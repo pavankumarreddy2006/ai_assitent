@@ -465,3 +465,26 @@ college_data = {
         },
     },
 }
+# =====================================================
+# ✅ FINAL FIX (DO NOT REMOVE / DO NOT MODIFY ABOVE DATA)
+# =====================================================
+
+def _safe_string(data):
+    try:
+        return str(data)
+    except:
+        return ""
+
+COLLEGE_CONTEXT = f"""
+================= ENGLISH =================
+{_safe_string(college_info_en)}
+
+================= TELUGU =================
+{_safe_string(college_info_te)}
+
+================= STRUCTURED =================
+{_safe_string(college_data)}
+"""
+
+def get_college_context_prompt():
+    return COLLEGE_CONTEXT

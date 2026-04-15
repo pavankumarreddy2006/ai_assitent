@@ -1,5 +1,5 @@
 # =====================================================
-# COLLEGE SERVICE — IMPROVED (SMART MATCHING)
+# COLLEGE SERVICE — FINAL IMPROVED VERSION (ERROR-FREE)
 # Ideal College of Arts and Sciences, Kakinada
 # =====================================================
 
@@ -9,34 +9,52 @@ from data.college_data import college_info_en, college_info_te, COLLEGE_CONTEXT
 def get_college_answer(query: str, lang: str = "en") -> str | None:
     """
     Smart keyword matching against college database.
-    Tries multiple matching strategies before returning None.
-    
-    Returns: Answer string if matched, else None (AI will handle it).
+    Supports English + Telugu.
+    Multi-strategy matching for best accuracy.
     """
-    try:
-        query_lower = query.lower().strip()
-        query_words = set(query_lower.replace("?", "").replace(".", "").split())
 
-        # Auto-detect Telugu query
-        if _is_telugu(query):
+    try:
+        if not query:
+            return None
+
+        query_clean = query.strip()
+        query_lower = query_clean.lower()
+
+        # Normalize words
+        query_words = set(
+            query_lower.replace("?", "")
+                       .replace(".", "")
+                       .replace(",", "")
+                       .split()
+        )
+
+        # Detect Telugu automatically
+        if _is_telugu(query_clean):
             lang = "te"
 
         data = college_info_te if lang == "te" else college_info_en
 
-        # ── Strategy 1: Exact key match ────────────────────────────
+        # =====================================================
+        # ✅ STRATEGY 1: Exact key match
+        # =====================================================
         for key, value in data.items():
             if key.lower() in query_lower:
                 return value
 
-        # ── Strategy 2: All words of a key appear in query ─────────
-        # e.g. query="what is the fee for bsc computers" matches key="bsc computers fee"
+        # =====================================================
+        # ✅ STRATEGY 2: Strong word match (score based)
+        # =====================================================
         best_match = None
-        best_score = 0
+        best_score = 0.0
 
         for key, value in data.items():
             key_words = set(key.lower().split())
-            common = key_words & query_words
-            score = len(common) / max(len(key_words), 1)
+
+            if not key_words:
+                continue
+
+            common_words = key_words & query_words
+            score = len(common_words) / len(key_words)
 
             if score > best_score and score >= 0.6:
                 best_score = score
@@ -45,13 +63,19 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         if best_match:
             return best_match
 
-        # ── Strategy 3: Any single word of query matches a key ──────
+        # =====================================================
+        # ✅ STRATEGY 3: Partial match (fallback)
+        # =====================================================
         for key, value in data.items():
             key_lower = key.lower()
+
             for word in query_words:
-                if len(word) >= 4 and word in key_lower:
+                if len(word) >= 3 and word in key_lower:
                     return value
 
+        # =====================================================
+        # ❌ No match → let AI handle
+        # =====================================================
         return None
 
     except Exception as e:
@@ -59,15 +83,23 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         return None
 
 
+# =====================================================
+# LANGUAGE DETECTION
+# =====================================================
+
 def _is_telugu(text: str) -> bool:
     """Return True if text contains Telugu Unicode characters."""
-    return any('\u0C00' <= ch <= '\u0C7F' for ch in text)
+    try:
+        return any('\u0C00' <= ch <= '\u0C7F' for ch in text)
+    except:
+        return False
 
+
+# =====================================================
+# COLLEGE SUMMARY (UI PANEL)
+# =====================================================
 
 def get_college_summary() -> dict:
-    """
-    Returns structured college summary for the sidebar info panel.
-    """
     return {
         "name": "Ideal College of Arts and Sciences",
         "location": "Vidyuth Nagar, Kakinada, Andhra Pradesh",
@@ -77,6 +109,7 @@ def get_college_summary() -> dict:
         "accreditation": "NAAC A Grade",
         "principal": "Dr. T. Satyanarayana",
         "timings": "9:30 AM – 3:45 PM (Mon–Sat)",
+
         "courses": [
             "B.Sc Computers",
             "BCA",
@@ -89,6 +122,7 @@ def get_college_summary() -> dict:
             "M.Sc Organic Chemistry",
             "M.Sc Food Science"
         ],
+
         "facilities": [
             "Library",
             "Computer Labs",
@@ -105,9 +139,17 @@ def get_college_summary() -> dict:
     }
 
 
+# =====================================================
+# ✅ CONTEXT FOR AI (VERY IMPORTANT)
+# =====================================================
+
 def get_college_context_prompt() -> str:
     """
-    Returns the full college context for AI system prompt.
-    Used when database match is not found — AI answers using this context.
+    Returns full college data for AI usage.
+    Ensures no crash even if data issue happens.
     """
-    return COLLEGE_CONTEXT
+    try:
+        return COLLEGE_CONTEXT
+    except Exception as e:
+        print(f"[Context Error] {e}")
+        return "College data not available."

@@ -2,7 +2,7 @@
 router.py — Decides where each request goes and orchestrates the response.
 
 Intent flow:
-  college  → college_service (data lookup) → llm_service (fallback with full context)
+  college  → college_service (smart DB lookup) → llm_service (AI with full college context)
   weather  → weather_service
   news     → news_service
   search   → search_service → llm_service (summarize results)
@@ -18,7 +18,10 @@ from core.responder import (
     format_general_response,
     format_error_response,
 )
-from services.college_service import get_college_answer
+from services.college_service import (
+    get_college_answer,
+    get_college_context_prompt,
+)
 from services.llm_service import query_groq, query_openrouter
 from services.search_service import search_duckduckgo, format_search_results
 from services.news_service import fetch_news
@@ -28,7 +31,7 @@ from services.weather_service import get_weather
 def route_message(message: str, conversation_history: list[dict] | None = None) -> dict:
     """
     Main routing function.
-    Returns a response dict with keys: reply, intent, source, show_video, video_url
+    Returns a response dict: reply, intent, source, show_video, video_url
     """
     if conversation_history is None:
         conversation_history = []
@@ -38,16 +41,12 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
     try:
         if intent == "college":
             return _handle_college(message, conversation_history)
-
         elif intent == "weather":
             return _handle_weather(message)
-
         elif intent == "news":
             return _handle_news(message)
-
         elif intent == "search":
             return _handle_search(message, conversation_history)
-
         else:
             return _handle_general(message, conversation_history)
 
@@ -56,26 +55,59 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
         return format_error_response()
 
 
+# ──────────────────────────────────────────────────────────────
+# HANDLERS
+# ──────────────────────────────────────────────────────────────
+
 def _handle_college(message: str, history: list[dict]) -> dict:
+    """
+    Try direct DB lookup first.
+    If no match, send the FULL college context to AI so it can answer precisely.
+    """
+
+    # Step 1: Smart keyword lookup from college_data.py
     result = get_college_answer(message)
     if result:
         return format_college_response(result, "College Database")
 
+    # Step 2: AI with full college context (no guessing)
     try:
-        from data.college_data import COLLEGE_INFO
-        full_context = "\n".join(f"{k}: {v}" for k, v in COLLEGE_INFO.items())
+        college_context = get_college_context_prompt()
+
         system_prompt = (
-            "You are the AI assistant for Ideal College of Arts and Sciences, Kakinada. "
-            "Use ONLY the following college data to answer. Give a direct, factual answer.\n\n"
-            f"COLLEGE DATA:\n{full_context}"
+            "You are the official AI assistant for Ideal College of Arts and Sciences, "
+            "located at Vidyuth Nagar, Kakinada, Andhra Pradesh.\n\n"
+            "Use ONLY the following college information to answer. "
+            "Give a clear, direct, and helpful answer. "
+            "If the answer is not in the data, say: "
+            "'I don't have that specific information. Please contact the college at "
+            "0884-2384382 or email idealcolleges@gmail.com.'\n\n"
+            "If the user writes in Telugu, respond in Telugu.\n\n"
+            f"COLLEGE INFORMATION:\n{college_context}"
         )
+
         answer = query_groq(message, history, system_prompt)
         return format_college_response(answer, "AI + College Data")
+
     except Exception:
-        return format_college_response(
-            "I don't have specific information about that. "
-            "Please contact the college at 0884-2384382 or email idealcolleges@gmail.com."
-        )
+        try:
+            # OpenRouter fallback
+            college_context = get_college_context_prompt()
+            system_prompt = (
+                "You are the AI assistant for Ideal College of Arts and Sciences, Kakinada. "
+                "Answer using only the college data provided. "
+                "If the user writes in Telugu, respond in Telugu.\n\n"
+                f"COLLEGE INFORMATION:\n{college_context}"
+            )
+            answer = query_openrouter(message, history, system_prompt)
+            return format_college_response(answer, "AI + College Data")
+
+        except Exception:
+            return format_college_response(
+                "I don't have specific information about that. "
+                "Please contact the college at 0884-2384382 or email idealcolleges@gmail.com.",
+                "College Database"
+            )
 
 
 def _handle_weather(message: str) -> dict:
@@ -86,7 +118,9 @@ def _handle_weather(message: str) -> dict:
 
 def _handle_news(message: str) -> dict:
     import re
-    raw_query = re.sub(r"news|latest|headlines|breaking|today", "", message, flags=re.IGNORECASE).strip()
+    raw_query = re.sub(
+        r"news|latest|headlines|breaking|today", "", message, flags=re.IGNORECASE
+    ).strip()
     articles = fetch_news(raw_query or "education India")
     return format_news_response(articles)
 
@@ -96,7 +130,10 @@ def _handle_search(message: str, history: list[dict]) -> dict:
     formatted = format_search_results(results)
 
     try:
-        prompt = f"Answer this question directly and concisely: \"{message}\"\n\nContext:\n{formatted}"
+        prompt = (
+            f"Answer this question directly and concisely: \"{message}\"\n\n"
+            f"Context from web search:\n{formatted}"
+        )
         answer = query_groq(prompt, history)
         return format_search_response(answer, "Internet Search + AI")
     except Exception:

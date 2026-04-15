@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ideal College AI Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <span class="status-dot" id="statusDot"></span>
+        <h1 class="brand">IDEAL COLLEGE OF ARTS &amp; SCIENCES</h1>
+      </div>
+      <div class="header-right">
+        <span class="greeting" id="greeting">Good Morning</span>
+        <button class="info-toggle" id="infoToggle" title="Toggle College Info">&#9776;</button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+
+      <!-- CHAT PANEL -->
+      <div class="chat-panel" id="chatPanel">
+        <!-- Messages Area -->
+        <div class="messages" id="messages">
+          <div class="welcome" id="welcome">
+            <h2>How can I help you today?</h2>
+            <p>Ask about courses, admissions, fees, faculty, or anything else.</p>
+            <div class="suggestions" id="suggestions">
+              <button class="suggestion-btn">What courses are offered?</button>
+              <button class="suggestion-btn">What is the fee structure?</button>
+              <button class="suggestion-btn">Who is the Principal?</button>
+              <button class="suggestion-btn">Tell me about the hostel.</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator" style="display:none;">
+          <div class="typing-bubble">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="input-bar">
+          <form class="input-form" id="inputForm">
+            <button type="button" class="mic-btn" id="micBtn" title="Voice input">
+              <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" x2="12" y1="19" y2="22"/>
+              </svg>
+            </button>
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Message Ideal AI..."
+              autocomplete="off"
+            />
+            <button type="submit" class="send-btn" id="sendBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 2-7 20-4-9-9-4Z"/>
+                <path d="M22 2 11 13"/>
+              </svg>
+            </button>
+          </form>
+          <p class="disclaimer">AI can make mistakes. Verify important information. &nbsp; <span id="sysStatus"></span></p>
+        </div>
+      </div>
+
+      <!-- INFO PANEL -->
+      <aside class="info-panel" id="infoPanel">
+        <div class="info-header">
+          <h3>INFORMATION HUB</h3>
+        </div>
+        <div class="info-content" id="infoContent">
+          <div class="info-loading">Loading college info...</div>
+        </div>
+        <div class="news-section">
+          <h4>LATEST UPDATES</h4>
+          <div id="newsContent">
+            <div class="info-loading">Fetching news...</div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

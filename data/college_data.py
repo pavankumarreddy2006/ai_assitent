@@ -1,3 +1,22 @@
+# ✅ ADD THIS AT TOP (FIX FOR ERROR)
+COLLEGE_KEYWORDS = [
+    "college",
+    "admissions",
+    "courses",
+    "fees",
+    "placements",
+    "campus",
+    "facilities",
+    "hostel",
+    "library",
+    "principal",
+    "location",
+    "contact"
+]
+
+# (your existing data below — unchanged)
+
+
 COLLEGE_INFO = """Ideal College of Arts and Sciences, Kakinada.
 
 Courses:

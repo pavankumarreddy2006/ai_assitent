@@ -1,7 +1,12 @@
 """
 app.py — Main entry point for College AI Flask application.
-Run with: python app.py  (dev)  or  gunicorn app:app  (prod/Render)
+Run with: python app.py  (dev)  or  gunicorn app:app  (prod)
 """
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
@@ -53,5 +58,6 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
-
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("debug", "false").lower() == "true"
+    app.run(debug=debug, host="0.0.0.0", port=port)

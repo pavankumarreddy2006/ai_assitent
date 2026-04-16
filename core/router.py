@@ -22,10 +22,7 @@ from core.responder import (
     format_general_response,
     format_error_response,
 )
-from services.college_service import (
-    get_college_answer,
-    get_college_context_prompt,
-)
+from services.college_service import get_college_answer, get_college_context_prompt
 from services.llm_service import query_groq, query_openrouter
 from services.search_service import search_duckduckgo, format_search_results
 from services.news_service import fetch_news
@@ -36,8 +33,8 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
     if conversation_history is None:
         conversation_history = []
 
-    lang   = detect_language(message)   # "te" or "en"
-    intent = classify_intent(message)   # "college" | "weather" | "news" | "search" | "general"
+    lang = detect_language(message)
+    intent = classify_intent(message)
 
     try:
         if intent == "college":
@@ -55,23 +52,18 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
         return format_error_response()
 
 
-# ── COLLEGE ────────────────────────────────────────────────────
-
 def _handle_college(message: str, history: list[dict], lang: str) -> dict:
-    # Step 1: Direct keyword match from college_data.py
     result = get_college_answer(message, lang=lang)
     if result:
         return format_college_response(result, "College Database")
 
-    # Step 2: AI with full college context
     college_context = get_college_context_prompt()
 
     if lang == "te":
         system_prompt = (
             "మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.\n\n"
             "కింది కాలేజీ సమాచారం మాత్రమే ఉపయోగించి తెలుగులో సమాధానం ఇవ్వండి.\n"
-            "సమాచారం లేకపోతే ఇలా చెప్పండి: "
-            "'ఆ వివరాలు నా దగ్గర లేవు. దయచేసి కాలేజీని 0884-2384382 లో సంప్రదించండి.'\n\n"
+            "సమాచారం లేకపోతే: 'ఆ వివరాలు నా దగ్గర లేవు. దయచేసి కాలేజీని 0884-2384382 లో సంప్రదించండి.'\n\n"
             f"కాలేజీ సమాచారం:\n{college_context}"
         )
     else:
@@ -108,28 +100,11 @@ def _handle_college(message: str, history: list[dict], lang: str) -> dict:
                 )
 
 
-# ── WEATHER ───────────────────────────────────────────────────
-
 def _handle_weather(message: str, lang: str) -> dict:
-    city         = extract_city(message) or "Kakinada"
+    city = extract_city(message) or "Kakinada"
     weather_data = get_weather(city)
+    return format_weather_response(weather_data, city, lang=lang)
 
-    if weather_data and lang == "te":
-        reply = (
-            f"{weather_data['city']}లో వాతావరణం: {weather_data['description']}, "
-            f"ఉష్ణోగ్రత: {weather_data['temperature']}°C, "
-            f"తేమ: {weather_data['humidity']}%, "
-            f"గాలి వేగం: {weather_data['wind_speed']} km/h."
-        )
-        return {"reply": reply, "intent": "weather", "source": "Open-Meteo", "show_video": False, "video_url": None}
-
-    if not weather_data and lang == "te":
-        return {"reply": f"'{city}' వాతావరణ సమాచారం దొరకలేదు.", "intent": "weather", "source": "Weather Service", "show_video": False, "video_url": None}
-
-    return format_weather_response(weather_data, city)
-
-
-# ── NEWS ──────────────────────────────────────────────────────
 
 def _handle_news(message: str, lang: str) -> dict:
     import re
@@ -139,24 +114,11 @@ def _handle_news(message: str, lang: str) -> dict:
     ).strip()
 
     articles = fetch_news(raw_query or "education India")
+    return format_news_response(articles, lang=lang)
 
-    if lang == "te":
-        if articles:
-            lines = ["తాజా విషయాలు:\n"]
-            for i, a in enumerate(articles[:5], 1):
-                lines.append(f"{i}. {a['title']} — {a['source']}")
-            reply = "\n".join(lines)
-        else:
-            reply = "ప్రస్తుతం వార్తలు తీసుకోలేకపోయాము. తర్వాత మళ్ళీ ప్రయత్నించండి."
-        return {"reply": reply, "intent": "news", "source": "News API", "show_video": False, "video_url": None}
-
-    return format_news_response(articles)
-
-
-# ── SEARCH ────────────────────────────────────────────────────
 
 def _handle_search(message: str, history: list[dict], lang: str) -> dict:
-    results   = search_duckduckgo(message)
+    results = search_duckduckgo(message)
     formatted = format_search_results(results)
 
     if lang == "te":
@@ -174,8 +136,6 @@ def _handle_search(message: str, history: list[dict], lang: str) -> dict:
         except Exception:
             return format_search_response(formatted, "Internet Search")
 
-
-# ── GENERAL ───────────────────────────────────────────────────
 
 def _handle_general(message: str, history: list[dict], lang: str) -> dict:
     try:

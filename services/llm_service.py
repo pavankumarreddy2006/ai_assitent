@@ -4,17 +4,15 @@ from config.config import (
     GROQ_MODEL, OPENROUTER_MODEL
 )
 
-# =====================================================
-# BILINGUAL SYSTEM PROMPT (Telugu + English)
-# =====================================================
-COLLEGE_SYSTEM_PROMPT = """You are the official AI assistant for Ideal College of Arts and Sciences, 
+COLLEGE_SYSTEM_PROMPT = """You are the official AI assistant for Ideal College of Arts and Sciences,
 located at Vidyuth Nagar, Kakinada, Andhra Pradesh.
 
 LANGUAGE RULE (VERY IMPORTANT):
-- If the user writes in Telugu → you MUST reply in Telugu only.
-- If the user writes in English → you MUST reply in English only.
+- If the user writes in Telugu → you MUST reply ONLY in Telugu.
+- If the user writes in English → you MUST reply ONLY in English.
 - If the user mixes both → reply in the dominant language used.
 - Never switch languages unless the user switches first.
+- Pronounce Telugu words clearly — speak naturally, not robotically.
 
 BEHAVIOR:
 - Be friendly, helpful, and professional.
@@ -30,14 +28,12 @@ COLLEGE CONTACT (use when needed):
 - Location: Vidyuth Nagar, Kakinada, Andhra Pradesh
 """
 
-# =====================================================
-# TELUGU-SPECIFIC SYSTEM PROMPT
-# =====================================================
 TELUGU_SYSTEM_PROMPT = """మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.
 
 భాషా నియమం (చాలా ముఖ్యమైనది):
 - వినియోగదారు తెలుగులో మాట్లాడితే → తెలుగులో మాత్రమే సమాధానం ఇవ్వండి.
 - వినియోగదారు ఇంగ్లీష్‌లో మాట్లాడితే → ఇంగ్లీష్‌లో సమాధానం ఇవ్వండి.
+- స్పష్టంగా, సహజంగా తెలుగులో మాట్లాడండి.
 
 ప్రవర్తన:
 - స్నేహపూర్వకంగా మరియు సహాయకరంగా ఉండండి.
@@ -58,14 +54,8 @@ def _build_messages(
     system_prompt: str | None = None,
     lang: str = "en"
 ) -> list[dict]:
-    """Build message list for LLM API call."""
-
-    # Choose default system prompt based on detected language
     if system_prompt is None:
-        if lang == "te":
-            system_prompt = TELUGU_SYSTEM_PROMPT
-        else:
-            system_prompt = COLLEGE_SYSTEM_PROMPT
+        system_prompt = TELUGU_SYSTEM_PROMPT if lang == "te" else COLLEGE_SYSTEM_PROMPT
 
     messages = [{"role": "system", "content": system_prompt}]
 
@@ -83,7 +73,6 @@ def query_groq(
     system_prompt: str | None = None,
     lang: str = "en"
 ) -> str:
-    """Query Groq API (Llama model). Returns AI response string."""
     if not GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY not configured")
 
@@ -115,7 +104,6 @@ def query_openrouter(
     system_prompt: str | None = None,
     lang: str = "en"
 ) -> str:
-    """Query OpenRouter API (fallback). Returns AI response string."""
     if not OPEN_ROUTER_API:
         raise ValueError("OPEN_ROUTER_API not configured")
 

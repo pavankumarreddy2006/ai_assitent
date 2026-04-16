@@ -88,7 +88,6 @@ body {
   letter-spacing: 0.15em;
 }
 
-/* Header Center — Greeting */
 .header-center {
   display: flex;
   align-items: center;
@@ -113,7 +112,6 @@ body {
   letter-spacing: 0.1em;
 }
 
-/* Header Right — Address */
 .header-right {
   display: flex;
   align-items: center;
@@ -130,10 +128,7 @@ body {
   background: var(--bg-card);
 }
 
-.addr-icon {
-  font-size: 12px;
-  opacity: 0.6;
-}
+.addr-icon { font-size: 12px; opacity: 0.6; }
 
 .addr-text {
   display: flex;
@@ -308,7 +303,6 @@ body {
   color: #000;
   border-radius: 20px 20px 4px 20px;
   font-weight: 450;
-  position: relative;
 }
 
 .message.assistant .bubble {
@@ -541,7 +535,7 @@ body {
 .mic-btn svg { width: 18px; height: 18px; position: relative; z-index: 1; }
 .mic-btn:hover { color: var(--text); }
 
-/* Listening state — pulsing rings */
+/* Listening state */
 .mic-btn.listening {
   color: #000;
   background: var(--accent);
@@ -563,7 +557,7 @@ body {
   100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* Speaking state — blue glow */
+/* Speaking state */
 .mic-btn.speaking {
   color: var(--accent-blue);
   background: rgba(59,130,246,0.1);
@@ -619,7 +613,7 @@ body {
   text-transform: uppercase;
 }
 
-/* Edit mode highlight */
+/* Edit mode */
 .input-form.editing {
   border-color: rgba(255,200,0,0.4);
   box-shadow: 0 0 0 1px rgba(255,200,0,0.1);
@@ -679,7 +673,6 @@ body {
 
 .info-close:hover { color: var(--text); }
 
-/* College Banner in Sidebar */
 .info-college-banner {
   display: flex;
   align-items: center;
@@ -733,7 +726,6 @@ body {
   gap: 8px;
 }
 
-/* Loading dots */
 .loading-dots {
   display: inline-flex;
   gap: 3px;
@@ -838,7 +830,6 @@ a.info-link:hover { color: var(--text); }
 }
 
 .news-item:last-child { border-bottom: none; }
-
 .news-item:hover { padding-left: 4px; }
 
 .news-title {
@@ -885,31 +876,24 @@ a.info-link:hover { color: var(--text); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== RESPONSIVE — Tablet (768px - 1100px) ===== */
+/* ===== RESPONSIVE — Tablet ===== */
 @media (max-width: 1100px) {
   .info-panel { width: 290px; }
   .college-address { display: none; }
   .header-center { display: none; }
 }
 
-/* ===== RESPONSIVE — Mobile (≤768px) ===== */
+/* ===== RESPONSIVE — Mobile ===== */
 @media (max-width: 768px) {
   :root { --header-h: 52px; }
-
   .header { padding: 0 14px; }
-
   .brand { font-size: 10px; letter-spacing: 0.12em; }
   .brand-sub { display: none; }
   .college-address { display: none; }
   .header-center { display: none; }
-
-  /* Greeting in header-right only */
   .header-right { gap: 8px; }
-
   .info-toggle { display: block; }
   .info-close { display: block; }
-
-  /* Info panel as overlay */
   .info-panel {
     display: none;
     position: fixed;
@@ -918,30 +902,18 @@ a.info-link:hover { color: var(--text); }
     width: 100%;
     background: var(--bg);
   }
-
   .info-panel.open { display: flex; }
-
-  /* Chat area full width */
   .chat-panel { border-right: none; }
-
   .messages { padding: 18px 14px; }
-
   .typing-indicator { padding: 0 14px 8px; }
-
   .speaker-anim { padding: 0 14px 6px; }
-
   .input-bar { padding: 10px 14px 16px; }
-
   .msg-wrapper { max-width: 90%; }
-
   .welcome h2 { font-size: 22px; }
-
   .suggestions { grid-template-columns: 1fr; max-width: 100%; }
-
   .wave-container { flex-wrap: wrap; gap: 8px; }
 }
 
-/* ===== RESPONSIVE — Very small (≤400px) ===== */
 @media (max-width: 400px) {
   .brand { font-size: 9px; }
   .messages { padding: 12px 10px; }

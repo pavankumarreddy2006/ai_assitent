@@ -1,8 +1,3 @@
-# =====================================================
-# COLLEGE SERVICE — FINAL IMPROVED VERSION (ERROR-FREE)
-# Ideal College of Arts and Sciences, Kakinada
-# =====================================================
-
 from data.college_data import college_info_en, college_info_te, COLLEGE_CONTEXT
 
 
@@ -12,7 +7,6 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
     Supports English + Telugu.
     Multi-strategy matching for best accuracy.
     """
-
     try:
         if not query:
             return None
@@ -20,7 +14,6 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         query_clean = query.strip()
         query_lower = query_clean.lower()
 
-        # Normalize words
         query_words = set(
             query_lower.replace("?", "")
                        .replace(".", "")
@@ -28,34 +21,29 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
                        .split()
         )
 
-        # Detect Telugu automatically
         if _is_telugu(query_clean):
             lang = "te"
 
         data = college_info_te if lang == "te" else college_info_en
 
-        # =====================================================
-        # ✅ STRATEGY 1: Exact key match
-        # =====================================================
-        for key, value in data.items():
-            if key.lower() in query_lower:
-                return value
+        # Prefer the LONGEST matching key (more specific wins over shorter match)
+        exact_matches = [
+            (key, value) for key, value in data.items()
+            if key.lower() in query_lower
+        ]
+        if exact_matches:
+            best_key, best_val = max(exact_matches, key=lambda x: len(x[0]))
+            return best_val
 
-        # =====================================================
-        # ✅ STRATEGY 2: Strong word match (score based)
-        # =====================================================
         best_match = None
         best_score = 0.0
 
         for key, value in data.items():
             key_words = set(key.lower().split())
-
             if not key_words:
                 continue
-
             common_words = key_words & query_words
             score = len(common_words) / len(key_words)
-
             if score > best_score and score >= 0.6:
                 best_score = score
                 best_match = value
@@ -63,19 +51,12 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         if best_match:
             return best_match
 
-        # =====================================================
-        # ✅ STRATEGY 3: Partial match (fallback)
-        # =====================================================
         for key, value in data.items():
             key_lower = key.lower()
-
             for word in query_words:
                 if len(word) >= 3 and word in key_lower:
                     return value
 
-        # =====================================================
-        # ❌ No match → let AI handle
-        # =====================================================
         return None
 
     except Exception as e:
@@ -83,21 +64,12 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         return None
 
 
-# =====================================================
-# LANGUAGE DETECTION
-# =====================================================
-
 def _is_telugu(text: str) -> bool:
-    """Return True if text contains Telugu Unicode characters."""
     try:
         return any('\u0C00' <= ch <= '\u0C7F' for ch in text)
-    except:
+    except Exception:
         return False
 
-
-# =====================================================
-# COLLEGE SUMMARY (UI PANEL)
-# =====================================================
 
 def get_college_summary() -> dict:
     return {
@@ -109,7 +81,6 @@ def get_college_summary() -> dict:
         "accreditation": "NAAC A Grade",
         "principal": "Dr. T. Satyanarayana",
         "timings": "9:30 AM – 3:45 PM (Mon–Sat)",
-
         "courses": [
             "B.Sc Computers",
             "BCA",
@@ -122,7 +93,6 @@ def get_college_summary() -> dict:
             "M.Sc Organic Chemistry",
             "M.Sc Food Science"
         ],
-
         "facilities": [
             "Library",
             "Computer Labs",
@@ -139,15 +109,7 @@ def get_college_summary() -> dict:
     }
 
 
-# =====================================================
-# ✅ CONTEXT FOR AI (VERY IMPORTANT)
-# =====================================================
-
 def get_college_context_prompt() -> str:
-    """
-    Returns full college data for AI usage.
-    Ensures no crash even if data issue happens.
-    """
     try:
         return COLLEGE_CONTEXT
     except Exception as e:

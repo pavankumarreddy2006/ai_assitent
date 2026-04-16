@@ -8,34 +8,34 @@ let isListening = false;
 let isSpeaking = false;
 let recognition = null;
 let voices = [];
-let editingHistoryIndex = null;  // track which message is being edited
+let editingHistoryIndex = null;
 
 const API_BASE = "";
 
 /* ========================
    DOM REFS
 ======================== */
-const messagesEl       = document.getElementById("messages");
-const welcomeEl        = document.getElementById("welcome");
-const inputForm        = document.getElementById("inputForm");
-const messageInput     = document.getElementById("messageInput");
-const sendBtn          = document.getElementById("sendBtn");
-const micBtn           = document.getElementById("micBtn");
-const typingIndicator  = document.getElementById("typingIndicator");
-const greetingEl       = document.getElementById("greeting");
-const statusDot        = document.getElementById("statusDot");
-const sysStatusEl      = document.getElementById("sysStatus");
-const infoPanel        = document.getElementById("infoPanel");
-const infoToggle       = document.getElementById("infoToggle");
-const infoClose        = document.getElementById("infoClose");
-const infoContent      = document.getElementById("infoContent");
-const newsContent      = document.getElementById("newsContent");
-const speakerAnim      = document.getElementById("speakerAnim");
-const stopSpeakBtn     = document.getElementById("stopSpeakBtn");
-const toastEl          = document.getElementById("toast");
+const messagesEl      = document.getElementById("messages");
+const welcomeEl       = document.getElementById("welcome");
+const inputForm       = document.getElementById("inputForm");
+const messageInput    = document.getElementById("messageInput");
+const sendBtn         = document.getElementById("sendBtn");
+const micBtn          = document.getElementById("micBtn");
+const typingIndicator = document.getElementById("typingIndicator");
+const greetingEl      = document.getElementById("greeting");
+const statusDot       = document.getElementById("statusDot");
+const sysStatusEl     = document.getElementById("sysStatus");
+const infoPanel       = document.getElementById("infoPanel");
+const infoToggle      = document.getElementById("infoToggle");
+const infoClose       = document.getElementById("infoClose");
+const infoContent     = document.getElementById("infoContent");
+const newsContent     = document.getElementById("newsContent");
+const speakerAnim     = document.getElementById("speakerAnim");
+const stopSpeakBtn    = document.getElementById("stopSpeakBtn");
+const toastEl         = document.getElementById("toast");
 
 /* ========================
-   GREETING (time-based)
+   GREETING
 ======================== */
 function getGreeting() {
   const h = new Date().getHours();
@@ -83,28 +83,28 @@ async function loadCollegeInfo() {
       <div class="info-section">
         <div class="info-label">Key Courses</div>
         <div class="tags">
-          ${data.courses.map(c => `<span class="tag">${c}</span>`).join("")}
+          ${data.courses.map(c => `<span class="tag">${escapeHtml(c)}</span>`).join("")}
         </div>
       </div>
       <div class="info-section">
         <div class="info-label">Facilities</div>
         <div class="tags">
-          ${data.facilities.map(f => `<span class="tag">${f}</span>`).join("")}
+          ${data.facilities.map(f => `<span class="tag">${escapeHtml(f)}</span>`).join("")}
         </div>
       </div>
       <div class="info-section">
         <div class="info-label">Contact</div>
         <div class="contact-row">
           <span class="contact-icon">&#9742;</span>
-          <span>${data.contact}</span>
+          <span>${escapeHtml(data.contact)}</span>
         </div>
         <div class="contact-row">
           <span class="contact-icon">&#9993;</span>
-          <span>${data.email || "idealcolleges@gmail.com"}</span>
+          <span>${escapeHtml(data.email || "idealcolleges@gmail.com")}</span>
         </div>
         <div class="contact-row">
-          <a class="info-link" href="${data.website}" target="_blank">
-            &#127760; ${data.website}
+          <a class="info-link" href="${escapeHtml(data.website)}" target="_blank">
+            &#127760; ${escapeHtml(data.website)}
           </a>
         </div>
       </div>
@@ -131,12 +131,15 @@ async function loadNews() {
       return;
     }
 
-    newsContent.innerHTML = articles.slice(0, 5).map(a => `
-      <div class="news-item" onclick="if('${escapeHtml(a.url || '')}') window.open('${escapeHtml(a.url || '')}','_blank')">
-        <div class="news-title">${escapeHtml(a.title || "")}</div>
-        <div class="news-source">${escapeHtml(a.source || "Unknown")}</div>
-      </div>
-    `).join("");
+    newsContent.innerHTML = articles.slice(0, 5).map(a => {
+      const url = escapeHtml(a.url || "");
+      return `
+        <div class="news-item" onclick="${url ? `window.open('${url}','_blank')` : ''}">
+          <div class="news-title">${escapeHtml(a.title || "")}</div>
+          <div class="news-source">${escapeHtml(a.source || "Unknown")}</div>
+        </div>
+      `;
+    }).join("");
   } catch {
     newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
   }
@@ -149,37 +152,48 @@ loadNews();
    PANEL TOGGLE (MOBILE)
 ======================== */
 if (infoToggle) {
-  infoToggle.addEventListener("click", () => {
-    infoPanel.classList.add("open");
-  });
+  infoToggle.addEventListener("click", () => infoPanel.classList.add("open"));
 }
-
 if (infoClose) {
-  infoClose.addEventListener("click", () => {
-    infoPanel.classList.remove("open");
-  });
+  infoClose.addEventListener("click", () => infoPanel.classList.remove("open"));
 }
 
 /* ========================
    VOICE — RECOGNITION
+   Only activates when user presses mic button
 ======================== */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
-  recognition.lang = "en-IN";          // supports Telugu + English
+  recognition.lang = "te-IN";
   recognition.continuous = false;
-  recognition.interimResults = false;
+  recognition.interimResults = true;
 
   recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    messageInput.value = transcript;
-    setListeningState(false);
-    if (transcript.trim()) sendMessage(transcript.trim());
+    let interim = "";
+    let final_text = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        final_text += t;
+      } else {
+        interim += t;
+      }
+    }
+    if (interim) messageInput.value = interim;
+    if (final_text.trim()) {
+      messageInput.value = final_text.trim();
+      setListeningState(false);
+      sendMessage(final_text.trim());
+    }
   };
 
-  recognition.onerror = () => setListeningState(false);
-  recognition.onend   = () => setListeningState(false);
+  recognition.onerror = (e) => {
+    setListeningState(false);
+    if (e.error === "no-speech") showToast("No speech detected. Try again.");
+  };
+  recognition.onend = () => setListeningState(false);
 }
 
 function setListeningState(val) {
@@ -203,11 +217,13 @@ micBtn.addEventListener("click", () => {
     stopSpeaking();
     recognition.start();
     setListeningState(true);
+    showToast("Listening... speak now (Telugu or English)");
   }
 });
 
 /* ========================
    VOICE — SYNTHESIS (TTS)
+   Auto-speaks AI responses in correct language
 ======================== */
 function loadVoices() {
   voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
@@ -218,42 +234,56 @@ if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-function getBestVoice(isTeluguText) {
+function isTeluguText(text) {
+  return /[\u0C00-\u0C7F]/.test(text);
+}
+
+function getBestVoice(isTeluguReply) {
   if (!voices.length) return null;
 
-  if (isTeluguText) {
+  if (isTeluguReply) {
+    const teIN = voices.find(v => v.lang === "te-IN");
+    if (teIN) return teIN;
     const te = voices.find(v => v.lang.startsWith("te"));
     if (te) return te;
+    const indiaFemale = voices.find(v =>
+      (v.lang === "hi-IN" || v.lang === "en-IN") &&
+      v.name.toLowerCase().includes("female")
+    );
+    if (indiaFemale) return indiaFemale;
+    const india = voices.find(v => v.lang === "en-IN" || v.lang === "hi-IN");
+    if (india) return india;
   }
 
   const preferred = [
+    "Microsoft Heera - Telugu (India)",
+    "Google हिन्दी",
     "Google UK English Female",
     "Microsoft Jenny Online (Natural) - English (United States)",
     "Microsoft Aria Online (Natural) - English (United States)",
+    "Microsoft Zira - English (United States)",
     "Google US English",
     "Samantha", "Karen", "Moira", "Victoria"
   ];
 
   for (const name of preferred) {
-    const v = voices.find(v => v.name === name);
+    const v = voices.find(vv => vv.name === name);
     if (v) return v;
   }
 
-  return voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
+  return voices.find(v => v.lang === "en-IN")
+      || voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
       || voices.find(v => v.lang.startsWith("en"))
       || null;
-}
-
-function isTeluguText(text) {
-  return /[\u0C00-\u0C7F]/.test(text);
 }
 
 function cleanForSpeech(text) {
   return text
     .replace(/https?:\/\/[^\s]+/g, "")
-    .replace(/\n+/g, ". ")
-    .replace(/[*_~`#]/g, "")
-    .replace(/\d+\.\s/g, "")
+    .replace(/[\r\n]+/g, ". ")
+    .replace(/[*_~`#\[\]]/g, "")
+    .replace(/\d+\.\s+/g, "")
+    .replace(/\.\s*\.\s*\./g, ".")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -266,7 +296,7 @@ function speak(text) {
   if (!cleaned) return;
 
   const CHUNK = 200;
-  const sentences = cleaned.match(/[^.!?]+[.!?]*/g) || [cleaned];
+  const sentences = cleaned.match(/[^.!?।]+[.!?।]*/g) || [cleaned];
   const chunks = [];
   let current = "";
 
@@ -295,13 +325,15 @@ function speak(text) {
       return;
     }
 
-    const utter    = new SpeechSynthesisUtterance(chunks[idx++]);
-    utter.lang     = isTe ? "te-IN" : "en-IN";
-    utter.rate     = 0.88;
-    utter.pitch    = 1.08;
-    utter.volume   = 1.0;
+    const chunk = chunks[idx++];
+    const chunkIsTe = isTeluguText(chunk);
+    const utter = new SpeechSynthesisUtterance(chunk);
+    utter.lang  = chunkIsTe ? "te-IN" : "en-IN";
+    utter.rate  = chunkIsTe ? 0.82 : 0.88;
+    utter.pitch = 1.05;
+    utter.volume = 1.0;
 
-    const v = getBestVoice(isTe);
+    const v = getBestVoice(chunkIsTe);
     if (v) utter.voice = v;
 
     utter.onend   = speakNext;
@@ -324,7 +356,6 @@ function stopSpeaking() {
   showSpeakerAnim(false);
 }
 
-/* Stop button in waveform */
 if (stopSpeakBtn) {
   stopSpeakBtn.addEventListener("click", stopSpeaking);
 }
@@ -346,19 +377,8 @@ function addMessage(role, content, meta = {}) {
   const div = document.createElement("div");
   div.className = `message ${role}`;
 
-  let metaHtml = "";
-  if (role === "assistant" && meta.intent) {
-    metaHtml = `
-      <div class="meta">
-        <span class="badge">${escapeHtml(meta.intent)}</span>
-        ${meta.source ? `<span class="badge">${escapeHtml(meta.source)}</span>` : ""}
-      </div>
-    `;
-  }
-
-  // Edit button for user messages
   let actionsHtml = "";
-  const historyIdx = conversationHistory.length; // index before pushing
+  const historyIdx = conversationHistory.length;
   if (role === "user") {
     actionsHtml = `
       <div class="msg-actions">
@@ -373,11 +393,9 @@ function addMessage(role, content, meta = {}) {
     <div class="msg-wrapper">
       <div class="bubble">${escapeHtml(content)}</div>
       ${actionsHtml}
-      ${metaHtml}
     </div>
   `;
 
-  // Bind edit button
   const editBtn = div.querySelector(".edit-btn");
   if (editBtn) {
     editBtn.addEventListener("click", () => {
@@ -396,26 +414,22 @@ function addMessage(role, content, meta = {}) {
    EDIT MESSAGE
 ======================== */
 function startEdit(text, historyIndex, msgDiv) {
-  // Restore the text to input
   messageInput.value = text;
   messageInput.focus();
 
-  // Mark form as editing
   inputForm.classList.add("editing");
 
-  // Show editing label
   let label = document.getElementById("editingLabel");
   if (!label) {
     label = document.createElement("div");
     label.id = "editingLabel";
     label.className = "editing-label visible";
-    label.textContent = "✎ Editing message — press Enter or Send to resend";
+    label.textContent = "Editing message — press Enter or Send to resend";
     inputForm.parentElement.insertBefore(label, inputForm);
   } else {
     label.className = "editing-label visible";
   }
 
-  // Remove all messages from this point forward visually
   const allMsgs = messagesEl.querySelectorAll(".message");
   let found = false;
   allMsgs.forEach(m => {
@@ -423,11 +437,7 @@ function startEdit(text, historyIndex, msgDiv) {
     if (found) m.remove();
   });
 
-  // Trim conversation history to before this user message
-  // historyIndex is the length when the user message was added (so index = historyIndex)
-  // user message is at historyIndex, assistant reply at historyIndex+1
   conversationHistory = conversationHistory.slice(0, historyIndex - 1);
-
   editingHistoryIndex = historyIndex;
   showToast("Message loaded for editing");
 }
@@ -522,7 +532,6 @@ async function sendMessage(text) {
     hideTyping();
     addMessage("assistant", "Connection error. Please check your network and try again.");
     console.error("[Chat Error]", err);
-
   } finally {
     sendBtn.disabled = false;
     messageInput.focus();
@@ -548,7 +557,6 @@ messageInput.addEventListener("keydown", (e) => {
   }
 });
 
-/* Suggestion buttons */
 document.querySelectorAll(".suggestion-btn").forEach(btn => {
   btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
 });

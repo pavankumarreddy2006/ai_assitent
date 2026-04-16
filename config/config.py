@@ -8,6 +8,7 @@ OPEN_ROUTER_API = os.getenv("OPEN_ROUTER_API", "")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 NEWS_DATA_API = os.getenv("NEWS_DATA_API", "")
 GNEWS_API = os.getenv("GNEWS_API", "")
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 SESSION_SECRET = os.getenv("SESSION_SECRET", "change-this-in-production")
 
 GROQ_MODEL = "llama-3.1-8b-instant"

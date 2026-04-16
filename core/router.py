@@ -102,7 +102,7 @@ def _handle_college(message: str, history: list[dict], lang: str) -> dict:
 
 def _handle_weather(message: str, lang: str) -> dict:
     city = extract_city(message) or "Kakinada"
-    weather_data = get_weather(city)
+    weather_data = get_weather(city, lang=lang)
     return format_weather_response(weather_data, city, lang=lang)
 
 
@@ -122,9 +122,13 @@ def _handle_search(message: str, history: list[dict], lang: str) -> dict:
     formatted = format_search_results(results)
 
     if lang == "te":
-        prompt = f"ఈ ప్రశ్నకు తెలుగులో స్పష్టంగా సమాధానం ఇవ్వండి: \"{message}\"\n\nవెబ్ సమాచారం:\n{formatted}"
+        prompt = (
+            "వినియోగదారు తెలుగు లేదా Roman Telugu లో అడిగారు. "
+            "ముందుగా English కి translate చేయకుండా తెలుగులోనే సహజంగా సమాధానం ఇవ్వండి.\n"
+            f"ప్రశ్న: \"{message}\"\n\nవెబ్ సమాచారం:\n{formatted}"
+        )
     else:
-        prompt = f"Answer this question directly and concisely: \"{message}\"\n\nContext:\n{formatted}"
+        prompt = f"Answer this question in English only. Do not switch to Telugu. Question: \"{message}\"\n\nContext:\n{formatted}"
 
     try:
         answer = query_groq(prompt, history, lang=lang)
@@ -138,12 +142,24 @@ def _handle_search(message: str, history: list[dict], lang: str) -> dict:
 
 
 def _handle_general(message: str, history: list[dict], lang: str) -> dict:
+    if lang == "te":
+        prompt = (
+            "User Telugu/Roman Telugu lo matladaru. English ki translate cheyyakunda "
+            "Telugu lone natural ga answer ivvandi.\n\n"
+            f"User message: {message}"
+        )
+    else:
+        prompt = (
+            "The user wrote in English. Reply only in English. "
+            "Do not switch to Telugu unless the user switches language.\n\n"
+            f"User message: {message}"
+        )
     try:
-        answer = query_groq(message, history, lang=lang)
+        answer = query_groq(prompt, history, lang=lang)
         return format_general_response(answer, "Groq AI")
     except Exception:
         try:
-            answer = query_openrouter(message, history, lang=lang)
+            answer = query_openrouter(prompt, history, lang=lang)
             return format_general_response(answer, "OpenRouter AI")
         except Exception:
             results = search_duckduckgo(message)

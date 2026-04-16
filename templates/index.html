@@ -10,156 +10,109 @@
 </head>
 <body>
   <div class="app">
-
-    <!-- HEADER -->
     <header class="header">
       <div class="header-left">
         <span class="status-dot" id="statusDot"></span>
         <div class="brand-group">
           <h1 class="brand">IDEAL COLLEGE</h1>
-          <span class="brand-sub">Arts &amp; Sciences</span>
+          <span class="brand-sub">AI Assistant</span>
         </div>
       </div>
       <div class="header-center">
         <span class="greeting-text" id="greeting">Good Morning</span>
-        <span class="greeting-place">&#x2022; Ideal College, Kakinada</span>
+        <span class="greeting-place">Ideal College, Kakinada</span>
       </div>
       <div class="header-right">
         <div class="college-address">
-          <span class="addr-icon">&#x1F4CD;</span>
+          <span class="addr-icon">AI</span>
           <div class="addr-text">
-            <span class="addr-main">Vidyuth Nagar, Kakinada</span>
-            <span class="addr-sub">Andhra Pradesh</span>
+            <span class="addr-main">Voice First</span>
+            <span class="addr-sub">Telugu + English</span>
           </div>
         </div>
-        <button class="info-toggle" id="infoToggle" title="Toggle College Info">&#9776;</button>
+        <button class="info-toggle" id="infoToggle" title="Toggle Info">&#9776;</button>
       </div>
     </header>
 
-    <!-- MAIN CONTENT -->
     <div class="main">
-
-      <!-- CHAT PANEL -->
       <div class="chat-panel" id="chatPanel">
-
-        <!-- Messages Area -->
         <div class="messages" id="messages">
           <div class="welcome" id="welcome">
-            <div class="welcome-logo">
-              <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="40" cy="40" r="38" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-                <circle cx="40" cy="40" r="28" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-                <path d="M25 52L40 28L55 52" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M29 46H51" stroke="white" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+            <div class="welcome-logo jarvis-orb small-orb">
+              <div class="orb-core"></div>
+              <div class="orb-ring ring-one"></div>
+              <div class="orb-ring ring-two"></div>
+              <div class="orb-ring ring-three"></div>
             </div>
-            <h2>How can I help you today?</h2>
-            <p>Ask about courses, admissions, fees, faculty, or anything else — in English or Telugu</p>
+            <h2>Speak to Ideal AI</h2>
+            <p>Telugu lo adigithe Telugu lo, English lo adigithe English lo answer chestanu</p>
             <div class="suggestions" id="suggestions">
+              <button class="suggestion-btn">Who is Elon Musk?</button>
               <button class="suggestion-btn">What courses are offered?</button>
-              <button class="suggestion-btn">What is the fee structure?</button>
-              <button class="suggestion-btn">Who is the Principal?</button>
-              <button class="suggestion-btn">Tell me about the hostel.</button>
               <button class="suggestion-btn">కోర్సులు ఏమిటి?</button>
-              <button class="suggestion-btn">ఫీజు ఎంత?</button>
-              <button class="suggestion-btn">Weather in Kakinada?</button>
-              <button class="suggestion-btn">హాస్టల్ గురించి చెప్పు.</button>
+              <button class="suggestion-btn">తాజా వార్తలు చెప్పు</button>
             </div>
           </div>
         </div>
 
-        <!-- Typing Indicator -->
         <div class="typing-indicator" id="typingIndicator" style="display:none;">
-          <div class="typing-bubble">
-            <span></span><span></span><span></span>
-          </div>
+          <div class="typing-bubble"><span></span><span></span><span></span></div>
           <span class="typing-label">AI is thinking...</span>
         </div>
 
-        <!-- Speaker Waveform Animation -->
         <div class="speaker-anim" id="speakerAnim" style="display:none;">
           <div class="wave-container">
-            <span class="wave-label">Speaking</span>
+            <span class="wave-label">Speaking full answer</span>
             <div class="wave-bars">
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
             </div>
-            <button class="stop-speak-btn" id="stopSpeakBtn" title="Stop speaking">&#9632; Stop</button>
+            <button class="stop-speak-btn" id="stopSpeakBtn" title="Stop speaking">Stop</button>
           </div>
         </div>
 
-        <!-- Input Bar -->
-        <div class="input-bar">
-          <form class="input-form" id="inputForm">
-            <!-- Mic Button with ring animation -->
-            <button type="button" class="mic-btn" id="micBtn" title="Voice input — press and speak">
-              <div class="mic-rings">
-                <div class="mic-ring r1"></div>
-                <div class="mic-ring r2"></div>
-              </div>
-              <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" x2="12" y1="19" y2="22"/>
-              </svg>
-            </button>
-
-            <input
-              type="text"
-              id="messageInput"
-              placeholder="Message Ideal AI... (English or Telugu)"
-              autocomplete="off"
-            />
-
-            <button type="submit" class="send-btn" id="sendBtn" title="Send">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m22 2-7 20-4-9-9-4Z"/>
-                <path d="M22 2 11 13"/>
-              </svg>
-            </button>
-          </form>
-          <p class="disclaimer">
-            AI can make mistakes. Verify important information.
-            <span id="sysStatus"></span>
-          </p>
+        <div class="voice-console">
+          <button type="button" class="jarvis-mic" id="micBtn" title="Press and speak">
+            <span class="jarvis-scan"></span>
+            <span class="jarvis-ring r1"></span>
+            <span class="jarvis-ring r2"></span>
+            <span class="jarvis-ring r3"></span>
+            <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
+          <div class="voice-status" id="voiceStatus">Tap the Jarvis mic and speak</div>
+          <div class="voice-transcript" id="voiceTranscript">No message box. Voice only.</div>
+          <span id="sysStatus"></span>
         </div>
       </div>
 
-      <!-- INFO PANEL (Sidebar) -->
       <aside class="info-panel" id="infoPanel">
         <div class="info-header">
-          <h3>INFORMATION HUB</h3>
+          <h3>AI HUB</h3>
           <button class="info-close" id="infoClose" title="Close">&#x2715;</button>
         </div>
 
-        <!-- College Summary -->
         <div class="info-college-banner">
-          <div class="college-initial">IC</div>
+          <div class="college-initial">AI</div>
           <div class="college-meta">
-            <div class="college-name-sm">Ideal College</div>
-            <div class="college-naac">NAAC A Grade</div>
+            <div class="college-name-sm">Ideal AI Assistant</div>
+            <div class="college-naac">Voice Enabled</div>
           </div>
         </div>
 
         <div class="info-content" id="infoContent">
           <div class="info-loading">
             <div class="loading-dots"><span></span><span></span><span></span></div>
-            Loading college info...
+            Loading AI info...
           </div>
         </div>
 
         <div class="news-section">
-          <h4>&#128240; LATEST UPDATES</h4>
+          <h4>Latest News</h4>
           <div id="newsContent">
             <div class="info-loading">
               <div class="loading-dots"><span></span><span></span><span></span></div>
@@ -168,13 +121,10 @@
           </div>
         </div>
       </aside>
-
     </div>
   </div>
 
-  <!-- Edit Toast Notification -->
   <div class="toast" id="toast" style="display:none;"></div>
-
   <script src="/static/js/main.js"></script>
 </body>
 </html>

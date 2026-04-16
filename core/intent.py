@@ -44,12 +44,48 @@ COLLEGE_KEYWORDS_TE = [
     "బీఎస్సీ", "ఎంసీఏ", "డైరెక్టర్", "సమయం", "ఆఫీస్"
 ]
 
+ROMAN_TELUGU_WORDS = {
+    "nenu", "meeru", "nuvvu", "adigina", "adigithe", "matladithe",
+    "matladu", "cheppu", "chepandi", "cheppandi", "ivvu", "ivvandi",
+    "enti", "emiti", "ela", "enduku", "ekkada", "evaru", "evarini",
+    "telugu", "lo", "ga", "ki", "ni", "undi", "unnayi", "kavali",
+    "chesi", "cheyyi", "cheyyandi", "theliyali", "gurunchi",
+    "vartalu", "tajaga", "vathavaranam", "vaatavaranam", "varsham",
+    "courseulu", "fee", "fees", "college", "hostel"
+}
+
+WEATHER_KEYWORDS_ROMAN_TE = [
+    "vathavaranam", "vaatavaranam", "weather cheppu", "varsham", "ushnograta",
+    "enda", "chali", "vaana", "gali"
+]
+
+NEWS_KEYWORDS_ROMAN_TE = [
+    "vartalu", "tajaga", "latest news cheppu", "news cheppu", "breaking vartalu"
+]
+
+SEARCH_KEYWORDS_ROMAN_TE = [
+    "cheppu", "enti", "emiti", "evaru", "ekkada", "ela", "gurunchi",
+    "theliyali", "vivaralu", "information ivvu"
+]
+
 
 def detect_language(text: str) -> str:
     telugu_chars = sum(1 for ch in text if '\u0C00' <= ch <= '\u0C7F')
     total_chars = max(len(text.replace(" ", "")), 1)
     ratio = telugu_chars / total_chars
-    return "te" if ratio > 0.15 else "en"
+    if ratio > 0.15:
+        return "te"
+
+    words = re.findall(r"[a-zA-Z]+", text.lower())
+    if not words:
+        return "en"
+
+    roman_hits = sum(1 for word in words if word in ROMAN_TELUGU_WORDS)
+    if roman_hits >= 2:
+        return "te"
+    if roman_hits == 1 and any(kw in text.lower() for kw in SEARCH_KEYWORDS_ROMAN_TE + NEWS_KEYWORDS_ROMAN_TE + WEATHER_KEYWORDS_ROMAN_TE):
+        return "te"
+    return "en"
 
 
 def classify_intent(message: str) -> str:
@@ -64,15 +100,21 @@ def classify_intent(message: str) -> str:
         return "weather"
     if any(kw in message for kw in WEATHER_KEYWORDS_TE):
         return "weather"
+    if any(kw in msg for kw in WEATHER_KEYWORDS_ROMAN_TE):
+        return "weather"
 
     if any(kw in msg for kw in NEWS_KEYWORDS):
         return "news"
     if any(kw in message for kw in NEWS_KEYWORDS_TE):
         return "news"
+    if any(kw in msg for kw in NEWS_KEYWORDS_ROMAN_TE):
+        return "news"
 
     if any(kw in msg for kw in SEARCH_KEYWORDS):
         return "search"
     if any(kw in message for kw in SEARCH_KEYWORDS_TE):
+        return "search"
+    if any(kw in msg for kw in SEARCH_KEYWORDS_ROMAN_TE):
         return "search"
 
     return "general"

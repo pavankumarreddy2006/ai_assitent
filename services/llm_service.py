@@ -10,8 +10,10 @@ located at Vidyuth Nagar, Kakinada, Andhra Pradesh.
 LANGUAGE RULE (VERY IMPORTANT):
 - If the user writes in Telugu → you MUST reply ONLY in Telugu.
 - If the user writes in English → you MUST reply ONLY in English.
+- If the user writes Roman Telugu → reply in Telugu, not English.
 - If the user mixes both → reply in the dominant language used.
 - Never switch languages unless the user switches first.
+- Do not translate the user's question into English before answering.
 - Pronounce Telugu words clearly — speak naturally, not robotically.
 
 BEHAVIOR:
@@ -33,6 +35,8 @@ TELUGU_SYSTEM_PROMPT = """మీరు ఐడియల్ కాలేజ్ ఆ
 భాషా నియమం (చాలా ముఖ్యమైనది):
 - వినియోగదారు తెలుగులో మాట్లాడితే → తెలుగులో మాత్రమే సమాధానం ఇవ్వండి.
 - వినియోగదారు ఇంగ్లీష్‌లో మాట్లాడితే → ఇంగ్లీష్‌లో సమాధానం ఇవ్వండి.
+- వినియోగదారు Roman Telugu లో మాట్లాడితే → తెలుగులోనే సమాధానం ఇవ్వండి.
+- ముందుగా English కి translate చేసి సమాధానం ఇవ్వకండి.
 - స్పష్టంగా, సహజంగా తెలుగులో మాట్లాడండి.
 
 ప్రవర్తన:
@@ -88,7 +92,7 @@ def query_groq(
             "model": GROQ_MODEL,
             "messages": messages,
             "temperature": 0.7,
-            "max_tokens": 1024
+            "max_tokens": 1600
         },
         timeout=30
     )
@@ -119,7 +123,7 @@ def query_openrouter(
             "model": OPENROUTER_MODEL,
             "messages": messages,
             "temperature": 0.7,
-            "max_tokens": 1024
+            "max_tokens": 1600
         },
         timeout=30
     )

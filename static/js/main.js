@@ -4,186 +4,9 @@ let conversationHistory = [];
 let isListening = false;
 let isSpeaking = false;
 let recognition = null;
-
-// ------- Image & Video Overlay System ---------
-let mediaOverlay = null;
-let sliderInterval = null;
-/**
- * Fetch college images from the backend.
- * Returns a Promise resolving to an array of image URLs.
- */
-async function fetchCollegeImages() {
-  try {
-    const res = await fetch("/api/media/images");
-    if (!res.ok) throw new Error("Failed to fetch images");
-    const data = await res.json();
-    if (!Array.isArray(data)) throw new Error("Invalid image data");
-    return data;
-  } catch (error) {
-    console.error("[fetchCollegeImages]", error);
-    return [];
-  }
-}
-
-/**
- * Fetch college video URL from the backend.
- * Returns a Promise resolving to a string URL or null.
- */
-async function fetchCollegeVideo() {
-  try {
-    const res = await fetch("/api/media/video");
-    if (!res.ok) throw new Error("Failed to fetch video");
-    const data = await res.json();
-    if (typeof data !== "string") throw new Error("Invalid video data");
-    return data;
-  } catch (error) {
-    console.error("[fetchCollegeVideo]", error);
-    return null;
-  }
-}
-
-function createMediaOverlay() {
-  mediaOverlay = document.createElement("div");
-  mediaOverlay.id = "mediaOverlay";
-  mediaOverlay.style.position = "fixed";
-  mediaOverlay.style.top = "0";
-  mediaOverlay.style.left = "0";
-  mediaOverlay.style.width = "100vw";
-  mediaOverlay.style.height = "100vh";
-  mediaOverlay.style.background = "rgba(0,0,0,0.95)";
-  mediaOverlay.style.display = "flex";
-  mediaOverlay.style.justifyContent = "center";
-  mediaOverlay.style.alignItems = "center";
-  mediaOverlay.style.zIndex = "9999";
-  document.body.appendChild(mediaOverlay);
-}
-
-/**
- * Show images in fullscreen slider for College images intent.
- * @param {Array} images
- */
-function showImagesOverlay(images = []) {
-  if (!images.length) return;
-  createMediaOverlay();
-  hideChatbotUI();
-
-  let imgEl = document.createElement("img");
-  imgEl.style.maxWidth = "95vw";
-  imgEl.style.maxHeight = "90vh";
-  imgEl.style.objectFit = "contain";
-  imgEl.style.borderRadius = "15px";
-  imgEl.style.boxShadow = "0 4px 32px rgba(0,0,0,0.5)";
-  imgEl.style.transition = "opacity 0.6s";
-  mediaOverlay.appendChild(imgEl);
-
-  let currIdx = 0;
-  function setImg(idx) {
-    imgEl.style.opacity = 0;
-    setTimeout(() => {
-      imgEl.src = images[idx];
-      imgEl.alt = `Campus Photo ${idx+1}`;
-      imgEl.style.opacity = 1;
-    }, 350);
-  }
-  setImg(currIdx);
-
-  sliderInterval = setInterval(() => {
-    currIdx++;
-    if (currIdx >= images.length) {
-      clearInterval(sliderInterval);
-      closeMediaOverlay();
-      showChatbotUI();
-    } else {
-      setImg(currIdx);
-    }
-  }, 2000);
-
-  // Allow user to click to close early
-  mediaOverlay.onclick = () => {
-    clearInterval(sliderInterval);
-    closeMediaOverlay();
-    showChatbotUI();
-  };
-}
-
-function showVideoOverlay(videoUrl = "") {
-  if (!videoUrl) return;
-  createMediaOverlay();
-  hideChatbotUI();
-
-  let videoEl = document.createElement("video");
-  videoEl.src = videoUrl;
-  videoEl.style.maxWidth = "95vw";
-  videoEl.style.maxHeight = "88vh";
-  videoEl.style.borderRadius = "14px";
-  videoEl.style.boxShadow = "0 4px 32px rgba(0,0,0,0.6)";
-  videoEl.autoplay = true;
-  videoEl.controls = true;
-  videoEl.playsInline = true;
-  videoEl.onended = () => {
-    closeMediaOverlay();
-    showChatbotUI();
-  };
-  // If user clicks overlay, also close
-  mediaOverlay.onclick = (e) => {
-    if (e.target === mediaOverlay) {
-      videoEl.pause();
-      closeMediaOverlay();
-      showChatbotUI();
-    }
-  };
-  mediaOverlay.appendChild(videoEl);
-}
-
-// Remove overlay & clean up
-function closeMediaOverlay() {
-  if (sliderInterval) {
-    clearInterval(sliderInterval);
-    sliderInterval = null;
-  }
-  if (mediaOverlay) {
-    document.body.removeChild(mediaOverlay);
-    mediaOverlay = null;
-  }
-}
-
-function hideChatbotUI() {
-  // Hide elements for immersive media experience
-  if (document.body) document.body.style.overflow = "hidden";
-  if (document.getElementById("container"))
-    document.getElementById("container").style.display = "none";
-  if (typeof welcomeEl !== "undefined" && welcomeEl) welcomeEl.style.display = "none";
-}
-
-function showChatbotUI() {
-  if (document.body) document.body.style.overflow = "";
-  if (document.getElementById("container"))
-    document.getElementById("container").style.display = "";
-  if (typeof welcomeEl !== "undefined" && welcomeEl) welcomeEl.style.display = "";
-}
-
-// --- Monkey-patch fetch/chatbot response handler to support images/video ---
-// This code assumes you have a function like "handleApiResponse(data)" used when you get a reply.
-
-const originalApiResponseHandler = window.handleApiResponse || function(data) {};
-
-window.handleApiResponse = function(data) {
-  // 1. Media priority: show media overlays if instructed by the server response
-  if (data.show_images === true && Array.isArray(data.images) && data.images.length > 0) {
-    showImagesOverlay(data.images);
-    return;
-  } else if (data.show_video === true && typeof data.video === "string" && data.video) {
-    showVideoOverlay(data.video);
-    return;
-  }
-
-  // Else, proceed with existing handler if present
-  if (typeof originalApiResponseHandler === "function") {
-    originalApiResponseHandler(data);
-  }
-};
 let voices = [];
 let finalTranscript = "";
+let sliderInterval = null;
 
 const API_BASE = "";
 let messagesEl = null;
@@ -203,6 +26,8 @@ let stopSpeakBtn = null;
 let toastEl = null;
 let voiceStatus = null;
 let voiceTranscript = null;
+let mediaOverlay = null;
+let mediaContent = null;
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -234,63 +59,83 @@ function initializeDomReferencesAndHandlers() {
   toastEl = document.getElementById("toast");
   voiceStatus = document.getElementById("voiceStatus");
   voiceTranscript = document.getElementById("voiceTranscript");
+  mediaOverlay = document.getElementById("mediaOverlay");
+  mediaContent = document.getElementById("mediaContent");
+
+  if (!mediaOverlay) {
+    mediaOverlay = document.createElement("div");
+    mediaOverlay.id = "mediaOverlay";
+    mediaOverlay.className = "hidden";
+    document.body.appendChild(mediaOverlay);
+  }
+  if (!mediaContent) {
+    mediaContent = document.createElement("div");
+    mediaContent.id = "mediaContent";
+    mediaOverlay.appendChild(mediaContent);
+  }
 
   updateGreeting();
   setInterval(updateGreeting, 60000);
-
   checkHealth();
   setInterval(checkHealth, 30000);
-
   loadCollegeInfo();
   loadNews();
+  setupSpeechRecognition();
+  loadVoices();
 
+  if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = loadVoices;
   if (infoToggle) infoToggle.addEventListener("click", () => infoPanel && infoPanel.classList.add("open"));
   if (infoClose) infoClose.addEventListener("click", () => infoPanel && infoPanel.classList.remove("open"));
-
-  if (micBtn) {
-    micBtn.addEventListener("click", () => {
-      if (isSpeaking) {
-        stopSpeaking();
-        return;
-      }
-      if (!recognition) {
-        showToast("Voice is not supported in this browser");
-        return;
-      }
-      if (isListening) recognition.stop();
-      else {
-        stopSpeaking();
-        recognition.start();
-      }
-    });
-  }
-
   if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
+  if (micBtn) micBtn.addEventListener("click", handleMicClick);
 
-  document.querySelectorAll(".suggestion-btn").forEach(btn => {
+  document.querySelectorAll(".suggestion-btn").forEach((btn) => {
     btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
   });
+
+  if (!recognition) setVoiceText("Tap the Jarvis mic and speak", "Voice works in supported browsers. You can also use the suggestion buttons.");
+}
+
+function handleMicClick() {
+  if (isSpeaking) {
+    stopSpeaking();
+    return;
+  }
+  if (!recognition) {
+    showToast("Voice is not supported in this browser");
+    return;
+  }
+  try {
+    if (isListening) recognition.stop();
+    else {
+      stopSpeaking();
+      recognition.start();
+    }
+  } catch {
+    setListeningState(false);
+    showToast("Voice could not start. Please try again.");
+  }
 }
 
 async function checkHealth() {
   try {
     const res = await fetch(`${API_BASE}/api/healthz`);
     const data = await res.json();
-    if (statusDot && data.status === "ok") {
-      statusDot.classList.add("active");
-      if (sysStatusEl) sysStatusEl.textContent = "";
-    }
+    if (statusDot && data.status === "ok") statusDot.classList.add("active");
+    if (sysStatusEl && data.status === "ok") sysStatusEl.textContent = "";
   } catch {
     if (statusDot) statusDot.classList.remove("active");
+    if (sysStatusEl) sysStatusEl.textContent = "System reconnecting...";
   }
 }
 
 async function loadCollegeInfo() {
   try {
     const res = await fetch(`${API_BASE}/api/college-info`);
+    if (!res.ok) throw new Error("College info failed");
     const data = await res.json();
-    if (infoContent) {
-      infoContent.innerHTML = `
+    if (!infoContent) return;
+    infoContent.innerHTML = `
       <div class="info-section">
         <div class="info-label">About this AI</div>
         <p class="ai-copy">Ideal AI answers college questions, general questions, weather, web search, and latest news through voice.</p>
@@ -303,16 +148,14 @@ async function loadCollegeInfo() {
       </div>
       <div class="info-section">
         <div class="info-label">Voice mode</div>
-        <div class="ai-rule">Tap Jarvis mic, speak, and listen to the full answer in a sweet female voice when available.</div>
+        <div class="ai-rule">Tap Jarvis mic, speak, and listen to the full answer when speech is available.</div>
       </div>
       <div class="info-section">
         <div class="info-label">College contact</div>
-        <div class="contact-row"><span>${escapeHtml(data.contact)}</span></div>
+        <div class="contact-row"><span>${escapeHtml(data.contact || "0884-2384382 / 0884-2384381")}</span></div>
         <div class="contact-row"><span>${escapeHtml(data.email || "idealcolleges@gmail.com")}</span></div>
-        <div class="contact-row"><a class="info-link" href="${escapeHtml(data.website)}" target="_blank">${escapeHtml(data.website)}</a></div>
-      </div>
-    `;
-    }
+        <div class="contact-row"><a class="info-link" href="${escapeAttribute(data.website || "https://idealcollege.edu.in")}" target="_blank" rel="noopener noreferrer">${escapeHtml(data.website || "https://idealcollege.edu.in")}</a></div>
+      </div>`;
   } catch {
     if (infoContent) infoContent.innerHTML = `<p class="info-loading">Could not load AI info.</p>`;
   }
@@ -321,25 +164,37 @@ async function loadCollegeInfo() {
 async function loadNews() {
   try {
     const res = await fetch(`${API_BASE}/api/news?query=latest%20India%20education`);
+    if (!res.ok) throw new Error("News failed");
     const { articles } = await res.json();
     if (!newsContent) return;
-    if (!articles || articles.length === 0) {
+    if (!Array.isArray(articles) || articles.length === 0) {
       newsContent.innerHTML = `<p class="info-loading">No news available.</p>`;
       return;
     }
-    newsContent.innerHTML = articles.slice(0, 5).map(a => {
-      const url = escapeHtml(a.url || "");
-      const click = url ? `window.open('${url}','_blank')` : "";
-      return `<div class="news-item" onclick="${click}"><div class="news-title">${escapeHtml(a.title || "")}</div><div class="news-source">${escapeHtml(a.source || "Unknown")}</div></div>`;
-    }).join("");
+    newsContent.innerHTML = "";
+    articles.slice(0, 5).forEach((article) => {
+      const item = document.createElement("div");
+      item.className = "news-item";
+      const title = document.createElement("div");
+      title.className = "news-title";
+      title.textContent = article.title || "Untitled";
+      const source = document.createElement("div");
+      source.className = "news-source";
+      source.textContent = article.source || "Unknown";
+      item.appendChild(title);
+      item.appendChild(source);
+      if (article.url) item.addEventListener("click", () => window.open(article.url, "_blank", "noopener,noreferrer"));
+      newsContent.appendChild(item);
+    });
   } catch {
     if (newsContent) newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
   }
 }
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function setupSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
 
-if (SpeechRecognition) {
   recognition = new SpeechRecognition();
   recognition.lang = "te-IN";
   recognition.continuous = false;
@@ -352,20 +207,20 @@ if (SpeechRecognition) {
     setVoiceText("Listening... Telugu or English lo matladandi", "Speak now");
   };
 
-  recognition.onresult = (e) => {
+  recognition.onresult = (event) => {
     let interim = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const text = e.results[i][0].transcript;
-      if (e.results[i].isFinal) finalTranscript += text;
+    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      const text = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalTranscript += text;
       else interim += text;
     }
     const shown = (finalTranscript || interim).trim();
     if (shown) setVoiceText("Listening...", shown);
   };
 
-  recognition.onerror = (e) => {
+  recognition.onerror = (event) => {
     setListeningState(false);
-    if (e.error === "no-speech") setVoiceText("No speech detected", "Tap mic and try again");
+    if (event.error === "no-speech") setVoiceText("No speech detected", "Tap mic and try again");
     else setVoiceText("Voice error", "Please try again");
   };
 
@@ -378,8 +233,8 @@ if (SpeechRecognition) {
 }
 
 function setVoiceText(status, transcript) {
-  if (voiceStatus) voiceStatus.textContent = status;
-  if (voiceTranscript) voiceTranscript.textContent = transcript;
+  if (voiceStatus) voiceStatus.textContent = status || "";
+  if (voiceTranscript) voiceTranscript.textContent = transcript || "";
 }
 
 function setListeningState(val) {
@@ -391,33 +246,28 @@ function loadVoices() {
   voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
 }
 
-loadVoices();
-if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = loadVoices;
-
 function isTeluguText(text) {
-  return /[\u0C00-\u0C7F]/.test(text);
+  return /[\u0C00-\u0C7F]/.test(text || "");
 }
 
 function getBestVoice(isTeluguReply) {
   if (!voices.length) return null;
   const femaleNames = ["heera", "swara", "neural", "jenny", "aria", "zira", "samantha", "karen", "moira", "victoria", "female"];
   if (isTeluguReply) {
-    return voices.find(v => v.lang === "te-IN" && femaleNames.some(n => v.name.toLowerCase().includes(n)))
-      || voices.find(v => v.lang.startsWith("te"))
-      || voices.find(v => v.lang === "hi-IN" && femaleNames.some(n => v.name.toLowerCase().includes(n)))
-      || voices.find(v => v.lang === "en-IN" && femaleNames.some(n => v.name.toLowerCase().includes(n)))
-      || voices.find(v => v.lang === "en-IN")
+    return voices.find((v) => v.lang === "te-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
+      || voices.find((v) => v.lang && v.lang.startsWith("te"))
+      || voices.find((v) => v.lang === "hi-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
+      || voices.find((v) => v.lang === "en-IN")
       || null;
   }
-  return voices.find(v => v.lang === "en-IN" && femaleNames.some(n => v.name.toLowerCase().includes(n)))
-    || voices.find(v => v.lang.startsWith("en") && femaleNames.some(n => v.name.toLowerCase().includes(n)))
-    || voices.find(v => v.lang === "en-IN")
-    || voices.find(v => v.lang.startsWith("en"))
+  return voices.find((v) => v.lang === "en-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
+    || voices.find((v) => v.lang && v.lang.startsWith("en") && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
+    || voices.find((v) => v.lang && v.lang.startsWith("en"))
     || null;
 }
 
 function cleanForSpeech(text) {
-  return text
+  return String(text || "")
     .replace(/https?:\/\/[^\s]+/g, "")
     .replace(/[\r\n]+/g, ". ")
     .replace(/[*_~`#[\]]/g, "")
@@ -435,13 +285,16 @@ function speak(text) {
   const sentences = cleaned.match(/[^.!?।]+[.!?।]*/g) || [cleaned];
   const chunks = [];
   let current = "";
-  for (const sentence of sentences) {
+  sentences.forEach((sentence) => {
     if ((current + sentence).length > 220) {
       if (current.trim()) chunks.push(current.trim());
       current = sentence;
-    } else current += " " + sentence;
-  }
+    } else {
+      current += ` ${sentence}`;
+    }
+  });
   if (current.trim()) chunks.push(current.trim());
+
   let index = 0;
   isSpeaking = true;
   if (micBtn) micBtn.classList.add("speaking");
@@ -450,10 +303,7 @@ function speak(text) {
 
   function speakNext() {
     if (index >= chunks.length) {
-      isSpeaking = false;
-      if (micBtn) micBtn.classList.remove("speaking");
-      showSpeakerAnim(false);
-      setVoiceText("Tap the Jarvis mic and speak", "No message box. Voice only.");
+      finishSpeaking("Tap the Jarvis mic and speak", "No message box. Voice only.");
       return;
     }
     const chunk = chunks[index++];
@@ -466,22 +316,23 @@ function speak(text) {
     const voice = getBestVoice(chunkIsTe);
     if (voice) utter.voice = voice;
     utter.onend = speakNext;
-    utter.onerror = () => {
-      isSpeaking = false;
-      if (micBtn) micBtn.classList.remove("speaking");
-      showSpeakerAnim(false);
-      setVoiceText("Tap the Jarvis mic and speak", "Voice stopped");
-    };
+    utter.onerror = () => finishSpeaking("Tap the Jarvis mic and speak", "Voice stopped");
     window.speechSynthesis.speak(utter);
   }
+
   setTimeout(speakNext, 80);
+}
+
+function finishSpeaking(status, transcript) {
+  isSpeaking = false;
+  if (micBtn) micBtn.classList.remove("speaking");
+  showSpeakerAnim(false);
+  setVoiceText(status, transcript);
 }
 
 function stopSpeaking() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-  isSpeaking = false;
-  if (micBtn) micBtn.classList.remove("speaking");
-  showSpeakerAnim(false);
+  finishSpeaking("Tap the Jarvis mic and speak", "No message box. Voice only.");
 }
 
 function showSpeakerAnim(show) {
@@ -493,7 +344,13 @@ function addMessage(role, content) {
   if (!messagesEl) return;
   const div = document.createElement("div");
   div.className = `message ${role}`;
-  div.innerHTML = `<div class="msg-wrapper"><div class="bubble">${escapeHtml(content)}</div></div>`;
+  const wrapper = document.createElement("div");
+  wrapper.className = "msg-wrapper";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = content || "";
+  wrapper.appendChild(bubble);
+  div.appendChild(wrapper);
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -502,12 +359,21 @@ function showToast(msg, duration = 2200) {
   if (!toastEl) return;
   toastEl.textContent = msg;
   toastEl.style.display = "block";
-  setTimeout(() => { toastEl.style.display = "none"; }, duration);
+  setTimeout(() => {
+    if (toastEl) toastEl.style.display = "none";
+  }, duration);
 }
 
 function escapeHtml(str) {
-  if (!str) return "";
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escapeAttribute(str) {
+  return escapeHtml(str).replace(/'/g, "&#39;");
 }
 
 function showTyping() {
@@ -524,6 +390,86 @@ function fallbackReplyForCurrentLanguage(msg) {
   return isTeluguText(msg) ? "సంబంధం సమస్య వచ్చింది. దయచేసి మళ్లీ ప్రయత్నించండి." : "Connection error. Please try again.";
 }
 
+function clearMediaOverlay() {
+  if (sliderInterval) {
+    clearInterval(sliderInterval);
+    sliderInterval = null;
+  }
+  if (mediaContent) mediaContent.innerHTML = "";
+}
+
+function closeMediaOverlay() {
+  clearMediaOverlay();
+  if (mediaOverlay) mediaOverlay.classList.add("hidden");
+}
+
+function showImagesOverlay(images) {
+  if (!mediaOverlay || !mediaContent || !Array.isArray(images) || images.length === 0) return;
+  clearMediaOverlay();
+  const img = document.createElement("img");
+  img.className = "media-image";
+  img.alt = "Campus Photo";
+  mediaContent.appendChild(img);
+  mediaOverlay.classList.remove("hidden");
+
+  let index = 0;
+  function setImage() {
+    img.style.opacity = "0";
+    setTimeout(() => {
+      img.src = images[index];
+      img.alt = `Campus Photo ${index + 1}`;
+      img.style.opacity = "1";
+    }, 150);
+  }
+
+  setImage();
+  sliderInterval = setInterval(() => {
+    index += 1;
+    if (index >= images.length) closeMediaOverlay();
+    else setImage();
+  }, 2500);
+  mediaOverlay.onclick = closeMediaOverlay;
+}
+
+function showVideoOverlay(videoUrl) {
+  if (!mediaOverlay || !mediaContent || !videoUrl) {
+    showToast("Video is not available right now");
+    return;
+  }
+  clearMediaOverlay();
+  const video = document.createElement("video");
+  video.className = "media-video";
+  video.src = videoUrl;
+  video.autoplay = true;
+  video.controls = true;
+  video.playsInline = true;
+  video.onended = closeMediaOverlay;
+  video.onerror = () => {
+    closeMediaOverlay();
+    showToast("Video file is missing or cannot be played");
+  };
+  mediaContent.appendChild(video);
+  mediaOverlay.classList.remove("hidden");
+  mediaOverlay.onclick = (event) => {
+    if (event.target === mediaOverlay) {
+      video.pause();
+      closeMediaOverlay();
+    }
+  };
+}
+
+function handleApiResponse(data) {
+  if (!data || typeof data !== "object") return;
+  if (data.show_images === true && Array.isArray(data.images) && data.images.length > 0) {
+    showImagesOverlay(data.images);
+    return;
+  }
+  const videoUrl = data.video_url || data.video;
+  if (data.show_video === true && typeof videoUrl === "string" && videoUrl) {
+    showVideoOverlay(videoUrl);
+  }
+}
+
 async function sendMessage(msg) {
   if (!msg) return;
   stopSpeaking();
@@ -531,17 +477,19 @@ async function sendMessage(msg) {
   addMessage("user", msg);
   conversationHistory.push({ role: "user", content: msg });
   showTyping();
+
   try {
     const res = await fetch(`${API_BASE}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg, conversationHistory: conversationHistory.slice(-12) })
+      body: JSON.stringify({ message: msg, conversationHistory: conversationHistory.slice(-12) }),
     });
     const data = await res.json();
     hideTyping();
     const reply = data.reply || (isTeluguText(msg) ? "సమాధానం రాలేదు. మళ్లీ ప్రయత్నించండి." : "I did not get a response. Please try again.");
     addMessage("assistant", reply);
     conversationHistory.push({ role: "assistant", content: reply });
+    handleApiResponse(data);
     setTimeout(() => speak(reply), 150);
   } catch {
     hideTyping();
@@ -550,6 +498,8 @@ async function sendMessage(msg) {
     speak(reply);
   }
 }
+
+window.handleApiResponse = handleApiResponse;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeDomReferencesAndHandlers);

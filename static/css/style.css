@@ -35,7 +35,7 @@
 
 /* Hide overlay by default or when needed */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* Inside media overlay: images and videos */

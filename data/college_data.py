@@ -14,7 +14,7 @@ COLLEGE_KEYWORDS = [
     "contact"
 ]
 
-# (your existing data below — unchanged)
+# (your existing data below - unchanged)
 
 
 COLLEGE_INFO = """Ideal College of Arts and Sciences, Kakinada.

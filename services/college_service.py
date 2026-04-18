@@ -80,7 +80,7 @@ def get_college_summary() -> dict:
         "website": "https://idealcollege.edu.in",
         "accreditation": "NAAC A Grade",
         "principal": "Dr. T. Satyanarayana",
-        "timings": "9:30 AM – 3:45 PM (Mon–Sat)",
+        "timings": "9:30 AM - 3:45 PM (Mon-Sat)",
         "courses": [
             "B.Sc Computers",
             "BCA",

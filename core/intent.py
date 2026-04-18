@@ -153,6 +153,13 @@ def detect_language(text: str) -> str:
 def classify_intent(message: str) -> str:
     msg = message.lower().strip()
 
+    for word in VIDEO_KEYWORDS:
+        if word in msg:
+            return "video_intent"
+    for word in IMAGES_KEYWORDS:
+        if word in msg:
+            return "images_intent"
+
     if any(kw in msg for kw in COLLEGE_KEYWORDS):
         return "college"
     if any(kw in message for kw in COLLEGE_KEYWORDS_TE):

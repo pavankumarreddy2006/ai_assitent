@@ -46,11 +46,11 @@ def format_news_response(articles: list, lang: str = "en") -> dict:
         if lang == "te":
             lines = ["తాజా వార్తలు:\n"]
             for i, article in enumerate(articles[:5], 1):
-                lines.append(f"{i}. {article['title']} — {article['source']}")
+                lines.append(f"{i}. {article['title']} - {article['source']}")
         else:
             lines = ["Here are the latest headlines:\n"]
             for i, article in enumerate(articles[:5], 1):
-                lines.append(f"{i}. {article['title']} — {article['source']}")
+                lines.append(f"{i}. {article['title']} - {article['source']}")
         reply = "\n".join(lines)
         source = "News API"
     else:

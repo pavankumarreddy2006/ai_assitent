@@ -1,5 +1,5 @@
 """
-app.py — Main entry point for College AI Flask application.
+app.py - Main entry point for College AI Flask application.
 Run with: python app.py  (dev)  or  gunicorn app:app  (prod)
 """
 

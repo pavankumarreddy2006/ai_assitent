@@ -1,8 +1,11 @@
 import requests
+import logging
 from config.config import (
     GROQ_API_KEY, OPEN_ROUTER_API,
     GROQ_MODEL, OPENROUTER_MODEL
 )
+
+logger = logging.getLogger("college-ai.llm")
 
 COLLEGE_SYSTEM_PROMPT = """You are the official AI assistant for Ideal College of Arts and Sciences,
 located at Vidyuth Nagar, Kakinada, Andhra Pradesh.
@@ -65,7 +68,10 @@ def _build_messages(
 
     if history:
         for msg in history[-10:]:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+            role = msg.get("role") if isinstance(msg, dict) else None
+            content = msg.get("content") if isinstance(msg, dict) else None
+            if role in {"user", "assistant"} and isinstance(content, str) and content.strip():
+                messages.append({"role": role, "content": content.strip()})
 
     messages.append({"role": "user", "content": prompt})
     return messages
@@ -99,7 +105,11 @@ def query_groq(
 
     response.raise_for_status()
     data = response.json()
-    return data["choices"][0]["message"]["content"]
+    try:
+        return data["choices"][0]["message"]["content"]
+    except Exception:
+        logger.exception("Unexpected Groq response format")
+        raise ValueError("Invalid response from Groq API")
 
 
 def query_openrouter(
@@ -130,4 +140,8 @@ def query_openrouter(
 
     response.raise_for_status()
     data = response.json()
-    return data["choices"][0]["message"]["content"]
+    try:
+        return data["choices"][0]["message"]["content"]
+    except Exception:
+        logger.exception("Unexpected OpenRouter response format")
+        raise ValueError("Invalid response from OpenRouter API")

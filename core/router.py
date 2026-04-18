@@ -13,6 +13,9 @@ from services.search_service import search_duckduckgo, format_search_results
 from services.news_service import fetch_news
 from services.weather_service import get_weather
 import services.media_service as media_service
+import logging
+
+logger = logging.getLogger("college-ai.router")
 
 
 def route_message(message: str, conversation_history: list[dict] | None = None) -> dict:
@@ -57,7 +60,7 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
             return _handle_search(clean_message, conversation_history, lang)
         return _handle_general(clean_message, conversation_history, lang)
     except Exception as e:
-        print(f"[Router Error] {e}")
+        logger.exception("Router error: %s", e)
         if lang == "te":
             return format_error_response("క్షమించండి, ఏదో సమస్య వచ్చింది. దయచేసి మళ్ళీ ప్రయత్నించండి.")
         return format_error_response("Something went wrong. Please try again.")
@@ -145,7 +148,11 @@ def _handle_search(message: str, history: list[dict], lang: str) -> dict:
             answer = query_openrouter(prompt, history, lang=lang)
             return format_search_response(answer, "Internet Search + AI")
         except Exception:
-            return format_search_response(formatted, "Internet Search")
+            fallback = formatted if formatted and formatted.strip() else (
+                "సరైన సమాచారం ప్రస్తుతం దొరకలేదు. దయచేసి మరోసారి అడగండి." if lang == "te"
+                else "I could not find reliable information right now. Please try another query."
+            )
+            return format_search_response(fallback, "Internet Search")
 
 
 def _handle_general(message: str, history: list[dict], lang: str) -> dict:
@@ -169,4 +176,11 @@ def _handle_general(message: str, history: list[dict], lang: str) -> dict:
             return format_general_response(answer, "OpenRouter AI")
         except Exception:
             results = search_duckduckgo(message)
-            return format_general_response(format_search_results(results), "Internet Search")
+            formatted = format_search_results(results)
+            if not formatted or "couldn't find relevant information" in formatted.lower():
+                formatted = (
+                    "క్షమించండి, ప్రస్తుతం సరైన సమాధానం ఇవ్వలేకపోయాను. దయచేసి ప్రశ్నను కొంచెం వివరంగా అడగండి."
+                    if lang == "te"
+                    else "Sorry, I could not answer that clearly right now. Please ask with a bit more detail."
+                )
+            return format_general_response(formatted, "Internet Search")

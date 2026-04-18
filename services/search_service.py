@@ -1,5 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
+import logging
+
+logger = logging.getLogger("college-ai.search")
 
 
 def search_duckduckgo(query: str) -> list[dict]:
@@ -12,6 +15,7 @@ def search_duckduckgo(query: str) -> list[dict]:
             headers={"User-Agent": "Mozilla/5.0"},
             timeout=10
         )
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         results = []
         for result in soup.select(".result")[:5]:
@@ -26,7 +30,7 @@ def search_duckduckgo(query: str) -> list[dict]:
                 })
         return results
     except Exception as e:
-        print(f"[Search Error] {e}")
+        logger.exception("Search error: %s", e)
         return []
 
 
@@ -54,7 +58,7 @@ def extract_page_content(url: str) -> str:
         text = " ".join(p.get_text() for p in paragraphs[:5])
         return text.strip()
     except Exception as e:
-        print(f"[Scrape Error] {e}")
+        logger.exception("Scrape error: %s", e)
         return ""
 
 

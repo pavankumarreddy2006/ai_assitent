@@ -5,6 +5,7 @@ Run with: python app.py  (dev)  or  gunicorn app:app  (prod)
 
 import os
 import sys
+import logging
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
@@ -20,6 +21,11 @@ from services.media_service import get_college_images, get_college_video
 app = Flask(__name__)
 app.secret_key = SESSION_SECRET
 CORS(app)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s"
+)
+logger = logging.getLogger("college-ai")
 
 
 @app.route("/")
@@ -30,18 +36,25 @@ def index():
 @app.route("/api/chat", methods=["POST"])
 @app.route("/assistant-api/chat", methods=["POST"])
 def chat():
-    data = request.get_json(silent=True) or {}
-    message = str(data.get("message", "")).strip()
+    try:
+        data = request.get_json(silent=True) or {}
+        message = str(data.get("message", "")).strip()
 
-    if not message:
-        return jsonify({"error": "Message is required"}), 400
+        if not message:
+            return jsonify({"error": "Message is required"}), 400
 
-    conversation_history = data.get("conversationHistory", [])
-    if not isinstance(conversation_history, list):
-        conversation_history = []
+        conversation_history = data.get("conversationHistory", [])
+        if not isinstance(conversation_history, list):
+            conversation_history = []
 
-    response = route_message(message, conversation_history)
-    return jsonify(response)
+        response = route_message(message, conversation_history)
+        if not isinstance(response, dict):
+            logger.warning("route_message returned non-dict response")
+            return jsonify({"reply": "Sorry, something went wrong.", "intent": "general", "source": "Error"}), 500
+        return jsonify(response)
+    except Exception:
+        logger.exception("Unhandled error in /chat")
+        return jsonify({"reply": "Sorry, something went wrong. Please try again.", "intent": "general", "source": "Error"}), 500
 
 
 @app.route("/api/college-info", methods=["GET"])
@@ -53,21 +66,33 @@ def college_info():
 @app.route("/api/news", methods=["GET"])
 @app.route("/assistant-api/news", methods=["GET"])
 def news():
-    query = request.args.get("query")
-    articles = fetch_news(query)
-    return jsonify({"articles": articles})
+    try:
+        query = request.args.get("query")
+        articles = fetch_news(query)
+        return jsonify({"articles": articles})
+    except Exception:
+        logger.exception("Unhandled error in /news")
+        return jsonify({"articles": []}), 500
 
 
 @app.route("/api/media/images", methods=["GET"])
 @app.route("/assistant-api/media/images", methods=["GET"])
 def media_images():
-    return jsonify(get_college_images())
+    try:
+        return jsonify(get_college_images())
+    except Exception:
+        logger.exception("Unhandled error in /media/images")
+        return jsonify([]), 500
 
 
 @app.route("/api/media/video", methods=["GET"])
 @app.route("/assistant-api/media/video", methods=["GET"])
 def media_video():
-    return jsonify(get_college_video())
+    try:
+        return jsonify(get_college_video())
+    except Exception:
+        logger.exception("Unhandled error in /media/video")
+        return jsonify(""), 500
 
 
 @app.route("/api/healthz", methods=["GET"])

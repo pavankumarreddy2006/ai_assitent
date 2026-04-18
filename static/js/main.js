@@ -7,6 +7,9 @@ let recognition = null;
 let voices = [];
 let finalTranscript = "";
 let sliderInterval = null;
+let isRequestInFlight = false;
+let continuousListeningEnabled = false;
+let shouldKeepListening = false;
 
 const API_BASE = "/assistant-api";
 let messagesEl = null;
@@ -89,6 +92,7 @@ function initializeDomReferencesAndHandlers() {
   if (infoClose) infoClose.addEventListener("click", () => infoPanel && infoPanel.classList.remove("open"));
   if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
   if (micBtn) micBtn.addEventListener("click", handleMicClick);
+  if (micBtn) micBtn.addEventListener("dblclick", toggleContinuousListening);
 
   document.querySelectorAll(".suggestion-btn").forEach((btn) => {
     btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
@@ -115,9 +119,11 @@ function handleMicClick() {
 
   try {
     if (isListening) {
+      shouldKeepListening = false;
       recognition.stop();
     } else {
       stopSpeaking();
+      shouldKeepListening = continuousListeningEnabled;
       recognition.start();
     }
   } catch {
@@ -126,9 +132,19 @@ function handleMicClick() {
   }
 }
 
+function toggleContinuousListening() {
+  continuousListeningEnabled = !continuousListeningEnabled;
+  shouldKeepListening = continuousListeningEnabled;
+
+  const status = continuousListeningEnabled ? "Continuous mode ON" : "Continuous mode OFF";
+  setVoiceText(status, "Double-click the mic to toggle continuous listening.");
+  showToast(continuousListeningEnabled ? "Continuous listening enabled" : "Continuous listening disabled");
+}
+
 async function checkHealth() {
   try {
-    const res = await fetch(`${API_BASE}/healthz`);
+    const res = await fetch(`${API_BASE}/healthz`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Health failed");
     const data = await res.json();
 
     if (statusDot && data.status === "ok") statusDot.classList.add("active");
@@ -141,7 +157,7 @@ async function checkHealth() {
 
 async function loadCollegeInfo() {
   try {
-    const res = await fetch(`${API_BASE}/college-info`);
+    const res = await fetch(`${API_BASE}/college-info`, { cache: "no-store" });
     if (!res.ok) throw new Error("College info failed");
 
     let data = {};
@@ -180,7 +196,7 @@ async function loadCollegeInfo() {
 
 async function loadNews() {
   try {
-    const res = await fetch(`${API_BASE}/news?query=latest%20India%20education`);
+    const res = await fetch(`${API_BASE}/news?query=latest%20India%20education`, { cache: "no-store" });
     if (!res.ok) throw new Error("News failed");
 
     const { articles } = await res.json();
@@ -232,6 +248,7 @@ function setupSpeechRecognition() {
   recognition.onstart = () => {
     finalTranscript = "";
     setListeningState(true);
+    if (micBtn) micBtn.classList.toggle("continuous", continuousListeningEnabled);
     setVoiceText("Listening... Telugu or English lo matladandi", "Speak now");
   };
 
@@ -254,6 +271,7 @@ function setupSpeechRecognition() {
 
   recognition.onerror = (event) => {
     setListeningState(false);
+    shouldKeepListening = false;
 
     if (event.error === "no-speech") {
       setVoiceText("No speech detected", "Tap mic and try again");
@@ -268,6 +286,17 @@ function setupSpeechRecognition() {
     const msg = finalTranscript.trim();
     if (msg) {
       sendMessage(msg);
+      finalTranscript = "";
+      return;
+    }
+
+    if (shouldKeepListening && !isSpeaking) {
+      try {
+        recognition.start();
+        return;
+      } catch {
+        shouldKeepListening = false;
+      }
     } else if (!isSpeaking) {
       setVoiceText("Tap the Jarvis mic and speak", "No message box. Voice only.");
     }
@@ -282,6 +311,7 @@ function setVoiceText(status, transcript) {
 function setListeningState(val) {
   isListening = val;
   if (micBtn) micBtn.classList.toggle("listening", val);
+  if (micBtn) micBtn.classList.toggle("continuous", continuousListeningEnabled);
 }
 
 function loadVoices() {
@@ -575,28 +605,41 @@ function handleApiResponse(data) {
 }
 
 async function sendMessage(msg) {
-  if (!msg) return;
+  if (!msg || isRequestInFlight) return;
+  const trimmedMessage = String(msg).trim();
+  if (!trimmedMessage) return;
+  isRequestInFlight = true;
 
   stopSpeaking();
-  setVoiceText("Processing your question", msg);
-  addMessage("user", msg);
+  setVoiceText("Processing your question", trimmedMessage);
+  addMessage("user", trimmedMessage);
 
-  conversationHistory.push({ role: "user", content: msg });
+  conversationHistory.push({ role: "user", content: trimmedMessage });
   showTyping();
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     const res = await fetch(`${API_BASE}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg, conversationHistory: conversationHistory.slice(-12) }),
+      body: JSON.stringify({ message: trimmedMessage, conversationHistory: conversationHistory.slice(-12) }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
-    const data = await res.json();
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
+    if (!res.ok) throw new Error(data.error || "Chat request failed");
 
     hideTyping();
 
     const reply = data.reply || (
-      isTeluguText(msg)
+      isTeluguText(trimmedMessage)
         ? "సమాధానం రాలేదు. మళ్లీ ప్రయత్నించండి."
         : "I did not get a response. Please try again."
     );
@@ -610,9 +653,11 @@ async function sendMessage(msg) {
   } catch {
     hideTyping();
 
-    const reply = fallbackReplyForCurrentLanguage(msg);
+    const reply = fallbackReplyForCurrentLanguage(trimmedMessage);
     addMessage("assistant", reply);
     speak(reply);
+  } finally {
+    isRequestInFlight = false;
   }
 }
 

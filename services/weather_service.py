@@ -27,6 +27,38 @@ def get_weather(city: str, lang: str = "en") -> dict | None:
     Returns dict with city, temperature, description, humidity, wind_speed or None.
     """
     try:
+        if WEATHER_API_KEY:
+            return _get_weatherapi(city, lang)
+        return _get_open_meteo_weather(city, lang)
+    except Exception as e:
+        print(f"[Weather Error] {e}")
+        return None
+
+
+def _get_weatherapi(city: str, lang: str) -> dict | None:
+    response = requests.get(
+        "https://api.weatherapi.com/v1/current.json",
+        params={"key": WEATHER_API_KEY, "q": city, "aqi": "no"},
+        timeout=10,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    current = payload.get("current", {})
+    location = payload.get("location", {})
+    condition = current.get("condition", {})
+    desc_en = condition.get("text", "Unknown")
+    description = desc_en if lang == "en" else desc_en
+    return {
+        "city": location.get("name", city),
+        "temperature": current.get("temp_c", 0),
+        "description": description,
+        "humidity": current.get("humidity", 0),
+        "wind_speed": current.get("wind_kph", 0),
+    }
+
+
+def _get_open_meteo_weather(city: str, lang: str) -> dict | None:
+    try:
         geo_response = requests.get(
             "https://geocoding-api.open-meteo.com/v1/search",
             params={"name": city, "count": 1},
@@ -68,5 +100,5 @@ def get_weather(city: str, lang: str = "en") -> dict | None:
         }
 
     except Exception as e:
-        print(f"[Weather Error] {e}")
+        print(f"[OpenMeteo Weather Error] {e}")
         return None

@@ -10,6 +10,9 @@ let sliderInterval = null;
 let isRequestInFlight = false;
 let continuousListeningEnabled = false;
 let shouldKeepListening = false;
+let wakeWordDetected = false;
+let pendingCommandTimeout = null;
+const WAKE_WORDS = ["hello ideal ai", "hello idol ai", "hello ideal a i"];
 
 const API_BASE = "/assistant-api";
 let messagesEl = null;
@@ -91,8 +94,7 @@ function initializeDomReferencesAndHandlers() {
   if (infoToggle) infoToggle.addEventListener("click", () => infoPanel && infoPanel.classList.add("open"));
   if (infoClose) infoClose.addEventListener("click", () => infoPanel && infoPanel.classList.remove("open"));
   if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
-  if (micBtn) micBtn.addEventListener("click", handleMicClick);
-  if (micBtn) micBtn.addEventListener("dblclick", toggleContinuousListening);
+  if (micBtn) micBtn.setAttribute("aria-label", "Wake word listening is always enabled");
 
   document.querySelectorAll(".suggestion-btn").forEach((btn) => {
     btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
@@ -100,9 +102,12 @@ function initializeDomReferencesAndHandlers() {
 
   if (!recognition) {
     setVoiceText(
-      "Tap the Jarvis mic and speak",
-      "Voice works in supported browsers. You can also use the suggestion buttons."
+      "Voice not supported in this browser",
+      "Use suggestion buttons or a browser with Web Speech API support."
     );
+  } else {
+    setVoiceText("Say 'Hello Ideal AI'", "Always listening for wake word.");
+    startWakeListening();
   }
 }
 
@@ -240,33 +245,36 @@ function setupSpeechRecognition() {
   if (!SpeechRecognition) return;
 
   recognition = new SpeechRecognition();
-  recognition.lang = "te-IN";
-  recognition.continuous = false;
-  recognition.interimResults = true;
+  recognition.lang = "en-IN";
+  recognition.continuous = true;
+  recognition.interimResults = false;
   recognition.maxAlternatives = 3;
 
   recognition.onstart = () => {
-    finalTranscript = "";
     setListeningState(true);
-    if (micBtn) micBtn.classList.toggle("continuous", continuousListeningEnabled);
-    setVoiceText("Listening... Telugu or English lo matladandi", "Speak now");
+    setVoiceText("Wake mode active", wakeWordDetected ? "Speak your question now." : "Say 'Hello Ideal AI'");
   };
 
   recognition.onresult = (event) => {
-    let interim = "";
-
     for (let i = event.resultIndex; i < event.results.length; i += 1) {
-      const text = event.results[i][0].transcript;
+      if (!event.results[i].isFinal) continue;
+      const transcript = (event.results[i][0].transcript || "").trim();
+      if (!transcript) continue;
 
-      if (event.results[i].isFinal) {
-        finalTranscript += text;
-      } else {
-        interim += text;
+      if (!wakeWordDetected) {
+        if (containsWakeWord(transcript)) {
+          wakeWordDetected = true;
+          resetPendingCommandWindow();
+          setVoiceText("Wake word detected", "Listening for your question...");
+        }
+        continue;
       }
-    }
 
-    const shown = (finalTranscript || interim).trim();
-    if (shown) setVoiceText("Listening...", shown);
+      wakeWordDetected = false;
+      clearPendingCommandWindow();
+      setVoiceText("Processing your question", transcript);
+      sendMessage(transcript);
+    }
   };
 
   recognition.onerror = (event) => {
@@ -282,25 +290,44 @@ function setupSpeechRecognition() {
 
   recognition.onend = () => {
     setListeningState(false);
-
-    const msg = finalTranscript.trim();
-    if (msg) {
-      sendMessage(msg);
-      finalTranscript = "";
-      return;
-    }
-
-    if (shouldKeepListening && !isSpeaking) {
-      try {
-        recognition.start();
-        return;
-      } catch {
-        shouldKeepListening = false;
-      }
-    } else if (!isSpeaking) {
-      setVoiceText("Tap the Jarvis mic and speak", "No message box. Voice only.");
-    }
+    if (!isSpeaking) startWakeListening();
   };
+}
+
+function containsWakeWord(text) {
+  const normalized = (text || "").toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+  return WAKE_WORDS.some((phrase) => normalized.includes(phrase));
+}
+
+function clearPendingCommandWindow() {
+  if (pendingCommandTimeout) {
+    clearTimeout(pendingCommandTimeout);
+    pendingCommandTimeout = null;
+  }
+}
+
+function resetPendingCommandWindow() {
+  clearPendingCommandWindow();
+  pendingCommandTimeout = setTimeout(() => {
+    wakeWordDetected = false;
+    setVoiceText("Wake mode active", "Say 'Hello Ideal AI'");
+  }, 8000);
+}
+
+function startWakeListening() {
+  if (!recognition || isListening || isSpeaking) return;
+  try {
+    recognition.start();
+  } catch {
+    setTimeout(startWakeListening, 800);
+  }
+}
+
+function stopWakeListening() {
+  if (!recognition || !isListening) return;
+  try {
+    recognition.stop();
+  } catch {}
 }
 
 function setVoiceText(status, transcript) {
@@ -367,7 +394,8 @@ function cleanForSpeech(text) {
 function speak(text) {
   if (!window.speechSynthesis) return;
 
-  stopSpeaking();
+  stopWakeListening();
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
 
   const cleaned = cleanForSpeech(text);
   if (!cleaned) return;
@@ -429,12 +457,13 @@ function finishSpeaking(status, transcript) {
 
   showSpeakerAnim(false);
   setVoiceText(status, transcript);
+  startWakeListening();
 }
 
 function stopSpeaking() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
 
-  finishSpeaking("Tap the Jarvis mic and speak", "No message box. Voice only.");
+  finishSpeaking("Wake mode active", "Say 'Hello Ideal AI'");
 }
 
 function showSpeakerAnim(show) {

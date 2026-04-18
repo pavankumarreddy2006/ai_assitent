@@ -92,11 +92,11 @@ def _handle_college(message: str, history: list[dict], lang: str) -> dict:
 
     try:
         answer = query_groq(message, history, system_prompt, lang=lang)
-        return format_college_response(answer, "AI + College Data")
+        return format_college_response(_finalize_answer(answer, lang), "AI + College Data")
     except Exception:
         try:
             answer = query_openrouter(message, history, system_prompt, lang=lang)
-            return format_college_response(answer, "AI + College Data")
+            return format_college_response(_finalize_answer(answer, lang), "AI + College Data")
         except Exception:
             if lang == "te":
                 return format_college_response(
@@ -142,11 +142,11 @@ def _handle_search(message: str, history: list[dict], lang: str) -> dict:
 
     try:
         answer = query_groq(prompt, history, lang=lang)
-        return format_search_response(answer, "Internet Search + AI")
+        return format_search_response(_finalize_answer(answer, lang), "Internet Search + AI")
     except Exception:
         try:
             answer = query_openrouter(prompt, history, lang=lang)
-            return format_search_response(answer, "Internet Search + AI")
+            return format_search_response(_finalize_answer(answer, lang), "Internet Search + AI")
         except Exception:
             fallback = formatted if formatted and formatted.strip() else (
                 "సరైన సమాచారం ప్రస్తుతం దొరకలేదు. దయచేసి మరోసారి అడగండి." if lang == "te"
@@ -169,11 +169,11 @@ def _handle_general(message: str, history: list[dict], lang: str) -> dict:
 
     try:
         answer = query_groq(prompt, history, lang=lang)
-        return format_general_response(answer, "Groq AI")
+        return format_general_response(_finalize_answer(answer, lang), "Groq AI")
     except Exception:
         try:
             answer = query_openrouter(prompt, history, lang=lang)
-            return format_general_response(answer, "OpenRouter AI")
+            return format_general_response(_finalize_answer(answer, lang), "OpenRouter AI")
         except Exception:
             results = search_duckduckgo(message)
             formatted = format_search_results(results)
@@ -184,3 +184,19 @@ def _handle_general(message: str, history: list[dict], lang: str) -> dict:
                     else "Sorry, I could not answer that clearly right now. Please ask with a bit more detail."
                 )
             return format_general_response(formatted, "Internet Search")
+
+
+def _finalize_answer(answer: str, lang: str) -> str:
+    text = str(answer or "").strip()
+    if not text:
+        return (
+            "క్షమించండి, సరైన సమాధానం దొరకలేదు. దయచేసి ప్రశ్నను ఇంకొంచెం స్పష్టంగా అడగండి."
+            if lang == "te"
+            else "Sorry, I could not find a clear answer. Please ask in a bit more detail."
+        )
+    for prefix in ("As an AI", "As an assistant", "Based on the provided"):
+        if text.lower().startswith(prefix.lower()):
+            parts = text.split(".", 1)
+            text = parts[1].strip() if len(parts) > 1 else text
+            break
+    return text

@@ -80,6 +80,11 @@ SEARCH_KEYWORDS = [
     "information about", "details about"
 ]
 
+COLLEGE_HINTS_EN = {
+    "admission", "admissions", "course", "courses", "fee", "fees", "principal", "hostel",
+    "library", "placement", "placements", "college", "campus", "timings", "contact", "scholarship",
+}
+
 WEATHER_KEYWORDS_TE = [
     "వాతావరణం", "ఉష్ణోగ్రత", "వర్షం", "వర్షపాతం", "ఎండ", "మేఘం",
     "గాలి", "వాతావరణ సమాచారం", "చలి", "తుఫాను", "వాన", "ఆకాశం"
@@ -113,7 +118,7 @@ ROMAN_TELUGU_WORDS = {
     "telugu", "lo", "ga", "ki", "ni", "undi", "unnayi", "kavali",
     "chesi", "cheyyi", "cheyyandi", "theliyali", "gurunchi",
     "vartalu", "tajaga", "vathavaranam", "vaatavaranam", "varsham",
-    "courseulu", "fee", "fees", "college", "hostel"
+    "courseulu"
 }
 
 WEATHER_KEYWORDS_ROMAN_TE = [
@@ -152,6 +157,7 @@ def detect_language(text: str) -> str:
 
 def classify_intent(message: str) -> str:
     msg = message.lower().strip()
+    msg_words = set(re.findall(r"[a-zA-Z]+", msg))
 
     for word in VIDEO_KEYWORDS:
         if word in msg:
@@ -159,6 +165,9 @@ def classify_intent(message: str) -> str:
     for word in IMAGES_KEYWORDS:
         if word in msg:
             return "images_intent"
+
+    if any(kw in msg for kw in COLLEGE_HINTS_EN) or msg_words & COLLEGE_HINTS_EN:
+        return "college"
 
     if any(kw in msg for kw in COLLEGE_KEYWORDS):
         return "college"
@@ -186,6 +195,8 @@ def classify_intent(message: str) -> str:
     if any(kw in msg for kw in SEARCH_KEYWORDS_ROMAN_TE):
         return "search"
 
+    if "?" in msg:
+        return "search"
     return "general"
 
 

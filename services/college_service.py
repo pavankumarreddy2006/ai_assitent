@@ -1,4 +1,5 @@
 from data.college_data import college_info_en, college_info_te, COLLEGE_CONTEXT
+import re
 
 
 def get_college_answer(query: str, lang: str = "en") -> str | None:
@@ -12,14 +13,8 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
             return None
 
         query_clean = query.strip()
-        query_lower = query_clean.lower()
-
-        query_words = set(
-            query_lower.replace("?", "")
-                       .replace(".", "")
-                       .replace(",", "")
-                       .split()
-        )
+        query_lower = _normalize_text(query_clean)
+        query_words = set(query_lower.split())
 
         if _is_telugu(query_clean):
             lang = "te"
@@ -29,7 +24,7 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         # Prefer the LONGEST matching key (more specific wins over shorter match)
         exact_matches = [
             (key, value) for key, value in data.items()
-            if key.lower() in query_lower
+            if _normalize_text(key) in query_lower
         ]
         if exact_matches:
             best_key, best_val = max(exact_matches, key=lambda x: len(x[0]))
@@ -39,12 +34,12 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
         best_score = 0.0
 
         for key, value in data.items():
-            key_words = set(key.lower().split())
+            key_words = set(_normalize_text(key).split())
             if not key_words:
                 continue
             common_words = key_words & query_words
             score = len(common_words) / len(key_words)
-            if score > best_score and score >= 0.6:
+            if score > best_score and score >= 0.5:
                 best_score = score
                 best_match = value
 
@@ -52,7 +47,7 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
             return best_match
 
         for key, value in data.items():
-            key_lower = key.lower()
+            key_lower = _normalize_text(key)
             for word in query_words:
                 if len(word) >= 3 and word in key_lower:
                     return value
@@ -69,6 +64,13 @@ def _is_telugu(text: str) -> bool:
         return any('\u0C00' <= ch <= '\u0C7F' for ch in text)
     except Exception:
         return False
+
+
+def _normalize_text(text: str) -> str:
+    text = (text or "").lower()
+    text = re.sub(r"[^\w\s\u0C00-\u0C7F]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 from data.college_data import college_info_en, college_info_te
 

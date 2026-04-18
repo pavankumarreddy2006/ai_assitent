@@ -63,6 +63,7 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
             return _handle_general(message, conversation_history, lang)
     except Exception as e:
         print(f"[Router Error] {e}")
+        return format_error_response()
 
 
 from core.intent import classify_intent, extract_city, detect_language

@@ -2,6 +2,13 @@
 <div id="mediaOverlay" class="hidden">
   <div id="mediaContent"></div>
 </div>
+<!-- Add a simple visible fallback in case main content fails to load -->
+<noscript>
+  <div style="text-align:center; color: #aa0000; margin: 1em;">
+    <strong>JavaScript is disabled or failed to load. Please enable JavaScript for the full experience.</strong>
+  </div>
+</noscript>
+<script src="/static/js/main.js"></script>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />

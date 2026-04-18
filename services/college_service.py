@@ -70,6 +70,7 @@ def _is_telugu(text: str) -> bool:
     except Exception:
         return False
 
+from data.college_data import college_info_en, college_info_te
 
 def get_college_summary() -> dict:
     return {

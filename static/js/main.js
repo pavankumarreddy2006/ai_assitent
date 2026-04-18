@@ -8,6 +8,39 @@ let recognition = null;
 // ------- Image & Video Overlay System ---------
 let mediaOverlay = null;
 let sliderInterval = null;
+/**
+ * Fetch college images from the backend.
+ * Returns a Promise resolving to an array of image URLs.
+ */
+async function fetchCollegeImages() {
+  try {
+    const res = await fetch("/api/media/images");
+    if (!res.ok) throw new Error("Failed to fetch images");
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error("Invalid image data");
+    return data;
+  } catch (error) {
+    console.error("[fetchCollegeImages]", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch college video URL from the backend.
+ * Returns a Promise resolving to a string URL or null.
+ */
+async function fetchCollegeVideo() {
+  try {
+    const res = await fetch("/api/media/video");
+    if (!res.ok) throw new Error("Failed to fetch video");
+    const data = await res.json();
+    if (typeof data !== "string") throw new Error("Invalid video data");
+    return data;
+  } catch (error) {
+    console.error("[fetchCollegeVideo]", error);
+    return null;
+  }
+}
 
 function createMediaOverlay() {
   mediaOverlay = document.createElement("div");

@@ -1,15 +1,6 @@
 <!DOCTYPE html>
-<div id="mediaOverlay" class="hidden">
-  <div id="mediaContent"></div>
-</div>
-<!-- Add a simple visible fallback in case main content fails to load -->
-<noscript>
-  <div style="text-align:center; color: #aa0000; margin: 1em;">
-    <strong>JavaScript is disabled or failed to load. Please enable JavaScript for the full experience.</strong>
-  </div>
-</noscript>
-<script src="/static/js/main.js"></script>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +9,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
 </head>
+
 <body>
+
+  <!-- ✅ FIX: moved from top -->
+  <div id="mediaOverlay" class="hidden">
+    <div id="mediaContent"></div>
+  </div>
+
+  <!-- ✅ FIX: moved from top -->
+  <noscript>
+    <div style="text-align:center; color: #aa0000; margin: 1em;">
+      <strong>JavaScript is disabled or failed to load. Please enable JavaScript for the full experience.</strong>
+    </div>
+  </noscript>
+
   <div class="app">
     <header class="header">
       <div class="header-left">
@@ -28,10 +33,12 @@
           <span class="brand-sub">AI Assistant</span>
         </div>
       </div>
+
       <div class="header-center">
         <span class="greeting-text" id="greeting">Good Morning</span>
         <span class="greeting-place">Ideal College, Kakinada</span>
       </div>
+
       <div class="header-right">
         <div class="college-address">
           <span class="addr-icon">AI</span>
@@ -54,14 +61,17 @@
               <div class="orb-ring ring-two"></div>
               <div class="orb-ring ring-three"></div>
             </div>
+
             <h2>Speak to Ideal AI</h2>
             <p>Telugu lo adigithe Telugu lo, English lo adigithe English lo answer chestanu</p>
+
             <div class="suggestions" id="suggestions">
-              <button class="suggestion-btn">Who is Elon Musk?</button>
+              <button class="suggestion-btn">college video?</button>
               <button class="suggestion-btn">What courses are offered?</button>
               <button class="suggestion-btn">కోర్సులు ఏమిటి?</button>
               <button class="suggestion-btn">తాజా వార్తలు చెప్పు</button>
             </div>
+
           </div>
         </div>
 
@@ -78,24 +88,26 @@
               <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
               <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
             </div>
-            <button class="stop-speak-btn" id="stopSpeakBtn" title="Stop speaking">Stop</button>
+            <button class="stop-speak-btn" id="stopSpeakBtn">Stop</button>
           </div>
         </div>
 
         <div class="voice-console">
-          <button type="button" class="jarvis-mic" id="micBtn" title="Press and speak">
+          <button type="button" class="jarvis-mic" id="micBtn">
             <span class="jarvis-scan"></span>
             <span class="jarvis-ring r1"></span>
             <span class="jarvis-ring r2"></span>
             <span class="jarvis-ring r3"></span>
-            <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+            <svg viewBox="0 0 24 24">
               <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <line x1="12" x2="12" y1="19" y2="22"/>
             </svg>
           </button>
-          <div class="voice-status" id="voiceStatus">Tap the Jarvis mic and speak</div>
-          <div class="voice-transcript" id="voiceTranscript">No message box. Voice only.</div>
+
+          <div class="voice-status" id="voiceStatus">Hello ideal ai</div>
+          <div class="voice-transcript" id="voiceTranscript">voice assistant.</div>
           <span id="sysStatus"></span>
         </div>
       </div>
@@ -103,7 +115,7 @@
       <aside class="info-panel" id="infoPanel">
         <div class="info-header">
           <h3>AI HUB</h3>
-          <button class="info-close" id="infoClose" title="Close">&#x2715;</button>
+          <button class="info-close" id="infoClose">&#x2715;</button>
         </div>
 
         <div class="info-college-banner">
@@ -114,27 +126,20 @@
           </div>
         </div>
 
-        <div class="info-content" id="infoContent">
-          <div class="info-loading">
-            <div class="loading-dots"><span></span><span></span><span></span></div>
-            Loading AI info...
-          </div>
-        </div>
+        <div class="info-content" id="infoContent"></div>
 
         <div class="news-section">
           <h4>Latest News</h4>
-          <div id="newsContent">
-            <div class="info-loading">
-              <div class="loading-dots"><span></span><span></span><span></span></div>
-              Fetching news...
-            </div>
-          </div>
+          <div id="newsContent"></div>
         </div>
       </aside>
     </div>
   </div>
 
-  <div class="toast" id="toast" style="display:none;"></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- ✅ ONLY SCRIPT HERE -->
   <script src="/static/js/main.js"></script>
+
 </body>
 </html>

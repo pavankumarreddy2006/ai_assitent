@@ -152,14 +152,14 @@ function hideChatbotUI() {
   if (document.body) document.body.style.overflow = "hidden";
   if (document.getElementById("container"))
     document.getElementById("container").style.display = "none";
-  if (welcomeEl) welcomeEl.style.display = "none";
+  if (typeof welcomeEl !== "undefined" && welcomeEl) welcomeEl.style.display = "none";
 }
 
 function showChatbotUI() {
   if (document.body) document.body.style.overflow = "";
   if (document.getElementById("container"))
     document.getElementById("container").style.display = "";
-  if (welcomeEl) welcomeEl.style.display = "";
+  if (typeof welcomeEl !== "undefined" && welcomeEl) welcomeEl.style.display = "";
 }
 
 // --- Monkey-patch fetch/chatbot response handler to support images/video ---
@@ -186,23 +186,23 @@ let voices = [];
 let finalTranscript = "";
 
 const API_BASE = "";
-const messagesEl = document.getElementById("messages");
-const welcomeEl = document.getElementById("welcome");
-const micBtn = document.getElementById("micBtn");
-const typingIndicator = document.getElementById("typingIndicator");
-const greetingEl = document.getElementById("greeting");
-const statusDot = document.getElementById("statusDot");
-const sysStatusEl = document.getElementById("sysStatus");
-const infoPanel = document.getElementById("infoPanel");
-const infoToggle = document.getElementById("infoToggle");
-const infoClose = document.getElementById("infoClose");
-const infoContent = document.getElementById("infoContent");
-const newsContent = document.getElementById("newsContent");
-const speakerAnim = document.getElementById("speakerAnim");
-const stopSpeakBtn = document.getElementById("stopSpeakBtn");
-const toastEl = document.getElementById("toast");
-const voiceStatus = document.getElementById("voiceStatus");
-const voiceTranscript = document.getElementById("voiceTranscript");
+let messagesEl = null;
+let welcomeEl = null;
+let micBtn = null;
+let typingIndicator = null;
+let greetingEl = null;
+let statusDot = null;
+let sysStatusEl = null;
+let infoPanel = null;
+let infoToggle = null;
+let infoClose = null;
+let infoContent = null;
+let newsContent = null;
+let speakerAnim = null;
+let stopSpeakBtn = null;
+let toastEl = null;
+let voiceStatus = null;
+let voiceTranscript = null;
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -216,30 +216,81 @@ function updateGreeting() {
   if (greetingEl) greetingEl.textContent = getGreeting();
 }
 
-updateGreeting();
-setInterval(updateGreeting, 60000);
+function initializeDomReferencesAndHandlers() {
+  messagesEl = document.getElementById("messages");
+  welcomeEl = document.getElementById("welcome");
+  micBtn = document.getElementById("micBtn");
+  typingIndicator = document.getElementById("typingIndicator");
+  greetingEl = document.getElementById("greeting");
+  statusDot = document.getElementById("statusDot");
+  sysStatusEl = document.getElementById("sysStatus");
+  infoPanel = document.getElementById("infoPanel");
+  infoToggle = document.getElementById("infoToggle");
+  infoClose = document.getElementById("infoClose");
+  infoContent = document.getElementById("infoContent");
+  newsContent = document.getElementById("newsContent");
+  speakerAnim = document.getElementById("speakerAnim");
+  stopSpeakBtn = document.getElementById("stopSpeakBtn");
+  toastEl = document.getElementById("toast");
+  voiceStatus = document.getElementById("voiceStatus");
+  voiceTranscript = document.getElementById("voiceTranscript");
+
+  updateGreeting();
+  setInterval(updateGreeting, 60000);
+
+  checkHealth();
+  setInterval(checkHealth, 30000);
+
+  loadCollegeInfo();
+  loadNews();
+
+  if (infoToggle) infoToggle.addEventListener("click", () => infoPanel && infoPanel.classList.add("open"));
+  if (infoClose) infoClose.addEventListener("click", () => infoPanel && infoPanel.classList.remove("open"));
+
+  if (micBtn) {
+    micBtn.addEventListener("click", () => {
+      if (isSpeaking) {
+        stopSpeaking();
+        return;
+      }
+      if (!recognition) {
+        showToast("Voice is not supported in this browser");
+        return;
+      }
+      if (isListening) recognition.stop();
+      else {
+        stopSpeaking();
+        recognition.start();
+      }
+    });
+  }
+
+  if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
+
+  document.querySelectorAll(".suggestion-btn").forEach(btn => {
+    btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
+  });
+}
 
 async function checkHealth() {
   try {
     const res = await fetch(`${API_BASE}/api/healthz`);
     const data = await res.json();
-    if (data.status === "ok") {
+    if (statusDot && data.status === "ok") {
       statusDot.classList.add("active");
       if (sysStatusEl) sysStatusEl.textContent = "";
     }
   } catch {
-    statusDot.classList.remove("active");
+    if (statusDot) statusDot.classList.remove("active");
   }
 }
-
-checkHealth();
-setInterval(checkHealth, 30000);
 
 async function loadCollegeInfo() {
   try {
     const res = await fetch(`${API_BASE}/api/college-info`);
     const data = await res.json();
-    infoContent.innerHTML = `
+    if (infoContent) {
+      infoContent.innerHTML = `
       <div class="info-section">
         <div class="info-label">About this AI</div>
         <p class="ai-copy">Ideal AI answers college questions, general questions, weather, web search, and latest news through voice.</p>
@@ -261,8 +312,9 @@ async function loadCollegeInfo() {
         <div class="contact-row"><a class="info-link" href="${escapeHtml(data.website)}" target="_blank">${escapeHtml(data.website)}</a></div>
       </div>
     `;
+    }
   } catch {
-    infoContent.innerHTML = `<p class="info-loading">Could not load AI info.</p>`;
+    if (infoContent) infoContent.innerHTML = `<p class="info-loading">Could not load AI info.</p>`;
   }
 }
 
@@ -270,6 +322,7 @@ async function loadNews() {
   try {
     const res = await fetch(`${API_BASE}/api/news?query=latest%20India%20education`);
     const { articles } = await res.json();
+    if (!newsContent) return;
     if (!articles || articles.length === 0) {
       newsContent.innerHTML = `<p class="info-loading">No news available.</p>`;
       return;
@@ -280,15 +333,9 @@ async function loadNews() {
       return `<div class="news-item" onclick="${click}"><div class="news-title">${escapeHtml(a.title || "")}</div><div class="news-source">${escapeHtml(a.source || "Unknown")}</div></div>`;
     }).join("");
   } catch {
-    newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
+    if (newsContent) newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
   }
 }
-
-loadCollegeInfo();
-loadNews();
-
-if (infoToggle) infoToggle.addEventListener("click", () => infoPanel.classList.add("open"));
-if (infoClose) infoClose.addEventListener("click", () => infoPanel.classList.remove("open"));
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -337,24 +384,8 @@ function setVoiceText(status, transcript) {
 
 function setListeningState(val) {
   isListening = val;
-  micBtn.classList.toggle("listening", val);
+  if (micBtn) micBtn.classList.toggle("listening", val);
 }
-
-micBtn.addEventListener("click", () => {
-  if (isSpeaking) {
-    stopSpeaking();
-    return;
-  }
-  if (!recognition) {
-    showToast("Voice is not supported in this browser");
-    return;
-  }
-  if (isListening) recognition.stop();
-  else {
-    stopSpeaking();
-    recognition.start();
-  }
-});
 
 function loadVoices() {
   voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
@@ -413,14 +444,14 @@ function speak(text) {
   if (current.trim()) chunks.push(current.trim());
   let index = 0;
   isSpeaking = true;
-  micBtn.classList.add("speaking");
+  if (micBtn) micBtn.classList.add("speaking");
   showSpeakerAnim(true);
   setVoiceText("AI is speaking full answer", cleaned.slice(0, 120) + (cleaned.length > 120 ? "..." : ""));
 
   function speakNext() {
     if (index >= chunks.length) {
       isSpeaking = false;
-      micBtn.classList.remove("speaking");
+      if (micBtn) micBtn.classList.remove("speaking");
       showSpeakerAnim(false);
       setVoiceText("Tap the Jarvis mic and speak", "No message box. Voice only.");
       return;
@@ -437,7 +468,7 @@ function speak(text) {
     utter.onend = speakNext;
     utter.onerror = () => {
       isSpeaking = false;
-      micBtn.classList.remove("speaking");
+      if (micBtn) micBtn.classList.remove("speaking");
       showSpeakerAnim(false);
       setVoiceText("Tap the Jarvis mic and speak", "Voice stopped");
     };
@@ -449,11 +480,9 @@ function speak(text) {
 function stopSpeaking() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   isSpeaking = false;
-  micBtn.classList.remove("speaking");
+  if (micBtn) micBtn.classList.remove("speaking");
   showSpeakerAnim(false);
 }
-
-if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
 
 function showSpeakerAnim(show) {
   if (speakerAnim) speakerAnim.style.display = show ? "block" : "none";
@@ -461,6 +490,7 @@ function showSpeakerAnim(show) {
 
 function addMessage(role, content) {
   if (welcomeEl) welcomeEl.style.display = "none";
+  if (!messagesEl) return;
   const div = document.createElement("div");
   div.className = `message ${role}`;
   div.innerHTML = `<div class="msg-wrapper"><div class="bubble">${escapeHtml(content)}</div></div>`;
@@ -481,12 +511,13 @@ function escapeHtml(str) {
 }
 
 function showTyping() {
+  if (!typingIndicator || !messagesEl) return;
   typingIndicator.style.display = "flex";
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function hideTyping() {
-  typingIndicator.style.display = "none";
+  if (typingIndicator) typingIndicator.style.display = "none";
 }
 
 function fallbackReplyForCurrentLanguage(msg) {
@@ -520,6 +551,8 @@ async function sendMessage(msg) {
   }
 }
 
-document.querySelectorAll(".suggestion-btn").forEach(btn => {
-  btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
-});
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeDomReferencesAndHandlers);
+} else {
+  initializeDomReferencesAndHandlers();
+}

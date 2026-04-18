@@ -1,6 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  /* Start of Selection */
   --bg: #050607;
   --bg-card: #0d1114;
   --bg-soft: #111820;
@@ -15,6 +16,7 @@
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --header-h: 60px;
+  /* End of Selection */
 }
 
 /* Fullscreen Media Overlay Styles */

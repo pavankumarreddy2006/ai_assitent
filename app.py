@@ -28,6 +28,7 @@ def index():
 
 
 @app.route("/api/chat", methods=["POST"])
+@app.route("/assistant-api/chat", methods=["POST"])
 def chat():
     data = request.get_json(silent=True) or {}
     message = str(data.get("message", "")).strip()
@@ -44,11 +45,13 @@ def chat():
 
 
 @app.route("/api/college-info", methods=["GET"])
+@app.route("/assistant-api/college-info", methods=["GET"])
 def college_info():
     return jsonify(get_college_summary())
 
 
 @app.route("/api/news", methods=["GET"])
+@app.route("/assistant-api/news", methods=["GET"])
 def news():
     query = request.args.get("query")
     articles = fetch_news(query)
@@ -56,16 +59,19 @@ def news():
 
 
 @app.route("/api/media/images", methods=["GET"])
+@app.route("/assistant-api/media/images", methods=["GET"])
 def media_images():
     return jsonify(get_college_images())
 
 
 @app.route("/api/media/video", methods=["GET"])
+@app.route("/assistant-api/media/video", methods=["GET"])
 def media_video():
     return jsonify(get_college_video())
 
 
 @app.route("/api/healthz", methods=["GET"])
+@app.route("/assistant-api/healthz", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
 

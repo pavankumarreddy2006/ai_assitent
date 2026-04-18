@@ -1,5 +1,67 @@
 import re
 from data.college_data import COLLEGE_KEYWORDS
+IMAGES_KEYWORDS = [
+    "images", "photos", "campus"
+]
+
+VIDEO_KEYWORDS = [
+    "full details", "full information", "explain college", "video"
+]
+
+def detect_intent(message):
+    """
+    Detects the type of user intent from the message.
+
+    Returns:
+        str: intent name such as "college_intent", "weather_intent", "news_intent", etc.
+    """
+    text = message.lower().strip()
+    # Video intent
+    for word in VIDEO_KEYWORDS:
+        if word in text:
+            return "video_intent"
+    # Images intent
+    for word in IMAGES_KEYWORDS:
+        if word in text:
+            return "images_intent"
+    # College intent
+    for word in COLLEGE_KEYWORDS:
+        if re.search(r"\b" + re.escape(word.lower()) + r"\b", text):
+            return "college_intent"
+    # Weather intent
+    for word in WEATHER_KEYWORDS:
+        if re.search(r"\b" + re.escape(word) + r"\b", text):
+            return "weather_intent"
+    # News intent
+    for word in NEWS_KEYWORDS:
+        if re.search(r"\b" + re.escape(word) + r"\b", text):
+            return "news_intent"
+    # Search intent
+    for word in SEARCH_KEYWORDS:
+        if re.search(r"\b" + re.escape(word) + r"\b", text):
+            return "search_intent"
+    # Telugu weather
+    for word in WEATHER_KEYWORDS_TE:
+        if word in text:
+            return "weather_intent"
+    # Telugu news
+    for word in NEWS_KEYWORDS_TE:
+        if word in text:
+            return "news_intent"
+    # Telugu search
+    for word in SEARCH_KEYWORDS_TE:
+        if word in text:
+            return "search_intent"
+    # Telugu college
+    for word in COLLEGE_KEYWORDS_TE:
+        if word in text:
+            return "college_intent"
+    # Roman Telugu (fallbacks - basic detection)
+    for word in ROMAN_TELUGU_WORDS:
+        if re.search(r"\b" + re.escape(word) + r"\b", text):
+            # Use search intent as a fallback
+            return "search_intent"
+    return "unknown_intent"
 
 WEATHER_KEYWORDS = [
     "weather", "temperature", "rain", "sunny", "cloudy", "forecast",

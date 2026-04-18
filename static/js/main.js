@@ -4,6 +4,151 @@ let conversationHistory = [];
 let isListening = false;
 let isSpeaking = false;
 let recognition = null;
+
+// ------- Image & Video Overlay System ---------
+let mediaOverlay = null;
+let sliderInterval = null;
+
+function createMediaOverlay() {
+  mediaOverlay = document.createElement("div");
+  mediaOverlay.id = "mediaOverlay";
+  mediaOverlay.style.position = "fixed";
+  mediaOverlay.style.top = "0";
+  mediaOverlay.style.left = "0";
+  mediaOverlay.style.width = "100vw";
+  mediaOverlay.style.height = "100vh";
+  mediaOverlay.style.background = "rgba(0,0,0,0.95)";
+  mediaOverlay.style.display = "flex";
+  mediaOverlay.style.justifyContent = "center";
+  mediaOverlay.style.alignItems = "center";
+  mediaOverlay.style.zIndex = "9999";
+  document.body.appendChild(mediaOverlay);
+}
+
+/**
+ * Show images in fullscreen slider for College images intent.
+ * @param {Array} images
+ */
+function showImagesOverlay(images = []) {
+  if (!images.length) return;
+  createMediaOverlay();
+  hideChatbotUI();
+
+  let imgEl = document.createElement("img");
+  imgEl.style.maxWidth = "95vw";
+  imgEl.style.maxHeight = "90vh";
+  imgEl.style.objectFit = "contain";
+  imgEl.style.borderRadius = "15px";
+  imgEl.style.boxShadow = "0 4px 32px rgba(0,0,0,0.5)";
+  imgEl.style.transition = "opacity 0.6s";
+  mediaOverlay.appendChild(imgEl);
+
+  let currIdx = 0;
+  function setImg(idx) {
+    imgEl.style.opacity = 0;
+    setTimeout(() => {
+      imgEl.src = images[idx];
+      imgEl.alt = `Campus Photo ${idx+1}`;
+      imgEl.style.opacity = 1;
+    }, 350);
+  }
+  setImg(currIdx);
+
+  sliderInterval = setInterval(() => {
+    currIdx++;
+    if (currIdx >= images.length) {
+      clearInterval(sliderInterval);
+      closeMediaOverlay();
+      showChatbotUI();
+    } else {
+      setImg(currIdx);
+    }
+  }, 2000);
+
+  // Allow user to click to close early
+  mediaOverlay.onclick = () => {
+    clearInterval(sliderInterval);
+    closeMediaOverlay();
+    showChatbotUI();
+  };
+}
+
+function showVideoOverlay(videoUrl = "") {
+  if (!videoUrl) return;
+  createMediaOverlay();
+  hideChatbotUI();
+
+  let videoEl = document.createElement("video");
+  videoEl.src = videoUrl;
+  videoEl.style.maxWidth = "95vw";
+  videoEl.style.maxHeight = "88vh";
+  videoEl.style.borderRadius = "14px";
+  videoEl.style.boxShadow = "0 4px 32px rgba(0,0,0,0.6)";
+  videoEl.autoplay = true;
+  videoEl.controls = true;
+  videoEl.playsInline = true;
+  videoEl.onended = () => {
+    closeMediaOverlay();
+    showChatbotUI();
+  };
+  // If user clicks overlay, also close
+  mediaOverlay.onclick = (e) => {
+    if (e.target === mediaOverlay) {
+      videoEl.pause();
+      closeMediaOverlay();
+      showChatbotUI();
+    }
+  };
+  mediaOverlay.appendChild(videoEl);
+}
+
+// Remove overlay & clean up
+function closeMediaOverlay() {
+  if (sliderInterval) {
+    clearInterval(sliderInterval);
+    sliderInterval = null;
+  }
+  if (mediaOverlay) {
+    document.body.removeChild(mediaOverlay);
+    mediaOverlay = null;
+  }
+}
+
+function hideChatbotUI() {
+  // Hide elements for immersive media experience
+  if (document.body) document.body.style.overflow = "hidden";
+  if (document.getElementById("container"))
+    document.getElementById("container").style.display = "none";
+  if (welcomeEl) welcomeEl.style.display = "none";
+}
+
+function showChatbotUI() {
+  if (document.body) document.body.style.overflow = "";
+  if (document.getElementById("container"))
+    document.getElementById("container").style.display = "";
+  if (welcomeEl) welcomeEl.style.display = "";
+}
+
+// --- Monkey-patch fetch/chatbot response handler to support images/video ---
+// This code assumes you have a function like "handleApiResponse(data)" used when you get a reply.
+
+const originalApiResponseHandler = window.handleApiResponse || function(data) {};
+
+window.handleApiResponse = function(data) {
+  // 1. Media priority: show media overlays if instructed by the server response
+  if (data.show_images === true && Array.isArray(data.images) && data.images.length > 0) {
+    showImagesOverlay(data.images);
+    return;
+  } else if (data.show_video === true && typeof data.video === "string" && data.video) {
+    showVideoOverlay(data.video);
+    return;
+  }
+
+  // Else, proceed with existing handler if present
+  if (typeof originalApiResponseHandler === "function") {
+    originalApiResponseHandler(data);
+  }
+};
 let voices = [];
 let finalTranscript = "";
 

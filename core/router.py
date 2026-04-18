@@ -1,19 +1,17 @@
-"""
-router.py — Routes each request to the correct handler.
-
-Intent flow:
-  college  → college_service (smart DB lookup) → llm with full college context
-  weather  → weather_service
-  news     → news_service
-  search   → search_service → llm summarize
-  images   → media_service (returns image paths)
-  video    → media_service (returns video url)
-  general  → llm (Groq → OpenRouter → search fallback)
-
-Language:
-  - detect_language() auto-detects Telugu vs English
-  - All handlers pass lang to LLM so responses match user's language
-"""
+# router.py - Routes each request to the correct handler.
+#
+# Intent flow:
+#   college  -> college_service (smart DB lookup) -> llm with full college context
+#   weather  -> weather_service
+#   news     -> news_service
+#   search   -> search_service -> llm summarize
+#   images   -> media_service (returns image paths)
+#   video    -> media_service (returns video url)
+#   general  -> llm (Groq -> OpenRouter -> search fallback)
+#
+# Language:
+#   - detect_language() auto-detects Telugu vs English
+#   - All handlers pass lang to LLM so responses match user's language
 
 from core.intent import classify_intent, extract_city, detect_language
 from core.responder import (
@@ -65,19 +63,7 @@ def route_message(message: str, conversation_history: list[dict] | None = None) 
             return _handle_general(message, conversation_history, lang)
     except Exception as e:
         print(f"[Router Error] {e}")
-router.py — Routes each request to the correct handler.
 
-Intent flow:
-  college  → college_service (smart DB lookup) → llm with full college context
-  weather  → weather_service
-  news     → news_service
-  search   → search_service → llm summarize
-  general  → llm (Groq → OpenRouter → search fallback)
-
-Language:
-  - detect_language() auto-detects Telugu vs English
-  - All handlers pass lang to LLM so responses match user's language
-"""
 
 from core.intent import classify_intent, extract_city, detect_language
 from core.responder import (

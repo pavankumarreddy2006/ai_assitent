@@ -19,14 +19,14 @@ def search_duckduckgo(query: str) -> list[dict]:
         soup = BeautifulSoup(response.text, "html.parser")
         results = []
         for result in soup.select(".result")[:5]:
-            title_tag = result.select_one(".result__title")
-            link_tag = result.select_one(".result__url")
+            title_tag = result.select_one(".result__a")
             snippet_tag = result.select_one(".result__snippet")
-            if title_tag and link_tag:
+            if title_tag:
+                href = title_tag.get("href") or ""
                 results.append({
                     "title": title_tag.get_text(strip=True),
                     "snippet": snippet_tag.get_text(strip=True) if snippet_tag else "",
-                    "url": link_tag.get("href")
+                    "url": href
                 })
         return results
     except Exception as e:
@@ -53,6 +53,7 @@ def extract_page_content(url: str) -> str:
             headers={"User-Agent": "Mozilla/5.0"},
             timeout=8
         )
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         paragraphs = soup.find_all("p")
         text = " ".join(p.get_text() for p in paragraphs[:5])

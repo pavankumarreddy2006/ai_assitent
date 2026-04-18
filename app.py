@@ -92,7 +92,7 @@ def media_video():
         return jsonify(get_college_video())
     except Exception:
         logger.exception("Unhandled error in /media/video")
-        return jsonify(""), 500
+        return jsonify(None), 500
 
 
 @app.route("/api/healthz", methods=["GET"])

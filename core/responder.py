@@ -3,8 +3,10 @@ def format_college_response(answer: str, source: str = "College Database") -> di
         "reply": answer,
         "intent": "college",
         "source": source,
-        "show_video": True,
-        "video_url": None
+        "show_images": False,
+        "images": [],
+        "show_video": False,
+        "video_url": None,
     }
 
 

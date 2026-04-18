@@ -144,7 +144,12 @@ async function loadCollegeInfo() {
     const res = await fetch(`${API_BASE}/college-info`);
     if (!res.ok) throw new Error("College info failed");
 
-    const data = await res.json();
+    let data = {};
+  try {
+  data = await res.json();
+  } catch (e) {
+  throw new Error("Invalid JSON response");
+  }
     if (!infoContent) return;
 
     infoContent.innerHTML = `
@@ -605,8 +610,7 @@ async function sendMessage(msg) {
   } catch {
     hideTyping();
 
-    const reply = fallbackReplyForCurrent
-    Language(msg);
+    const reply = fallbackReplyForCurrentLanguage(msg);
     addMessage("assistant", reply);
     speak(reply);
   }

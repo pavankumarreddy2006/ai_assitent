@@ -72,7 +72,6 @@ def _normalize_text(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
-from data.college_data import college_info_en, college_info_te
 
 def get_college_summary() -> dict:
     return {

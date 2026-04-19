@@ -1,12 +1,70 @@
 import re
 from data.college_data import COLLEGE_KEYWORDS
-IMAGES_KEYWORDS = [
-    "images", "photos", "campus"
+IMAGE_INTENT_PHRASES = [
+    "college photos",
+    "college images",
+    "college pictures",
+    "college gallery",
+    "campus photos",
+    "campus images",
+    "campus pictures",
+    "campus gallery",
+    "show college photos",
+    "show campus photos",
+    "show photos",
+    "show images",
+    "campus tour",
+    "virtual tour",
+    "ఫోటోలు చూపించు",
+    "చిత్రాలు చూపించు",
+    "క్యాంపస్ ఫోటో",
+    "కాలేజీ ఫోటో",
+    "కాలేజీ చిత్రాలు",
+    "క్యాంపస్ చిత్రాలు",
 ]
 
-VIDEO_KEYWORDS = [
-    "full details", "full information", "explain college", "video"
+VIDEO_INTENT_PHRASES = [
+    "college video",
+    "campus video",
+    "promotional video",
+    "promo video",
+    "ideal college video",
+    "play college video",
+    "show college video",
+    "watch college video",
+    "play video",
+    "show video",
+    "watch video",
+    "కాలేజీ వీడియో",
+    "క్యాంపస్ వీడియో",
+    "వీడియో ప్లే",
+    "వీడియో చూపించు",
 ]
+
+_SCOPE = ("college", "campus", "ideal", "కాలేజీ", "క్యాంపస్", "ఐడియల్")
+_MEDIA_PIC = ("photo", "photos", "image", "images", "picture", "pictures", "gallery", "ఫోటో", "చిత్ర")
+_MEDIA_VID = ("video", "వీడియో")
+
+
+def _images_intent_from_text(msg: str, raw: str) -> bool:
+    if any(p in msg for p in IMAGE_INTENT_PHRASES) or any(p in raw for p in IMAGE_INTENT_PHRASES):
+        return True
+    if any(s in msg for s in _SCOPE) and any(m in msg or m in raw for m in _MEDIA_PIC):
+        return True
+    return False
+
+
+def _video_intent_from_text(msg: str, raw: str) -> bool:
+    if any(p in msg for p in VIDEO_INTENT_PHRASES) or any(p in raw for p in VIDEO_INTENT_PHRASES):
+        return True
+    if any(s in msg for s in _SCOPE) and any(v in msg or v in raw for v in _MEDIA_VID):
+        return True
+    return False
+
+
+# Legacy names for detect_intent (unused); keep as supersets for compatibility
+IMAGES_KEYWORDS = list(IMAGE_INTENT_PHRASES) + ["photos", "images"]
+VIDEO_KEYWORDS = list(VIDEO_INTENT_PHRASES) + ["video"]
 
 def detect_intent(message):
     """
@@ -17,13 +75,10 @@ def detect_intent(message):
     """
     text = message.lower().strip()
     # Video intent
-    for word in VIDEO_KEYWORDS:
-        if word in text:
-            return "video_intent"
-    # Images intent
-    for word in IMAGES_KEYWORDS:
-        if word in text:
-            return "images_intent"
+    if _video_intent_from_text(text, message.strip()):
+        return "video_intent"
+    if _images_intent_from_text(text, message.strip()):
+        return "images_intent"
     # College intent
     for word in COLLEGE_KEYWORDS:
         if re.search(r"\b" + re.escape(word.lower()) + r"\b", text):
@@ -157,14 +212,13 @@ def detect_language(text: str) -> str:
 
 def classify_intent(message: str) -> str:
     msg = message.lower().strip()
+    raw = (message or "").strip()
     msg_words = set(re.findall(r"[a-zA-Z]+", msg))
 
-    for word in VIDEO_KEYWORDS:
-        if word in msg:
-            return "video_intent"
-    for word in IMAGES_KEYWORDS:
-        if word in msg:
-            return "images_intent"
+    if _video_intent_from_text(msg, raw):
+        return "video_intent"
+    if _images_intent_from_text(msg, raw):
+        return "images_intent"
 
     if any(kw in msg for kw in COLLEGE_HINTS_EN) or msg_words & COLLEGE_HINTS_EN:
         return "college"

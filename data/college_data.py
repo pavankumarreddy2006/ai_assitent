@@ -162,6 +162,19 @@ college_info_en = {
     "seminar halls": "Seminar halls and conference rooms available.",
     "auditorium": "College auditorium for cultural and academic events.",
     "counseling services": "Counseling and mentoring services for student welfare.",
+    "placement highlights": "Recent drives have seen strong participation: hundreds of students attend placement training, and recruiters include major IT and BPO firms. For exact current-year numbers, contact the Training & Placement cell at the college office.",
+    "placement stats": "The Training & Placement cell runs aptitude, soft skills, and interview preparation. Recruiting partners include TCS, Infosys, HCL, Cognizant, Tech Mahindra, Sutherland, and other IT, pharma, and analytics firms. Visit the office for the latest selection statistics.",
+    "top recruiters": "Campus visitors have included TCS, Infosys, HCL, Cognizant, Tech Mahindra, and Sutherland, along with pharma and regional companies.",
+    "highest package": "Package details vary by year and program. The placement cell publishes updated figures each season; call 0884-2384382 or visit the office for verified numbers.",
+    "internship": "Internships and industry projects are encouraged through departmental coordinators and the placement cell.",
+    "campus life": "Campus life blends academics with NSS, NCC, sports, cultural fests, seminars, and student clubs. Hostel students have evening study hours and supervised activities.",
+    "student clubs": "Students can join departmental associations, cultural teams, and sports squads announced at the start of each academic year.",
+    "history": "Ideal College has a long legacy in Kakinada (junior college from 1970, degree programs from 1974) and has grown into a NAAC 'A' grade institution focused on placements and holistic development.",
+    "founders": "The institution was shaped by visionary founders including Dr. Col. D. S. Raju, Dr. P. V. N. Raju, Dr. P. Chiranjeevini Kumari, and Dr. N. S. R. Sastry.",
+    "affiliation": "The college is affiliated to Adikavi Nannaya University.",
+    "mlt": "Medical Lab Technology (MLT) related programs and fee subsidies are handled as per current university-approved offerings—confirm at the admissions desk.",
+    "digital learning": "Computer labs, e-resources in the library, and Wi-Fi for academic use support digital learning.",
+    "anti ragging": "Anti-ragging committees, CCTV, and strict discipline policies keep the campus safe; violations should be reported immediately to the administration.",
 }
 
 # =====================================================
@@ -296,6 +309,17 @@ college_info_te = {
     "సెమినార్ హాల్‌లు": "సెమినార్ హాల్‌లు మరియు సమావేశ గదులు అందుబాటులో ఉన్నాయి.",
     "ఆడిటోరియం": "సాంస్కృతిక మరియు అకాడమిక్ ఈవెంట్‌ల కోసం ఆడిటోరియం ఉంది.",
     "కౌన్సెలింగ్ సేవలు": "విద్యార్థుల సంక్షేమం కోసం కౌన్సెలింగ్, మెంటరింగ్ సేవలు ఉన్నాయి.",
+    "ప్లేస్‌మెంట్ హైలైట్స్": "ట్రైనింగ్ అండ్ ప్లేస్‌మెంట్ సెల్ ఇంటర్వ్యూ సన్నాహం, సాఫ్ట్ స్కిల్స్, అప్టిట్యూడ్ శిక్షణ నిర్వహిస్తుంది. ఐటీ, బీపీఓ, ఫార్మా సంస్థలు క్యాంపస్‌కు వస్తాయి. తాజా సంఖ్యల కోసం కాలేజీ ఆఫీసును సంప్రదించండి.",
+    "టాప్ రిక్రూటర్స్": "టీసీఎస్, ఇన్ఫోసిస్, హెచ్‌సీఎల్, కాగ్నిజాంట్, టెక్ మహీంద్రా, సదర్లాండ్ వంటి సంస్థలు క్యాంపస్ డ్రైవ్‌లలో పాల్గొన్నాయి.",
+    "అధిక ప్యాకేజ్": "ప్యాకేజ్ వివరాలు సంవత్సరానికి మారుతూ ఉంటాయి. ధృవీకరించిన సమాచారం కోసం 0884-2384382 కి కాల్ చేయండి లేదా ప్లేస్‌మెంట్ సెల్‌ను కలవండి.",
+    "ఇంటర్న్‌షిప్": "ఇంటర్న్‌షిప్‌లు మరియు పరిశ్రమ ప్రాజెక్టులు విభాగ కోఆర్డినేటర్లు మరియు ప్లేస్‌మెంట్ సెల్ ద్వారా ప్రోత్సహించబడతాయి.",
+    "క్యాంపస్ లైఫ్": "విద్యాబ్యాసం, ఎన్‌ఎస్‌ఎస్, ఎన్‌సిసి, క్రీడలు, సాంస్కృతిక ఫెస్ట్‌లు, సెమినార్లు కలిపి క్యాంపస్ జీవితం సమతుల్యంగా ఉంటుంది.",
+    "విద్యార్థి క్లబ్‌లు": "ప్రతి అకాడమిక్ సంవత్సరం ప్రారంభంలో విభాగ సంఘాలు మరియు క్రీడా జట్లు ప్రకటించబడతాయి.",
+    "చరిత్ర": "ఐడియల్ కాలేజ్ కాకినాడలో దీర్ఘ చరిత్ర కలిగి ఉంది (1970 జూనియర్, 1974 డిగ్రీ) మరియు ఎన్‌ఏఏసీ 'ఎ' గ్రేడ్‌తో అభివృద్ధి చెందింది.",
+    "స్థాపకులు": "డా. కలనల్ డి.ఎస్. రాజు, డా. పి.వి.ఎన్. రాజు, డా. పి. చిరంజీవిని కుమారి, డా. ఎన్.ఎస్.ఆర్. శాస్త్రి వంటి స్థాపక దృష్టికోణం ఈ సంస్థను నడిపింది.",
+    "అనుబంధం": "ఆదికవి నన్నయ్య విశ్వవిద్యాలయానికి అనుబంధ కాలేజీ.",
+    "డిజిటల్ లెర్నింగ్": "కంప్యూటర్ ల్యాబ్‌లు, లైబ్రరీ ఇ-రిసోర్సెస్, విద్యార్థులకు అకాడమిక్ వైఫై డిజిటల్ నేర్పుకునే వాతావరణాన్ని ఇస్తాయి.",
+    "ర్యాగింగ్ నిరోధం": "ర్యాగింగ్ నిషేధం కఠినంగా అమలవుతుంది; సీసీటీవీ మరియు గ్రివెన్స్ సెల్ అందుబాటులో ఉన్నాయి.",
 }
 
 college_data = {
@@ -382,6 +406,11 @@ college_data = {
             "pg": "Relevant bachelor's degree",
             "documents": ["10th memo", "12th memo", "TC", "Aadhaar", "Photos"],
         },
+        "placement_summary": {
+            "training": "CRT, soft skills, aptitude, spoken English, mock interviews",
+            "recruiters_sample": ["TCS", "Infosys", "HCL", "Cognizant", "Tech Mahindra", "Sutherland"],
+            "note": "Contact the placement cell for verified year-wise statistics.",
+        },
     },
     "telugu": {
         "name": "ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్",
@@ -462,6 +491,11 @@ college_data = {
             "ug": "ఇంటర్మీడియట్",
             "pg": "డిగ్రీ అవసరం",
             "documents": ["10వ మార్క్స్", "ఇంటర్ మార్క్స్", "టీసీ", "ఆధార్", "ఫోటోలు"],
+        },
+        "placement_summary": {
+            "training": "సీఆర్‌టీ, సాఫ్ట్ స్కిల్స్, స్పోకెన్ ఇంగ్లీష్, మాక్ ఇంటర్వ్యూలు",
+            "recruiters_sample": ["టీసీఎస్", "ఇన్ఫోసిస్", "హెచ్‌సీఎల్", "కాగ్నిజాంట్", "టెక్ మహీంద్రా", "సదర్లాండ్"],
+            "note": "ధృవీకరించిన గణాంకాల కోసం ప్లేస్‌మెంట్ సెల్‌ను సంప్రదించండి.",
         },
     },
 }

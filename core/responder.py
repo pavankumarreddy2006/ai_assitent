@@ -10,6 +10,9 @@ def format_college_response(answer: str, source: str = "College Database") -> di
     }
 
 
+_MEDIA_FIELDS = {"show_images": False, "images": [], "show_video": False, "video_url": None}
+
+
 def format_weather_response(weather_data: dict | None, city: str, lang: str = "en") -> dict:
     if weather_data:
         if lang == "te":
@@ -38,8 +41,7 @@ def format_weather_response(weather_data: dict | None, city: str, lang: str = "e
         "reply": reply,
         "intent": "weather",
         "source": source,
-        "show_video": False,
-        "video_url": None
+        **_MEDIA_FIELDS,
     }
 
 
@@ -66,8 +68,7 @@ def format_news_response(articles: list, lang: str = "en") -> dict:
         "reply": reply,
         "intent": "news",
         "source": source,
-        "show_video": False,
-        "video_url": None
+        **_MEDIA_FIELDS,
     }
 
 
@@ -76,8 +77,7 @@ def format_search_response(answer: str, source: str = "Live Web (DuckDuckGo)") -
         "reply": answer,
         "intent": "search",
         "source": source,
-        "show_video": False,
-        "video_url": None
+        **_MEDIA_FIELDS,
     }
 
 
@@ -86,8 +86,7 @@ def format_general_response(answer: str, source: str = "Groq AI") -> dict:
         "reply": answer,
         "intent": "general",
         "source": source,
-        "show_video": False,
-        "video_url": None
+        **_MEDIA_FIELDS,
     }
 
 
@@ -96,6 +95,5 @@ def format_error_response(message: str = "Something went wrong. Please try again
         "reply": message,
         "intent": "general",
         "source": "Error",
-        "show_video": False,
-        "video_url": None
+        **_MEDIA_FIELDS,
     }

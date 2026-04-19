@@ -4,143 +4,175 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ideal College AI Assistant</title>
+  <title>Ideal College — Voice AI Assistant</title>
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    rel="stylesheet" />
 </head>
 
 <body>
-
-  <!-- ✅ FIX: moved from top -->
-  <div id="mediaOverlay" class="hidden">
-    <div id="mediaContent"></div>
+  <div id="mediaOverlay" class="media-overlay hidden" aria-hidden="true">
+    <div class="media-modal" role="dialog" aria-modal="true" aria-label="College media">
+      <button type="button" class="media-close" id="mediaCloseBtn" aria-label="Close">&times;</button>
+      <div id="mediaContent" class="media-modal-body"></div>
+    </div>
   </div>
 
-  <!-- ✅ FIX: moved from top -->
   <noscript>
-    <div style="text-align:center; color: #aa0000; margin: 1em;">
-      <strong>JavaScript is disabled or failed to load. Please enable JavaScript for the full experience.</strong>
+    <div class="noscript-banner">
+      <strong>JavaScript is required</strong> for the voice assistant. Please enable JavaScript.
     </div>
   </noscript>
 
   <div class="app">
-    <header class="header">
+    <header class="header glass-header">
       <div class="header-left">
-        <span class="status-dot" id="statusDot"></span>
-        <div class="brand-group">
-          <h1 class="brand">IDEAL COLLEGE</h1>
-          <span class="brand-sub">AI Assistant</span>
-        </div>
+        <span class="status-dot" id="statusDot" title="API status"></span>
+        <a class="brand-lockup" href="/" aria-label="Ideal College home">
+          <img class="college-logo" src="/static/media/images/1.png" alt="Ideal College emblem" width="52" height="52" loading="eager" />
+          <div class="brand-group">
+            <span class="brand-line">Ideal College</span>
+            <span class="brand-sub">Arts &amp; Sciences · Kakinada</span>
+          </div>
+        </a>
       </div>
 
       <div class="header-center">
         <span class="greeting-text" id="greeting">Good Morning</span>
-        <span class="greeting-place">Ideal College, Kakinada</span>
+        <span class="greeting-place">NAAC &lsquo;A&rsquo; Grade Institution</span>
       </div>
 
       <div class="header-right">
-        <div class="college-address">
-          <span class="addr-icon">AI</span>
-          <div class="addr-text">
-            <span class="addr-main">Voice First</span>
-            <span class="addr-sub">Telugu + English</span>
-          </div>
+        <div class="header-pill">
+          <span class="pill-label">Voice AI</span>
+          <span class="pill-value">English · Telugu</span>
         </div>
-        <button class="info-toggle" id="infoToggle" title="Toggle Info">&#9776;</button>
+        <button type="button" class="info-toggle" id="infoToggle" title="Campus info">&#9776;</button>
       </div>
     </header>
 
+    <section class="placements-strip glass-strip" aria-label="Placements highlight">
+      <div class="placements-inner">
+        <span class="placements-badge">Placements</span>
+        <div class="placements-ticker" id="placementsTicker">
+          <span class="ticker-track">
+            <span>TCS</span><span>Infosys</span><span>HCL</span><span>Cognizant</span><span>Tech Mahindra</span><span>Sutherland</span>
+            <span>CRT &amp; Soft Skills</span><span>Mock interviews</span><span>Industry internships</span>
+            <span>TCS</span><span>Infosys</span><span>HCL</span><span>Cognizant</span><span>Tech Mahindra</span><span>Sutherland</span>
+          </span>
+        </div>
+        <div class="placements-grid" aria-hidden="true">
+          <div class="pkg-card"><span class="pkg-label">Training</span><span class="pkg-val">CRT · Aptitude · HR</span></div>
+          <div class="pkg-card"><span class="pkg-label">Focus</span><span class="pkg-val">IT · BPO · Pharma</span></div>
+          <div class="pkg-card"><span class="pkg-label">Support</span><span class="pkg-val">Placement cell</span></div>
+        </div>
+      </div>
+    </section>
+
     <div class="main">
-      <div class="chat-panel" id="chatPanel">
+      <div class="chat-panel glass-main" id="chatPanel">
+        <div class="hero-backdrop" aria-hidden="true"></div>
         <div class="messages" id="messages">
           <div class="welcome" id="welcome">
-            <div class="welcome-logo jarvis-orb small-orb">
-              <div class="orb-core"></div>
-              <div class="orb-ring ring-one"></div>
-              <div class="orb-ring ring-two"></div>
-              <div class="orb-ring ring-three"></div>
+            <div class="welcome-visual">
+              <div class="campus-frame">
+                <img src="/static/media/images/2.png" alt="Ideal College campus" class="campus-hero" loading="lazy" width="640" height="360" />
+                <div class="campus-frame-glow"></div>
+              </div>
+
+              <div class="jarvis-stack">
+                <div class="jarvis-label">Voice interface</div>
+                <div class="jarvis-rings" aria-hidden="true">
+                  <span class="jr r1"></span><span class="jr r2"></span><span class="jr r3"></span>
+                  <span class="jr scan"></span>
+                </div>
+              </div>
             </div>
 
-            <h2>Speak to Ideal AI</h2>
-            <p>Telugu lo adigithe Telugu lo, English lo adigithe English lo answer chestanu</p>
+            <h2 class="welcome-title">Ideal AI — your campus concierge</h2>
+            <p class="welcome-sub">Ask in English or Telugu. Say <strong>Hello Ideal AI</strong>, then your question.</p>
 
             <div class="suggestions" id="suggestions">
-              <button class="suggestion-btn">college video?</button>
-              <button class="suggestion-btn">What courses are offered?</button>
-              <button class="suggestion-btn">కోర్సులు ఏమిటి?</button>
-              <button class="suggestion-btn">తాజా వార్తలు చెప్పు</button>
+              <button type="button" class="suggestion-btn">Show college photos</button>
+              <button type="button" class="suggestion-btn">Play college video</button>
+              <button type="button" class="suggestion-btn">What courses are offered?</button>
+              <button type="button" class="suggestion-btn">కోర్సులు ఏమిటి?</button>
             </div>
-
           </div>
         </div>
 
         <div class="typing-indicator" id="typingIndicator" style="display:none;">
           <div class="typing-bubble"><span></span><span></span><span></span></div>
-          <span class="typing-label">AI is thinking...</span>
+          <span class="typing-label">Assistant is thinking</span>
         </div>
 
         <div class="speaker-anim" id="speakerAnim" style="display:none;">
-          <div class="wave-container">
-            <span class="wave-label">Speaking full answer</span>
-            <div class="wave-bars">
+          <div class="wave-container glass-panel">
+            <span class="wave-label">Speaking</span>
+            <div class="wave-bars" aria-hidden="true">
               <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
               <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
               <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
             </div>
-            <button class="stop-speak-btn" id="stopSpeakBtn">Stop</button>
+            <button type="button" class="stop-speak-btn" id="stopSpeakBtn">Stop</button>
           </div>
         </div>
 
-        <div class="voice-console">
-          <button type="button" class="jarvis-mic" id="micBtn">
-            <span class="jarvis-scan"></span>
-            <span class="jarvis-ring r1"></span>
-            <span class="jarvis-ring r2"></span>
-            <span class="jarvis-ring r3"></span>
+        <div class="voice-console glass-console">
+          <div class="mic-assembly">
+            <div class="viz-bars" id="vizBars" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <button type="button" class="jarvis-mic" id="micBtn" title="Tap to start/stop listening (wake word always on)">
+              <span class="jarvis-scan"></span>
+              <span class="jarvis-ring r1"></span>
+              <span class="jarvis-ring r2"></span>
+              <span class="jarvis-ring r3"></span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z" />
+                <path fill="currentColor" d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" x2="12" y1="19" y2="22" stroke="currentColor" stroke-width="2" fill="none" />
+              </svg>
+            </button>
+            <div class="mic-hint">Double-click mic for continuous mode</div>
+          </div>
 
-            <svg viewBox="0 0 24 24">
-              <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" x2="12" y1="19" y2="22"/>
-            </svg>
-          </button>
-
-          <div class="voice-status" id="voiceStatus">Hello ideal ai</div>
-          <div class="voice-transcript" id="voiceTranscript">voice assistant.</div>
-          <div id="sysStatus"></div>
-  
+          <div class="voice-status" id="voiceStatus">Wake mode</div>
+          <div class="voice-transcript" id="voiceTranscript">Say &ldquo;Hello Ideal AI&rdquo;</div>
+          <div id="sysStatus" class="sys-status"></div>
         </div>
       </div>
 
-      <aside class="info-panel" id="infoPanel">
+      <aside class="info-panel glass-side" id="infoPanel">
         <div class="info-header">
-          <h3>AI HUB</h3>
-          <button class="info-close" id="infoClose">&#x2715;</button>
+          <h3>Campus desk</h3>
+          <button type="button" class="info-close" id="infoClose" aria-label="Close panel">&times;</button>
         </div>
 
         <div class="info-college-banner">
-          <div class="college-initial">AI</div>
+          <img class="banner-thumb" src="/static/media/images/1.png" alt="" width="48" height="48" loading="lazy" />
           <div class="college-meta">
-            <div class="college-name-sm">Ideal AI Assistant</div>
-            <div class="college-naac">Voice Enabled</div>
+            <div class="college-name-sm">Ideal College AI</div>
+            <div class="college-naac">Voice · News · Weather</div>
           </div>
         </div>
 
         <div class="info-content" id="infoContent"></div>
 
         <div class="news-section">
-          <h4>Latest News</h4>
+          <h4>Latest headlines</h4>
           <div id="newsContent"></div>
         </div>
       </aside>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status"></div>
 
-  <!-- ✅ ONLY SCRIPT HERE -->
   <script src="/static/js/main.js"></script>
-
 </body>
+
 </html>

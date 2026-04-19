@@ -12,6 +12,7 @@ let continuousListeningEnabled = false;
 let shouldKeepListening = false;
 let wakeWordDetected = false;
 let pendingCommandTimeout = null;
+let mediaBlockingWake = false;
 const WAKE_WORDS = ["hello ideal ai", "hello idol ai", "hello ideal a i"];
 
 const API_BASE = "/assistant-api";
@@ -34,6 +35,8 @@ let voiceStatus = null;
 let voiceTranscript = null;
 let mediaOverlay = null;
 let mediaContent = null;
+let mediaCloseBtn = null;
+let vizBars = null;
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -45,6 +48,10 @@ function getGreeting() {
 
 function updateGreeting() {
   if (greetingEl) greetingEl.textContent = getGreeting();
+}
+
+function setVizActive(on) {
+  if (vizBars) vizBars.classList.toggle("active", Boolean(on));
 }
 
 function initializeDomReferencesAndHandlers() {
@@ -67,19 +74,8 @@ function initializeDomReferencesAndHandlers() {
   voiceTranscript = document.getElementById("voiceTranscript");
   mediaOverlay = document.getElementById("mediaOverlay");
   mediaContent = document.getElementById("mediaContent");
-
-  if (!mediaOverlay) {
-    mediaOverlay = document.createElement("div");
-    mediaOverlay.id = "mediaOverlay";
-    mediaOverlay.className = "hidden";
-    document.body.appendChild(mediaOverlay);
-  }
-
-  if (!mediaContent) {
-    mediaContent = document.createElement("div");
-    mediaContent.id = "mediaContent";
-    mediaOverlay.appendChild(mediaContent);
-  }
+  mediaCloseBtn = document.getElementById("mediaCloseBtn");
+  vizBars = document.getElementById("vizBars");
 
   updateGreeting();
   setInterval(updateGreeting, 60000);
@@ -94,19 +90,33 @@ function initializeDomReferencesAndHandlers() {
   if (infoToggle) infoToggle.addEventListener("click", () => infoPanel && infoPanel.classList.add("open"));
   if (infoClose) infoClose.addEventListener("click", () => infoPanel && infoPanel.classList.remove("open"));
   if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
-  if (micBtn) micBtn.setAttribute("aria-label", "Wake word listening is always enabled");
+  if (micBtn) {
+    micBtn.addEventListener("click", handleMicClick);
+    micBtn.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      toggleContinuousListening();
+    });
+    micBtn.setAttribute("aria-label", "Microphone — tap to toggle listening");
+  }
+
+  if (mediaOverlay) {
+    mediaOverlay.addEventListener("click", (e) => {
+      if (e.target === mediaOverlay) closeMediaOverlay();
+    });
+  }
+  if (mediaCloseBtn) mediaCloseBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeMediaOverlay();
+  });
 
   document.querySelectorAll(".suggestion-btn").forEach((btn) => {
     btn.addEventListener("click", () => sendMessage(btn.textContent.trim()));
   });
 
   if (!recognition) {
-    setVoiceText(
-      "Voice not supported in this browser",
-      "Use suggestion buttons or a browser with Web Speech API support."
-    );
+    setVoiceText("Voice not supported", "Use suggestion chips or a Chromium-based browser.");
   } else {
-    setVoiceText("Say 'Hello Ideal AI'", "Always listening for wake word.");
+    setVoiceText("Wake mode active", "Say \"Hello Ideal AI\"");
     startWakeListening();
   }
 }
@@ -140,7 +150,6 @@ function handleMicClick() {
 function toggleContinuousListening() {
   continuousListeningEnabled = !continuousListeningEnabled;
   shouldKeepListening = continuousListeningEnabled;
-
   const status = continuousListeningEnabled ? "Continuous mode ON" : "Continuous mode OFF";
   setVoiceText(status, "Double-click the mic to toggle continuous listening.");
   showToast(continuousListeningEnabled ? "Continuous listening enabled" : "Continuous listening disabled");
@@ -156,56 +165,49 @@ async function checkHealth() {
     if (sysStatusEl && data.status === "ok") sysStatusEl.textContent = "";
   } catch {
     if (statusDot) statusDot.classList.remove("active");
-    if (sysStatusEl) sysStatusEl.textContent = "System reconnecting...";
+    if (sysStatusEl) sysStatusEl.textContent = "Reconnecting to server…";
   }
 }
 
 async function loadCollegeInfo() {
+  if (!infoContent) return;
   try {
     const res = await fetch(`${API_BASE}/college-info`, { cache: "no-store" });
     if (!res.ok) throw new Error("College info failed");
-
-    let data = {};
-  try {
-  data = await res.json();
-  } catch (e) {
-  throw new Error("Invalid JSON response");
-  }
-    if (!infoContent) return;
+    const data = await res.json();
 
     infoContent.innerHTML = `
       <div class="info-section">
-        <div class="info-label">About this AI</div>
-        <p class="ai-copy">Ideal AI answers college questions, general questions, weather, web search, and latest news through voice.</p>
+        <div class="info-label">About this assistant</div>
+        <p class="ai-copy">Ideal AI answers college questions, weather, news, and general queries in English or Telugu — voice-first.</p>
       </div>
       <div class="info-section">
-        <div class="info-label">Language rule</div>
-        <div class="ai-rule">User Telugu lo matladithe Telugu answer.</div>
-        <div class="ai-rule">User English lo matladithe English answer.</div>
-        <div class="ai-rule">Translation first kaadu. Direct same-language response.</div>
+        <div class="info-label">Language</div>
+        <div class="ai-rule">Telugu question → Telugu answer.</div>
+        <div class="ai-rule">English question → English answer.</div>
       </div>
       <div class="info-section">
-        <div class="info-label">Voice mode</div>
-        <div class="ai-rule">Tap Jarvis mic, speak, and listen to the full answer when speech is available.</div>
+        <div class="info-label">Media</div>
+        <div class="ai-rule">Ask for <strong>college photos</strong> or <strong>college video</strong> for an instant full-screen preview.</div>
       </div>
       <div class="info-section">
-        <div class="info-label">College contact</div>
-        <div class="contact-row"><span>${escapeHtml(data.contact || "0884-2384382 / 0884-2384381")}</span></div>
-        <div class="contact-row"><span>${escapeHtml(data.email || "idealcolleges@gmail.com")}</span></div>
+        <div class="info-label">Contact</div>
+        <div class="contact-row">${escapeHtml(data.contact || "0884-2384382 / 0884-2384381")}</div>
+        <div class="contact-row">${escapeHtml(data.email || "idealcolleges@gmail.com")}</div>
         <div class="contact-row"><a class="info-link" href="${escapeAttribute(data.website || "https://idealcollege.edu.in")}" target="_blank" rel="noopener noreferrer">${escapeHtml(data.website || "https://idealcollege.edu.in")}</a></div>
       </div>`;
   } catch {
-    if (infoContent) infoContent.innerHTML = `<p class="info-loading">Could not load AI info.</p>`;
+    infoContent.innerHTML = `<p class="info-loading">Could not load campus desk.</p>`;
   }
 }
 
 async function loadNews() {
+  if (!newsContent) return;
   try {
     const res = await fetch(`${API_BASE}/news?query=latest%20India%20education`, { cache: "no-store" });
     if (!res.ok) throw new Error("News failed");
 
     const { articles } = await res.json();
-    if (!newsContent) return;
 
     if (!Array.isArray(articles) || articles.length === 0) {
       newsContent.innerHTML = `<p class="info-loading">No news available.</p>`;
@@ -236,7 +238,7 @@ async function loadNews() {
       newsContent.appendChild(item);
     });
   } catch {
-    if (newsContent) newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
+    newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
   }
 }
 
@@ -252,7 +254,8 @@ function setupSpeechRecognition() {
 
   recognition.onstart = () => {
     setListeningState(true);
-    setVoiceText("Wake mode active", wakeWordDetected ? "Speak your question now." : "Say 'Hello Ideal AI'");
+    setVizActive(true);
+    setVoiceText("Listening", wakeWordDetected ? "Ask your question now." : "Say \"Hello Ideal AI\"");
   };
 
   recognition.onresult = (event) => {
@@ -265,24 +268,25 @@ function setupSpeechRecognition() {
         if (containsWakeWord(transcript)) {
           wakeWordDetected = true;
           resetPendingCommandWindow();
-          setVoiceText("Wake word detected", "Listening for your question...");
+          setVoiceText("Wake word detected", "Listening for your question…");
         }
         continue;
       }
 
       wakeWordDetected = false;
       clearPendingCommandWindow();
-      setVoiceText("Processing your question", transcript);
+      setVoiceText("Processing", transcript);
       sendMessage(transcript);
     }
   };
 
   recognition.onerror = (event) => {
     setListeningState(false);
+    setVizActive(false);
     shouldKeepListening = false;
 
     if (event.error === "no-speech") {
-      setVoiceText("No speech detected", "Tap mic and try again");
+      setVoiceText("No speech detected", "Tap the mic and try again");
     } else {
       setVoiceText("Voice error", "Please try again");
     }
@@ -290,6 +294,8 @@ function setupSpeechRecognition() {
 
   recognition.onend = () => {
     setListeningState(false);
+    setVizActive(false);
+    if (mediaBlockingWake) return;
     if (!isSpeaking) startWakeListening();
   };
 }
@@ -310,12 +316,12 @@ function resetPendingCommandWindow() {
   clearPendingCommandWindow();
   pendingCommandTimeout = setTimeout(() => {
     wakeWordDetected = false;
-    setVoiceText("Wake mode active", "Say 'Hello Ideal AI'");
+    setVoiceText("Wake mode active", "Say \"Hello Ideal AI\"");
   }, 8000);
 }
 
 function startWakeListening() {
-  if (!recognition || isListening || isSpeaking) return;
+  if (!recognition || isListening || isSpeaking || mediaBlockingWake) return;
   try {
     recognition.start();
   } catch {
@@ -327,7 +333,9 @@ function stopWakeListening() {
   if (!recognition || !isListening) return;
   try {
     recognition.stop();
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 
 function setVoiceText(status, transcript) {
@@ -337,8 +345,12 @@ function setVoiceText(status, transcript) {
 
 function setListeningState(val) {
   isListening = val;
-  if (micBtn) micBtn.classList.toggle("listening", val);
-  if (micBtn) micBtn.classList.toggle("continuous", continuousListeningEnabled);
+  if (micBtn) {
+    micBtn.classList.toggle("listening", val);
+    micBtn.classList.toggle("continuous", continuousListeningEnabled);
+  }
+  if (val && !isSpeaking) setVizActive(true);
+  if (!val && !isSpeaking) setVizActive(false);
 }
 
 function loadVoices() {
@@ -353,31 +365,26 @@ function getBestVoice(isTeluguReply) {
   if (!voices.length) return null;
 
   const femaleNames = [
-    "heera",
-    "swara",
-    "neural",
-    "jenny",
-    "aria",
-    "zira",
-    "samantha",
-    "karen",
-    "moira",
-    "victoria",
-    "female",
+    "heera", "swara", "neural", "jenny", "aria", "zira", "samantha",
+    "karen", "moira", "victoria", "female",
   ];
 
   if (isTeluguReply) {
-    return voices.find((v) => v.lang === "te-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
+    return (
+      voices.find((v) => v.lang === "te-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
       || voices.find((v) => v.lang && v.lang.startsWith("te"))
       || voices.find((v) => v.lang === "hi-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
       || voices.find((v) => v.lang === "en-IN")
-      || null;
+      || null
+    );
   }
 
-  return voices.find((v) => v.lang === "en-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
+  return (
+    voices.find((v) => v.lang === "en-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
     || voices.find((v) => v.lang && v.lang.startsWith("en") && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
     || voices.find((v) => v.lang && v.lang.startsWith("en"))
-    || null;
+    || null
+  );
 }
 
 function cleanForSpeech(text) {
@@ -421,11 +428,12 @@ function speak(text) {
   if (micBtn) micBtn.classList.add("speaking");
 
   showSpeakerAnim(true);
-  setVoiceText("AI is speaking full answer", cleaned.slice(0, 120) + (cleaned.length > 120 ? "..." : ""));
+  setVizActive(true);
+  setVoiceText("Speaking", cleaned.slice(0, 140) + (cleaned.length > 140 ? "…" : ""));
 
   function speakNext() {
     if (index >= chunks.length) {
-      finishSpeaking("Tap the Jarvis mic and speak", "No message box. Voice only.");
+      finishSpeaking("Wake mode active", "Say \"Hello Ideal AI\"");
       return;
     }
 
@@ -434,15 +442,15 @@ function speak(text) {
     const utter = new SpeechSynthesisUtterance(chunk);
 
     utter.lang = chunkIsTe ? "te-IN" : "en-IN";
-    utter.rate = chunkIsTe ? 0.82 : 0.86;
-    utter.pitch = 1.14;
+    utter.rate = chunkIsTe ? 0.82 : 0.88;
+    utter.pitch = 1.12;
     utter.volume = 1.0;
 
     const voice = getBestVoice(chunkIsTe);
     if (voice) utter.voice = voice;
 
     utter.onend = speakNext;
-    utter.onerror = () => finishSpeaking("Tap the Jarvis mic and speak", "Voice stopped");
+    utter.onerror = () => finishSpeaking("Wake mode active", "Voice interrupted");
 
     window.speechSynthesis.speak(utter);
   }
@@ -456,14 +464,15 @@ function finishSpeaking(status, transcript) {
   if (micBtn) micBtn.classList.remove("speaking");
 
   showSpeakerAnim(false);
+  setVizActive(false);
   setVoiceText(status, transcript);
-  startWakeListening();
+  if (!mediaBlockingWake) startWakeListening();
 }
 
 function stopSpeaking() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
 
-  finishSpeaking("Wake mode active", "Say 'Hello Ideal AI'");
+  finishSpeaking("Wake mode active", "Say \"Hello Ideal AI\"");
 }
 
 function showSpeakerAnim(show) {
@@ -491,7 +500,7 @@ function addMessage(role, content) {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function showToast(msg, duration = 2200) {
+function showToast(msg, duration = 2400) {
   if (!toastEl) return;
 
   toastEl.textContent = msg;
@@ -527,7 +536,7 @@ function hideTyping() {
 
 function fallbackReplyForCurrentLanguage(msg) {
   return isTeluguText(msg)
-    ? "సంబంధం సమస్య వచ్చింది. దయచేసి మళ్లీ ప్రయత్నించండి."
+    ? "సర్వర్ సమస్య. దయచేసి మళ్లీ ప్రయత్నించండి."
     : "Connection error. Please try again.";
 }
 
@@ -543,46 +552,62 @@ function clearMediaOverlay() {
 function closeMediaOverlay() {
   clearMediaOverlay();
 
-  if (mediaOverlay) mediaOverlay.classList.add("hidden");
+  if (mediaOverlay) {
+    mediaOverlay.classList.add("hidden");
+    mediaOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  mediaBlockingWake = false;
+  setVoiceText("Wake mode active", "Say \"Hello Ideal AI\"");
+  if (!isSpeaking) startWakeListening();
+}
+
+function openMediaOverlay() {
+  if (!mediaOverlay) return;
+  mediaBlockingWake = true;
+  stopWakeListening();
+  mediaOverlay.classList.remove("hidden");
+  mediaOverlay.setAttribute("aria-hidden", "false");
 }
 
 function showImagesOverlay(images) {
   if (!mediaOverlay || !mediaContent || !Array.isArray(images) || images.length === 0) return;
 
   clearMediaOverlay();
+  openMediaOverlay();
 
   const img = document.createElement("img");
   img.className = "media-image";
-  img.alt = "Campus Photo";
+  img.alt = "Campus photo";
+  img.decoding = "async";
+  img.fetchPriority = "high";
 
   mediaContent.appendChild(img);
-  mediaOverlay.classList.remove("hidden");
 
   let index = 0;
 
   function setImage() {
     img.style.opacity = "0";
-
-    setTimeout(() => {
-      img.src = images[index];
-      img.alt = `Campus Photo ${index + 1}`;
-      img.style.opacity = "1";
-    }, 150);
+    const nextSrc = images[index];
+    requestAnimationFrame(() => {
+      img.src = nextSrc;
+      img.alt = `Campus photo ${index + 1}`;
+      requestAnimationFrame(() => {
+        img.style.opacity = "1";
+      });
+    });
   }
 
   setImage();
 
   sliderInterval = setInterval(() => {
     index += 1;
-
     if (index >= images.length) {
       closeMediaOverlay();
     } else {
       setImage();
     }
-  }, 2500);
-
-  mediaOverlay.onclick = closeMediaOverlay;
+  }, 3200);
 }
 
 function showVideoOverlay(videoUrl) {
@@ -592,45 +617,50 @@ function showVideoOverlay(videoUrl) {
   }
 
   clearMediaOverlay();
+  openMediaOverlay();
 
   const video = document.createElement("video");
   video.className = "media-video";
   video.src = videoUrl;
-  video.autoplay = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.preload = "auto";
   video.controls = true;
   video.playsInline = true;
 
-  video.onended = closeMediaOverlay;
-
-  video.onerror = () => {
+  video.addEventListener("ended", () => closeMediaOverlay());
+  video.addEventListener("error", () => {
     closeMediaOverlay();
-    showToast("Video file is missing or cannot be played");
-  };
+    showToast("Video could not be played");
+  });
 
   mediaContent.appendChild(video);
-  mediaOverlay.classList.remove("hidden");
 
-  mediaOverlay.onclick = (event) => {
-    if (event.target === mediaOverlay) {
-      video.pause();
-      closeMediaOverlay();
-    }
-  };
+  video.load();
+  const playAttempt = video.play();
+  if (playAttempt && typeof playAttempt.catch === "function") {
+    playAttempt.catch(() => {
+      /* autoplay blocked — user can press play */
+    });
+  }
 }
 
 function handleApiResponse(data) {
-  if (!data || typeof data !== "object") return;
+  if (!data || typeof data !== "object") return false;
 
   if (data.show_images === true && Array.isArray(data.images) && data.images.length > 0) {
     showImagesOverlay(data.images);
-    return;
+    return true;
   }
 
   const videoUrl = data.video_url || data.video;
 
   if (data.show_video === true && typeof videoUrl === "string" && videoUrl) {
     showVideoOverlay(videoUrl);
+    return true;
   }
+
+  return false;
 }
 
 async function sendMessage(msg) {
@@ -640,7 +670,7 @@ async function sendMessage(msg) {
   isRequestInFlight = true;
 
   stopSpeaking();
-  setVoiceText("Processing your question", trimmedMessage);
+  setVoiceText("Processing", trimmedMessage);
   addMessage("user", trimmedMessage);
 
   conversationHistory.push({ role: "user", content: trimmedMessage });
@@ -676,9 +706,19 @@ async function sendMessage(msg) {
     addMessage("assistant", reply);
     conversationHistory.push({ role: "assistant", content: reply });
 
-    handleApiResponse(data);
+    const showedMedia = handleApiResponse(data);
+    const isVideo = Boolean(data.show_video && (data.video_url || data.video));
 
-    setTimeout(() => speak(reply), 150);
+    if (showedMedia) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (isVideo) return;
+          speak(reply);
+        });
+      });
+    } else {
+      setTimeout(() => speak(reply), 120);
+    }
   } catch {
     hideTyping();
 

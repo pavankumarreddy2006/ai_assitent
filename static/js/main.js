@@ -8,14 +8,17 @@ let voices = [];
 let finalTranscript = "";
 let sliderInterval = null;
 let isRequestInFlight = false;
-let continuousListeningEnabled = false;
-let shouldKeepListening = false;
+let continuousMode = false;
 let wakeWordDetected = false;
 let pendingCommandTimeout = null;
 let mediaBlockingWake = false;
-const WAKE_WORDS = ["hello ideal ai", "hello idol ai", "hello ideal a i"];
+let selectedLang = "en-IN"; // Default language
+
+const WAKE_WORDS = ["hello ideal ai", "hello idol ai", "hello ideal a i", "హలో ఐడియల్ ఏఐ"];
 
 const API_BASE = "/assistant-api";
+
+// DOM References
 let messagesEl = null;
 let welcomeEl = null;
 let micBtn = null;
@@ -86,16 +89,16 @@ function initializeDomReferencesAndHandlers() {
   setupSpeechRecognition();
   loadVoices();
 
-  if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = loadVoices;
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
   if (infoToggle) infoToggle.addEventListener("click", () => infoPanel && infoPanel.classList.add("open"));
   if (infoClose) infoClose.addEventListener("click", () => infoPanel && infoPanel.classList.remove("open"));
   if (stopSpeakBtn) stopSpeakBtn.addEventListener("click", stopSpeaking);
+
   if (micBtn) {
     micBtn.addEventListener("click", handleMicClick);
-    micBtn.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      toggleContinuousListening();
-    });
     micBtn.setAttribute("aria-label", "Microphone — tap to toggle listening");
   }
 
@@ -114,10 +117,10 @@ function initializeDomReferencesAndHandlers() {
   });
 
   if (!recognition) {
-    setVoiceText("Voice not supported", "Use suggestion chips or a Chromium-based browser.");
+    setVoiceText("Voice not supported", "Please use a modern browser like Chrome or Edge.");
   } else {
-    setVoiceText("Wake mode active", "Say \"Hello Ideal AI\"");
-    startWakeListening();
+    setVoiceText("Wake mode active", "Say \"Hello Ideal AI\" to start.");
+    startListening(); 
   }
 }
 
@@ -132,40 +135,25 @@ function handleMicClick() {
     return;
   }
 
-  try {
-    if (isListening) {
-      shouldKeepListening = false;
-      recognition.stop();
-    } else {
-      stopSpeaking();
-      shouldKeepListening = continuousListeningEnabled;
-      recognition.start();
-    }
-  } catch {
-    setListeningState(false);
-    showToast("Voice could not start. Please try again.");
+  if (isListening) {
+    recognition.stop();
+    setVoiceText("Mic toggled OFF", "Tap to start listening again.");
+  } else {
+    wakeWordDetected = true; // Manual trigger treats it as if wake word was said
+    startListening();
+    setVoiceText("Mic toggled ON", "How can I help you?");
   }
-}
-
-function toggleContinuousListening() {
-  continuousListeningEnabled = !continuousListeningEnabled;
-  shouldKeepListening = continuousListeningEnabled;
-  const status = continuousListeningEnabled ? "Continuous mode ON" : "Continuous mode OFF";
-  setVoiceText(status, "Double-click the mic to toggle continuous listening.");
-  showToast(continuousListeningEnabled ? "Continuous listening enabled" : "Continuous listening disabled");
 }
 
 async function checkHealth() {
   try {
     const res = await fetch(`${API_BASE}/healthz`, { cache: "no-store" });
-    if (!res.ok) throw new Error("Health failed");
     const data = await res.json();
-
-    if (statusDot && data.status === "ok") statusDot.classList.add("active");
-    if (sysStatusEl && data.status === "ok") sysStatusEl.textContent = "";
+    if (statusDot) statusDot.classList.toggle("active", data.status === "ok");
+    if (sysStatusEl) sysStatusEl.textContent = "";
   } catch {
     if (statusDot) statusDot.classList.remove("active");
-    if (sysStatusEl) sysStatusEl.textContent = "Reconnecting to server…";
+    if (sysStatusEl) sysStatusEl.textContent = "Server connection lost";
   }
 }
 
@@ -173,72 +161,40 @@ async function loadCollegeInfo() {
   if (!infoContent) return;
   try {
     const res = await fetch(`${API_BASE}/college-info`, { cache: "no-store" });
-    if (!res.ok) throw new Error("College info failed");
     const data = await res.json();
-
     infoContent.innerHTML = `
       <div class="info-section">
-        <div class="info-label">About this assistant</div>
-        <p class="ai-copy">Ideal AI answers college questions, weather, news, and general queries in English or Telugu — voice-first.</p>
+        <div class="info-label">Assistant Status</div>
+        <p class="ai-copy">Official Voice AI for Ideal College of Arts & Sciences. Available in English & Telugu.</p>
       </div>
       <div class="info-section">
-        <div class="info-label">Language</div>
-        <div class="ai-rule">Telugu question → Telugu answer.</div>
-        <div class="ai-rule">English question → English answer.</div>
-      </div>
-      <div class="info-section">
-        <div class="info-label">Media</div>
-        <div class="ai-rule">Ask for <strong>college photos</strong> or <strong>college video</strong> for an instant full-screen preview.</div>
-      </div>
-      <div class="info-section">
-        <div class="info-label">Contact</div>
-        <div class="contact-row">${escapeHtml(data.contact || "0884-2384382 / 0884-2384381")}</div>
-        <div class="contact-row">${escapeHtml(data.email || "idealcolleges@gmail.com")}</div>
-        <div class="contact-row"><a class="info-link" href="${escapeAttribute(data.website || "https://idealcollege.edu.in")}" target="_blank" rel="noopener noreferrer">${escapeHtml(data.website || "https://idealcollege.edu.in")}</a></div>
+        <div class="info-label">Contact Details</div>
+        <div class="contact-row">📞 ${escapeHtml(data.contact || "0884-2384382")}</div>
+        <div class="contact-row">📧 ${escapeHtml(data.email || "idealcolleges@gmail.com")}</div>
+        <div class="contact-row">🌐 <a class="info-link" href="${escapeAttribute(data.website || "https://idealcollege.edu.in")}" target="_blank">${escapeHtml(data.website || "idealcollege.edu.in")}</a></div>
       </div>`;
   } catch {
-    infoContent.innerHTML = `<p class="info-loading">Could not load campus desk.</p>`;
+    infoContent.innerHTML = `<p class="info-loading">Information offline</p>`;
   }
 }
 
 async function loadNews() {
   if (!newsContent) return;
   try {
-    const res = await fetch(`${API_BASE}/news?query=latest%20India%20education`, { cache: "no-store" });
-    if (!res.ok) throw new Error("News failed");
-
+    const res = await fetch(`${API_BASE}/news`, { cache: "no-store" });
     const { articles } = await res.json();
-
-    if (!Array.isArray(articles) || articles.length === 0) {
-      newsContent.innerHTML = `<p class="info-loading">No news available.</p>`;
+    if (!articles?.length) {
+      newsContent.innerHTML = `<p class="info-loading">No recent news</p>`;
       return;
     }
-
-    newsContent.innerHTML = "";
-
-    articles.slice(0, 5).forEach((article) => {
-      const item = document.createElement("div");
-      item.className = "news-item";
-
-      const title = document.createElement("div");
-      title.className = "news-title";
-      title.textContent = article.title || "Untitled";
-
-      const source = document.createElement("div");
-      source.className = "news-source";
-      source.textContent = article.source || "Unknown";
-
-      item.appendChild(title);
-      item.appendChild(source);
-
-      if (article.url) {
-        item.addEventListener("click", () => window.open(article.url, "_blank", "noopener,noreferrer"));
-      }
-
-      newsContent.appendChild(item);
-    });
+    newsContent.innerHTML = articles.slice(0, 4).map(a => `
+      <div class="news-item" onclick="window.open('${escapeAttribute(a.url)}', '_blank')">
+        <div class="news-title">${escapeHtml(a.title)}</div>
+        <div class="news-source">${escapeHtml(a.source)}</div>
+      </div>
+    `).join("");
   } catch {
-    newsContent.innerHTML = `<p class="info-loading">Could not fetch news.</p>`;
+    newsContent.innerHTML = `<p class="info-loading">News feed unavailable</p>`;
   }
 }
 
@@ -247,61 +203,91 @@ function setupSpeechRecognition() {
   if (!SpeechRecognition) return;
 
   recognition = new SpeechRecognition();
-  recognition.lang = "en-IN";
+  recognition.lang = selectedLang;
   recognition.continuous = true;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 3;
+  recognition.interimResults = true; // Use interim for faster wake word detection
 
   recognition.onstart = () => {
-    setListeningState(true);
+    isListening = true;
+    if (micBtn) micBtn.classList.add("listening");
     setVizActive(true);
-    setVoiceText("Listening", wakeWordDetected ? "Ask your question now." : "Say \"Hello Ideal AI\"");
   };
 
   recognition.onresult = (event) => {
-    for (let i = event.resultIndex; i < event.results.length; i += 1) {
-      if (!event.results[i].isFinal) continue;
-      const transcript = (event.results[i][0].transcript || "").trim();
-      if (!transcript) continue;
-
-      if (!wakeWordDetected) {
-        if (containsWakeWord(transcript)) {
-          wakeWordDetected = true;
-          resetPendingCommandWindow();
-          setVoiceText("Wake word detected", "Listening for your question…");
+    let interimTranscript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcriptChunk = event.results[i][0].transcript.toLowerCase();
+        if (event.results[i].isFinal) {
+            finalTranscript = transcriptChunk.trim();
+            handleTranscript(finalTranscript);
+        } else {
+            interimTranscript += transcriptChunk;
         }
-        continue;
-      }
-
-      wakeWordDetected = false;
-      clearPendingCommandWindow();
-      setVoiceText("Processing", transcript);
-      sendMessage(transcript);
+    }
+    
+    // Check for wake word in interim if not already detected
+    if (!wakeWordDetected && containsWakeWord(interimTranscript)) {
+        wakeWordDetected = true;
+        setVoiceText("Listening...", "How can I help you?");
+        showToast("Hello! I'm listening.");
+        resetPendingCommandWindow();
     }
   };
 
   recognition.onerror = (event) => {
-    setListeningState(false);
+    console.error("Speech recognition error:", event.error);
+    isListening = false;
+    if (micBtn) micBtn.classList.remove("listening");
     setVizActive(false);
-    shouldKeepListening = false;
-
-    if (event.error === "no-speech") {
-      setVoiceText("No speech detected", "Tap the mic and try again");
-    } else {
-      setVoiceText("Voice error", "Please try again");
+    
+    if (event.error === "not-allowed") {
+        showToast("Microphone access denied.");
+        setVoiceText("Mic Error", "Please allow mic access.");
     }
   };
 
   recognition.onend = () => {
-    setListeningState(false);
+    isListening = false;
+    if (micBtn) micBtn.classList.remove("listening");
     setVizActive(false);
-    if (mediaBlockingWake) return;
-    if (!isSpeaking) startWakeListening();
+    // Auto-restart unless speaking or media is playing
+    if (!isSpeaking && !mediaBlockingWake) {
+        setTimeout(startListening, 500);
+    }
   };
 }
 
+function startListening() {
+    if (!recognition || isListening || isSpeaking || mediaBlockingWake) return;
+    try {
+        recognition.start();
+    } catch (e) {
+        console.warn("Recognition start failed, retrying...", e);
+        setTimeout(startListening, 1000);
+    }
+}
+
+function handleTranscript(text) {
+    if (!text) return;
+
+    if (!wakeWordDetected) {
+        if (containsWakeWord(text)) {
+            wakeWordDetected = true;
+            setVoiceText("Listening...", "Say your question.");
+            resetPendingCommandWindow();
+        }
+        return;
+    }
+
+    // Process question
+    wakeWordDetected = false;
+    clearPendingCommandWindow();
+    setVoiceText("Processing", text);
+    sendMessage(text);
+}
+
 function containsWakeWord(text) {
-  const normalized = (text || "").toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+  const normalized = (text || "").toLowerCase();
   return WAKE_WORDS.some((phrase) => normalized.includes(phrase));
 }
 
@@ -317,40 +303,12 @@ function resetPendingCommandWindow() {
   pendingCommandTimeout = setTimeout(() => {
     wakeWordDetected = false;
     setVoiceText("Wake mode active", "Say \"Hello Ideal AI\"");
-  }, 8000);
-}
-
-function startWakeListening() {
-  if (!recognition || isListening || isSpeaking || mediaBlockingWake) return;
-  try {
-    recognition.start();
-  } catch {
-    setTimeout(startWakeListening, 800);
-  }
-}
-
-function stopWakeListening() {
-  if (!recognition || !isListening) return;
-  try {
-    recognition.stop();
-  } catch {
-    /* ignore */
-  }
+  }, 10000);
 }
 
 function setVoiceText(status, transcript) {
   if (voiceStatus) voiceStatus.textContent = status || "";
   if (voiceTranscript) voiceTranscript.textContent = transcript || "";
-}
-
-function setListeningState(val) {
-  isListening = val;
-  if (micBtn) {
-    micBtn.classList.toggle("listening", val);
-    micBtn.classList.toggle("continuous", continuousListeningEnabled);
-  }
-  if (val && !isSpeaking) setVizActive(true);
-  if (!val && !isSpeaking) setVizActive(false);
 }
 
 function loadVoices() {
@@ -361,118 +319,54 @@ function isTeluguText(text) {
   return /[\u0C00-\u0C7F]/.test(text || "");
 }
 
-function getBestVoice(isTeluguReply) {
+function getBestVoice(isTelugu) {
   if (!voices.length) return null;
-
-  const femaleNames = [
-    "heera", "swara", "neural", "jenny", "aria", "zira", "samantha",
-    "karen", "moira", "victoria", "female",
-  ];
-
-  if (isTeluguReply) {
-    return (
-      voices.find((v) => v.lang === "te-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
-      || voices.find((v) => v.lang && v.lang.startsWith("te"))
-      || voices.find((v) => v.lang === "hi-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
-      || voices.find((v) => v.lang === "en-IN")
-      || null
-    );
+  if (isTelugu) {
+    return voices.find(v => v.lang.startsWith("te")) || voices.find(v => v.lang.startsWith("hi")) || voices[0];
   }
-
-  return (
-    voices.find((v) => v.lang === "en-IN" && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
-    || voices.find((v) => v.lang && v.lang.startsWith("en") && femaleNames.some((n) => v.name.toLowerCase().includes(n)))
-    || voices.find((v) => v.lang && v.lang.startsWith("en"))
-    || null
-  );
-}
-
-function cleanForSpeech(text) {
-  return String(text || "")
-    .replace(/https?:\/\/[^\s]+/g, "")
-    .replace(/[\r\n]+/g, ". ")
-    .replace(/[*_~`#[\]]/g, "")
-    .replace(/\d+\.\s+/g, "")
-    .replace(/\.\s*\.\s*\./g, ".")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return voices.find(v => v.name.includes("Google") && v.lang.startsWith("en-IN")) ||
+         voices.find(v => v.lang.startsWith("en")) || voices[0];
 }
 
 function speak(text) {
-  if (!window.speechSynthesis) return;
+  if (!window.speechSynthesis || !text) return;
 
-  stopWakeListening();
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-  const cleaned = cleanForSpeech(text);
-  if (!cleaned) return;
-
-  const sentences = cleaned.match(/[^.!?।]+[.!?।]*/g) || [cleaned];
-  const chunks = [];
-  let current = "";
-
-  sentences.forEach((sentence) => {
-    if ((current + sentence).length > 220) {
-      if (current.trim()) chunks.push(current.trim());
-      current = sentence;
-    } else {
-      current += ` ${sentence}`;
-    }
-  });
-
-  if (current.trim()) chunks.push(current.trim());
-
-  let index = 0;
+  window.speechSynthesis.cancel();
   isSpeaking = true;
-
-  if (micBtn) micBtn.classList.add("speaking");
-
   showSpeakerAnim(true);
   setVizActive(true);
-  setVoiceText("Speaking", cleaned.slice(0, 140) + (cleaned.length > 140 ? "…" : ""));
 
-  function speakNext() {
-    if (index >= chunks.length) {
-      finishSpeaking("Wake mode active", "Say \"Hello Ideal AI\"");
-      return;
-    }
+  const isTe = isTeluguText(text);
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.voice = getBestVoice(isTe);
+  utter.rate = isTe ? 0.9 : 1.0;
+  utter.pitch = 1.0;
+  utter.lang = isTe ? "te-IN" : "en-IN";
 
-    const chunk = chunks[index++];
-    const chunkIsTe = isTeluguText(chunk);
-    const utter = new SpeechSynthesisUtterance(chunk);
+  utter.onend = () => {
+    isSpeaking = false;
+    showSpeakerAnim(false);
+    setVizActive(false);
+    startListening();
+  };
 
-    utter.lang = chunkIsTe ? "te-IN" : "en-IN";
-    utter.rate = chunkIsTe ? 0.82 : 0.88;
-    utter.pitch = 1.12;
-    utter.volume = 1.0;
+  utter.onerror = (e) => {
+    console.error("Speech error", e);
+    isSpeaking = false;
+    showSpeakerAnim(false);
+    setVizActive(false);
+    startListening();
+  };
 
-    const voice = getBestVoice(chunkIsTe);
-    if (voice) utter.voice = voice;
-
-    utter.onend = speakNext;
-    utter.onerror = () => finishSpeaking("Wake mode active", "Voice interrupted");
-
-    window.speechSynthesis.speak(utter);
-  }
-
-  setTimeout(speakNext, 80);
-}
-
-function finishSpeaking(status, transcript) {
-  isSpeaking = false;
-
-  if (micBtn) micBtn.classList.remove("speaking");
-
-  showSpeakerAnim(false);
-  setVizActive(false);
-  setVoiceText(status, transcript);
-  if (!mediaBlockingWake) startWakeListening();
+  window.speechSynthesis.speak(utter);
 }
 
 function stopSpeaking() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-  finishSpeaking("Wake mode active", "Say \"Hello Ideal AI\"");
+  isSpeaking = false;
+  showSpeakerAnim(false);
+  setVizActive(false);
+  startListening();
 }
 
 function showSpeakerAnim(show) {
@@ -485,251 +379,104 @@ function addMessage(role, content) {
 
   const div = document.createElement("div");
   div.className = `message ${role}`;
-
-  const wrapper = document.createElement("div");
-  wrapper.className = "msg-wrapper";
-
-  const bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.textContent = content || "";
-
-  wrapper.appendChild(bubble);
-  div.appendChild(wrapper);
+  div.innerHTML = `<div class="msg-wrapper"><div class="bubble">${escapeHtml(content)}</div></div>`;
+  
   messagesEl.appendChild(div);
-
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function showToast(msg, duration = 2400) {
+function showToast(msg) {
   if (!toastEl) return;
-
   toastEl.textContent = msg;
-  toastEl.style.display = "block";
-
-  setTimeout(() => {
-    if (toastEl) toastEl.style.display = "none";
-  }, duration);
+  toastEl.classList.add("visible");
+  setTimeout(() => toastEl.classList.remove("visible"), 3000);
 }
 
 function escapeHtml(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  const p = document.createElement('p');
+  p.textContent = str;
+  return p.innerHTML;
 }
 
 function escapeAttribute(str) {
-  return escapeHtml(str).replace(/'/g, "&#39;");
+  return escapeHtml(str).replace(/"/g, "&quot;");
 }
 
 function showTyping() {
-  if (!typingIndicator || !messagesEl) return;
-
-  typingIndicator.style.display = "flex";
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  if (typingIndicator) typingIndicator.style.display = "flex";
+  if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function hideTyping() {
   if (typingIndicator) typingIndicator.style.display = "none";
 }
 
-function fallbackReplyForCurrentLanguage(msg) {
-  return isTeluguText(msg)
-    ? "సర్వర్ సమస్య. దయచేసి మళ్లీ ప్రయత్నించండి."
-    : "Connection error. Please try again.";
-}
-
-function clearMediaOverlay() {
-  if (sliderInterval) {
-    clearInterval(sliderInterval);
-    sliderInterval = null;
-  }
-
-  if (mediaContent) mediaContent.innerHTML = "";
-}
-
-function closeMediaOverlay() {
-  clearMediaOverlay();
-
-  if (mediaOverlay) {
-    mediaOverlay.classList.add("hidden");
-    mediaOverlay.setAttribute("aria-hidden", "true");
-  }
-
-  mediaBlockingWake = false;
-  setVoiceText("Wake mode active", "Say \"Hello Ideal AI\"");
-  if (!isSpeaking) startWakeListening();
-}
-
-function openMediaOverlay() {
-  if (!mediaOverlay) return;
-  mediaBlockingWake = true;
-  stopWakeListening();
-  mediaOverlay.classList.remove("hidden");
-  mediaOverlay.setAttribute("aria-hidden", "false");
-}
-
-function showImagesOverlay(images) {
-  if (!mediaOverlay || !mediaContent || !Array.isArray(images) || images.length === 0) return;
-
-  clearMediaOverlay();
-  openMediaOverlay();
-
-  const img = document.createElement("img");
-  img.className = "media-image";
-  img.alt = "Campus photo";
-  img.decoding = "async";
-  img.fetchPriority = "high";
-
-  mediaContent.appendChild(img);
-
-  let index = 0;
-
-  function setImage() {
-    img.style.opacity = "0";
-    const nextSrc = images[index];
-    requestAnimationFrame(() => {
-      img.src = nextSrc;
-      img.alt = `Campus photo ${index + 1}`;
-      requestAnimationFrame(() => {
-        img.style.opacity = "1";
-      });
-    });
-  }
-
-  setImage();
-
-  sliderInterval = setInterval(() => {
-    index += 1;
-    if (index >= images.length) {
-      closeMediaOverlay();
-    } else {
-      setImage();
-    }
-  }, 3200);
-}
-
-function showVideoOverlay(videoUrl) {
-  if (!mediaOverlay || !mediaContent || !videoUrl) {
-    showToast("Video is not available right now");
-    return;
-  }
-
-  clearMediaOverlay();
-  openMediaOverlay();
-
-  const video = document.createElement("video");
-  video.className = "media-video";
-  video.src = videoUrl;
-  video.setAttribute("playsinline", "");
-  video.setAttribute("webkit-playsinline", "");
-  video.preload = "auto";
-  video.controls = true;
-  video.playsInline = true;
-
-  video.addEventListener("ended", () => closeMediaOverlay());
-  video.addEventListener("error", () => {
-    closeMediaOverlay();
-    showToast("Video could not be played");
-  });
-
-  mediaContent.appendChild(video);
-
-  video.load();
-  const playAttempt = video.play();
-  if (playAttempt && typeof playAttempt.catch === "function") {
-    playAttempt.catch(() => {
-      /* autoplay blocked — user can press play */
-    });
-  }
-}
-
-function handleApiResponse(data) {
-  if (!data || typeof data !== "object") return false;
-
-  if (data.show_images === true && Array.isArray(data.images) && data.images.length > 0) {
-    showImagesOverlay(data.images);
-    return true;
-  }
-
-  const videoUrl = data.video_url || data.video;
-
-  if (data.show_video === true && typeof videoUrl === "string" && videoUrl) {
-    showVideoOverlay(videoUrl);
-    return true;
-  }
-
-  return false;
-}
-
 async function sendMessage(msg) {
   if (!msg || isRequestInFlight) return;
-  const trimmedMessage = String(msg).trim();
-  if (!trimmedMessage) return;
   isRequestInFlight = true;
 
   stopSpeaking();
-  setVoiceText("Processing", trimmedMessage);
-  addMessage("user", trimmedMessage);
-
-  conversationHistory.push({ role: "user", content: trimmedMessage });
+  addMessage("user", msg);
+  conversationHistory.push({ role: "user", content: msg });
   showTyping();
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
     const res = await fetch(`${API_BASE}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: trimmedMessage, conversationHistory: conversationHistory.slice(-12) }),
-      signal: controller.signal,
+      body: JSON.stringify({ 
+        message: msg, 
+        conversationHistory: conversationHistory.slice(-10) 
+      }),
     });
-    clearTimeout(timeoutId);
 
-    let data = null;
-    try {
-      data = await res.json();
-    } catch {
-      data = {};
-    }
-    if (!res.ok) throw new Error(data.error || "Chat request failed");
-
+    const data = await res.json();
     hideTyping();
 
-    const reply = data.reply || (
-      isTeluguText(trimmedMessage)
-        ? "సమాధానం రాలేదు. మళ్లీ ప్రయత్నించండి."
-        : "I did not get a response. Please try again."
-    );
+    if (!res.ok) throw new Error(data.error || "Server error");
 
+    const reply = data.reply || "I couldn't process that.";
     addMessage("assistant", reply);
     conversationHistory.push({ role: "assistant", content: reply });
 
-    const showedMedia = handleApiResponse(data);
-    const isVideo = Boolean(data.show_video && (data.video_url || data.video));
+    if (data.show_images) showImagesOverlay(data.images);
+    else if (data.show_video) showVideoOverlay(data.video_url);
 
-    if (showedMedia) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (isVideo) return;
-          speak(reply);
-        });
-      });
-    } else {
-      setTimeout(() => speak(reply), 120);
-    }
-  } catch {
-    hideTyping();
-
-    const reply = fallbackReplyForCurrentLanguage(trimmedMessage);
-    addMessage("assistant", reply);
     speak(reply);
+  } catch (err) {
+    hideTyping();
+    const fallback = isTeluguText(msg) ? "క్షమించండి, సర్వర్ సమస్య వచ్చింది." : "Sorry, I'm having trouble connecting.";
+    addMessage("assistant", fallback);
+    speak(fallback);
   } finally {
     isRequestInFlight = false;
   }
 }
 
+function showImagesOverlay(images) {
+    if (!mediaOverlay || !images?.length) return;
+    mediaBlockingWake = true;
+    mediaOverlay.classList.remove("hidden");
+    mediaContent.innerHTML = `<img src="${images[0]}" class="media-image">`;
+}
+
+function showVideoOverlay(url) {
+    if (!mediaOverlay || !url) return;
+    mediaBlockingWake = true;
+    mediaOverlay.classList.remove("hidden");
+    mediaContent.innerHTML = `
+      <video src="${url}" class="media-video" controls autoplay></video>
+    `;
+}
+
+function closeMediaOverlay() {
+    mediaOverlay.classList.add("hidden");
+    mediaContent.innerHTML = "";
+    mediaBlockingWake = false;
+    startListening();
+}
+
+// Global start
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeDomReferencesAndHandlers);
 } else {

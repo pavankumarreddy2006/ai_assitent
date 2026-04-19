@@ -1,69 +1,87 @@
-from core.intent import classify_intent, extract_city, detect_language
+import logging
+import re
+
+import services.media_service as media_service
+from core.intent import classify_intent, detect_language, extract_city, strip_wake_phrase
 from core.responder import (
     format_college_response,
-    format_weather_response,
+    format_error_response,
+    format_general_response,
     format_news_response,
     format_search_response,
-    format_general_response,
-    format_error_response,
+    format_weather_response,
 )
 from services.college_service import get_college_answer, get_college_context_prompt
 from services.llm_service import query_groq, query_openrouter
-from services.search_service import search_duckduckgo, format_search_results
 from services.news_service import fetch_news
+from services.search_service import format_search_results, search_duckduckgo
 from services.weather_service import get_weather
-import services.media_service as media_service
-import logging
 
 logger = logging.getLogger("college-ai.router")
 
 
 def route_message(message: str, conversation_history: list[dict] | None = None) -> dict:
-    if conversation_history is None:
-        conversation_history = []
-
-    clean_message = str(message or "").strip()
+    history = conversation_history or []
+    clean_message = strip_wake_phrase(str(message or "").strip())
     if not clean_message:
-        return format_error_response("Please say or type a message.")
+        return _with_language(format_error_response("Please say or type a message."), "en")
 
     lang = detect_language(clean_message)
     intent = classify_intent(clean_message)
 
     try:
         if intent == "images_intent":
-            return {
-                "reply": "Showing campus images" if lang == "en" else "క్యాంపస్ చిత్రాలు చూపిస్తున్నాను",
-                "intent": "images",
-                "source": "College Media",
-                "show_images": True,
-                "images": media_service.get_college_images(),
-                "show_video": False,
-                "video_url": None,
-            }
+            return _with_language(
+                {
+                    "reply": "Showing campus images now." if lang == "en" else "\u0c07\u0c2a\u0c4d\u0c2a\u0c41\u0c21\u0c41 \u0c15\u0c4d\u0c2f\u0c3e\u0c02\u0c2a\u0c38\u0c4d \u0c1a\u0c3f\u0c24\u0c4d\u0c30\u0c3e\u0c32\u0c41 \u0c1a\u0c42\u0c2a\u0c3f\u0c38\u0c4d\u0c24\u0c41\u0c28\u0c4d\u0c28\u0c3e\u0c28\u0c41.",
+                    "intent": "images",
+                    "source": "College Media",
+                    "show_images": True,
+                    "images": media_service.get_college_images(),
+                    "show_video": False,
+                    "video_url": None,
+                    "media_duration": 6,
+                },
+                lang,
+            )
         if intent == "video_intent":
-            return {
-                "reply": "Playing college video" if lang == "en" else "కాలేజీ వీడియో ప్లే చేస్తున్నాను",
-                "intent": "video",
-                "source": "College Media",
-                "show_images": False,
-                "images": [],
-                "show_video": True,
-                "video_url": media_service.get_college_video(),
-            }
+            return _with_language(
+                {
+                    "reply": "Playing the college video now." if lang == "en" else "\u0c07\u0c2a\u0c4d\u0c2a\u0c41\u0c21\u0c41 \u0c15\u0c3e\u0c32\u0c47\u0c1c\u0c40 \u0c35\u0c40\u0c21\u0c3f\u0c2f\u0c4b \u0c2a\u0c4d\u0c32\u0c47 \u0c1a\u0c47\u0c38\u0c4d\u0c24\u0c41\u0c28\u0c4d\u0c28\u0c3e\u0c28\u0c41.",
+                    "intent": "video",
+                    "source": "College Media",
+                    "show_images": False,
+                    "images": [],
+                    "show_video": True,
+                    "video_url": media_service.get_college_video(),
+                    "media_duration": 18,
+                },
+                lang,
+            )
         if intent == "college":
-            return _handle_college(clean_message, conversation_history, lang)
+            return _with_language(_handle_college(clean_message, history, lang), lang)
         if intent == "weather":
-            return _handle_weather(clean_message, lang)
+            return _with_language(_handle_weather(clean_message, lang), lang)
         if intent == "news":
-            return _handle_news(clean_message, lang)
+            return _with_language(_handle_news(clean_message, lang), lang)
         if intent == "search":
-            return _handle_search(clean_message, conversation_history, lang)
-        return _handle_general(clean_message, conversation_history, lang)
-    except Exception as e:
-        logger.exception("Router error: %s", e)
-        if lang == "te":
-            return format_error_response("క్షమించండి, ఏదో సమస్య వచ్చింది. దయచేసి మళ్ళీ ప్రయత్నించండి.")
-        return format_error_response("Something went wrong. Please try again.")
+            return _with_language(_handle_search(clean_message, history, lang), lang)
+        return _with_language(_handle_general(clean_message, history, lang), lang)
+    except Exception as exc:
+        logger.exception("Router error: %s", exc)
+        message = (
+            "\u0c15\u0c4d\u0c37\u0c2e\u0c3f\u0c02\u0c1a\u0c02\u0c21\u0c3f, \u0c0f\u0c26\u0c4b \u0c38\u0c2e\u0c38\u0c4d\u0c2f \u0c35\u0c1a\u0c4d\u0c1a\u0c3f\u0c02\u0c26\u0c3f. \u0c26\u0c2f\u0c1a\u0c47\u0c38\u0c3f \u0c2e\u0c33\u0c4d\u0c33\u0c40 \u0c2a\u0c4d\u0c30\u0c2f\u0c24\u0c4d\u0c28\u0c3f\u0c02\u0c1a\u0c02\u0c21\u0c3f."
+            if lang == "te"
+            else "Something went wrong. Please try again."
+        )
+        return _with_language(format_error_response(message), lang)
+
+
+def _with_language(payload: dict, lang: str) -> dict:
+    enriched = dict(payload)
+    enriched.setdefault("language", lang)
+    enriched.setdefault("media_duration", 0)
+    return enriched
 
 
 def _handle_college(message: str, history: list[dict], lang: str) -> dict:
@@ -72,41 +90,38 @@ def _handle_college(message: str, history: list[dict], lang: str) -> dict:
         return format_college_response(result, "College Database")
 
     college_context = get_college_context_prompt()
-
     if lang == "te":
         system_prompt = (
-            "మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.\n\n"
-            "కింది కాలేజీ సమాచారం మాత్రమే ఉపయోగించి తెలుగులో సమాధానం ఇవ్వండి.\n"
-            "సమాచారం లేకపోతే: 'ఆ వివరాలు నా దగ్గర లేవు. దయచేసి కాలేజీని 0884-2384382 లో సంప్రదించండి.'\n\n"
-            f"కాలేజీ సమాచారం:\n{college_context}"
+            "\u0c2e\u0c40\u0c30\u0c41 Ideal College of Arts and Sciences \u0c2f\u0c4a\u0c15\u0c4d\u0c15 \u0c05\u0c27\u0c3f\u0c15\u0c3e\u0c30\u0c3f\u0c15 AI assistant.\n"
+            "\u0c2f\u0c42\u0c1c\u0c30\u0c4d \u0c24\u0c46\u0c32\u0c41\u0c17\u0c41 \u0c32\u0c47\u0c26\u0c3e Roman Telugu \u0c32\u0c4b \u0c2e\u0c3e\u0c1f\u0c4d\u0c32\u0c3e\u0c21\u0c3f\u0c24\u0c47 \u0c38\u0c39\u0c1c\u0c2e\u0c48\u0c28 \u0c24\u0c46\u0c32\u0c41\u0c17\u0c41\u0c32\u0c4b \u0c05\u0c28\u0c47 \u0c38\u0c2e\u0c3e\u0c27\u0c3e\u0c28\u0c02 \u0c07\u0c35\u0c4d\u0c35\u0c02\u0c21\u0c3f.\n"
+            "\u0c38\u0c2e\u0c3e\u0c27\u0c3e\u0c28\u0c02 \u0c38\u0c4d\u0c2a\u0c37\u0c4d\u0c1f\u0c02\u0c17\u0c3e, \u0c1a\u0c15\u0c4d\u0c15\u0c17\u0c3e, \u0c2f\u0c42\u0c1c\u0c30\u0c4d\u0c24\u0c4b interactive \u0c17\u0c3e \u0c09\u0c02\u0c21\u0c3e\u0c32\u0c3f.\n"
+            "\u0c15\u0c3f\u0c02\u0c26 \u0c07\u0c1a\u0c4d\u0c1a\u0c3f\u0c28 college data \u0c28\u0c41, conversation history \u0c28\u0c41, user question \u0c28\u0c41 \u0c15\u0c32\u0c3f\u0c2a\u0c3f \u0c38\u0c30\u0c48\u0c28 answer \u0c07\u0c35\u0c4d\u0c35\u0c02\u0c21\u0c3f.\n"
+            "\u0c38\u0c2e\u0c3e\u0c1a\u0c3e\u0c30\u0c02 \u0c32\u0c47\u0c15\u0c2a\u0c4b\u0c24\u0c47 \u0c24\u0c46\u0c32\u0c3f\u0c2f\u0c26\u0c28\u0c3f \u0c38\u0c4d\u0c2a\u0c37\u0c4d\u0c1f\u0c02\u0c17\u0c3e \u0c1a\u0c46\u0c2a\u0c4d\u0c2a\u0c3f, 0884-2384382 \u0c32\u0c47\u0c26\u0c3e idealcolleges@gmail.com \u0c15\u0c3f contact \u0c1a\u0c47\u0c2f\u0c2e\u0c28\u0c3f \u0c1a\u0c46\u0c2a\u0c4d\u0c2a\u0c02\u0c21\u0c3f.\n\n"
+            f"COLLEGE INFORMATION:\n{college_context}"
         )
     else:
         system_prompt = (
-            "You are the official AI assistant for Ideal College of Arts and Sciences, "
-            "Vidyuth Nagar, Kakinada, Andhra Pradesh.\n\n"
-            "Use ONLY the following college data to answer in English. Be direct, clear, and helpful. "
-            "If information is not available, say: 'I don't have that specific information. "
-            "Please contact the college at 0884-2384382 or email idealcolleges@gmail.com.'\n\n"
+            "You are Ideal College AI, the official assistant for Ideal College of Arts and Sciences.\n"
+            "Answer only in clear English when the user speaks English.\n"
+            "Use the supplied college information, conversation context, and the user question to give accurate, interactive, user-friendly answers.\n"
+            "If exact information is unavailable, say so clearly and guide the user to contact 0884-2384382 or idealcolleges@gmail.com.\n\n"
             f"COLLEGE INFORMATION:\n{college_context}"
         )
 
     try:
         answer = query_groq(message, history, system_prompt, lang=lang)
-        return format_college_response(_finalize_answer(answer, lang), "AI + College Data")
+        return format_college_response(_finalize_answer(answer, lang), "Groq + College Data")
     except Exception:
         try:
             answer = query_openrouter(message, history, system_prompt, lang=lang)
-            return format_college_response(_finalize_answer(answer, lang), "AI + College Data")
+            return format_college_response(_finalize_answer(answer, lang), "OpenRouter + College Data")
         except Exception:
-            if lang == "te":
-                return format_college_response(
-                    "ఆ వివరాలు నా దగ్గర లేవు. దయచేసి కాలేజీని 0884-2384382 లో సంప్రదించండి లేదా idealcolleges@gmail.com కి ఇమెయిల్ చేయండి.",
-                    "College Database",
-                )
-            return format_college_response(
-                "I don't have specific information about that. Please contact the college at 0884-2384382 or email idealcolleges@gmail.com.",
-                "College Database",
+            fallback = (
+                "\u0c06 \u0c35\u0c3f\u0c35\u0c30\u0c3e\u0c32\u0c41 \u0c28\u0c3e \u0c26\u0c17\u0c4d\u0c17\u0c30 \u0c32\u0c47\u0c35\u0c41. \u0c26\u0c2f\u0c1a\u0c47\u0c38\u0c3f \u0c15\u0c3e\u0c32\u0c47\u0c1c\u0c40\u0c28\u0c3f 0884-2384382 \u0c32\u0c4b \u0c38\u0c02\u0c2a\u0c4d\u0c30\u0c26\u0c3f\u0c02\u0c1a\u0c02\u0c21\u0c3f \u0c32\u0c47\u0c26\u0c3e idealcolleges@gmail.com \u0c15\u0c3f email \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f."
+                if lang == "te"
+                else "I do not have that exact information right now. Please contact the college at 0884-2384382 or idealcolleges@gmail.com."
             )
+            return format_college_response(fallback, "College Database")
 
 
 def _handle_weather(message: str, lang: str) -> dict:
@@ -116,41 +131,47 @@ def _handle_weather(message: str, lang: str) -> dict:
 
 
 def _handle_news(message: str, lang: str) -> dict:
-    import re
-
     raw_query = re.sub(
-        r"news|latest|headlines|breaking|today|వార్తలు|తాజా|సమాచారం",
+        r"news|latest|headlines|breaking|today|\u0c35\u0c3e\u0c30\u0c4d\u0c24\u0c32\u0c41|\u0c24\u0c3e\u0c1c\u0c3e|\u0c38\u0c2e\u0c3e\u0c1a\u0c3e\u0c30\u0c02",
         "",
         message,
         flags=re.IGNORECASE,
     ).strip()
-    articles = fetch_news(raw_query or "education India")
-    return format_news_response(articles, lang=lang)
+    return format_news_response(fetch_news(raw_query or "education India"), lang=lang)
 
 
 def _handle_search(message: str, history: list[dict], lang: str) -> dict:
     results = search_duckduckgo(message)
     formatted = format_search_results(results)
-
     if lang == "te":
         prompt = (
-            "వినియోగదారు తెలుగు లేదా Roman Telugu లో అడిగారు. ముందుగా English కి translate చేయకుండా తెలుగులోనే సహజంగా సమాధానం ఇవ్వండి.\n"
-            f"ప్రశ్న: \"{message}\"\n\nవెబ్ సమాచారం:\n{formatted}"
+            "\u0c2f\u0c42\u0c1c\u0c30\u0c4d Telugu \u0c32\u0c47\u0c26\u0c3e Roman Telugu \u0c32\u0c4b \u0c05\u0c21\u0c3f\u0c17\u0c3e\u0c21\u0c41.\n"
+            "\u0c07\u0c02\u0c17\u0c4d\u0c32\u0c3f\u0c37\u0c4d \u0c15\u0c3f translate \u0c1a\u0c47\u0c2f\u0c15\u0c41\u0c02\u0c21\u0c3e \u0c38\u0c39\u0c1c\u0c2e\u0c48\u0c28 \u0c24\u0c46\u0c32\u0c41\u0c17\u0c41\u0c32\u0c4b\u0c28\u0c47 answer \u0c07\u0c35\u0c4d\u0c35\u0c02\u0c21\u0c3f.\n"
+            "\u0c38\u0c2e\u0c3e\u0c27\u0c3e\u0c28\u0c02 user-friendly \u0c17\u0c3e \u0c09\u0c02\u0c21\u0c3e\u0c32\u0c3f.\n"
+            f"Question: {message}\n\nContext:\n{formatted}"
         )
     else:
-        prompt = f"Answer this question in English only. Do not switch to Telugu. Question: \"{message}\"\n\nContext:\n{formatted}"
+        prompt = (
+            "Answer only in English. Keep the reply interactive and easy to understand.\n"
+            f"Question: {message}\n\nContext:\n{formatted}"
+        )
 
     try:
         answer = query_groq(prompt, history, lang=lang)
-        return format_search_response(_finalize_answer(answer, lang), "Internet Search + AI")
+        return format_search_response(_finalize_answer(answer, lang), "Groq + Web Search")
     except Exception:
         try:
             answer = query_openrouter(prompt, history, lang=lang)
-            return format_search_response(_finalize_answer(answer, lang), "Internet Search + AI")
+            return format_search_response(_finalize_answer(answer, lang), "OpenRouter + Web Search")
         except Exception:
-            fallback = formatted if formatted and formatted.strip() else (
-                "సరైన సమాచారం ప్రస్తుతం దొరకలేదు. దయచేసి మరోసారి అడగండి." if lang == "te"
-                else "I could not find reliable information right now. Please try another query."
+            fallback = (
+                formatted
+                if formatted and formatted.strip()
+                else (
+                    "\u0c38\u0c30\u0c48\u0c28 \u0c38\u0c2e\u0c3e\u0c1a\u0c3e\u0c30\u0c02 \u0c2a\u0c4d\u0c30\u0c38\u0c4d\u0c24\u0c41\u0c24\u0c02 \u0c26\u0c4a\u0c30\u0c15\u0c32\u0c47\u0c26\u0c41. \u0c26\u0c2f\u0c1a\u0c47\u0c38\u0c3f \u0c2e\u0c30\u0c4b\u0c38\u0c3e\u0c30\u0c3f \u0c05\u0c21\u0c17\u0c02\u0c21\u0c3f."
+                    if lang == "te"
+                    else "I could not find reliable information right now. Please try another query."
+                )
             )
             return format_search_response(fallback, "Internet Search")
 
@@ -158,12 +179,15 @@ def _handle_search(message: str, history: list[dict], lang: str) -> dict:
 def _handle_general(message: str, history: list[dict], lang: str) -> dict:
     if lang == "te":
         prompt = (
-            "User Telugu/Roman Telugu lo matladaru. English ki translate cheyyakunda Telugu lone natural ga answer ivvandi.\n\n"
+            "User Telugu \u0c32\u0c47\u0c26\u0c3e Roman Telugu \u0c32\u0c4b \u0c2e\u0c3e\u0c1f\u0c4d\u0c32\u0c3e\u0c21\u0c3e\u0c30\u0c41.\n"
+            "English ki switch avvakunda natural Telugu lone answer ivvandi.\n"
+            "Answer warm ga, interactive ga, clear ga undali.\n\n"
             f"User message: {message}"
         )
     else:
         prompt = (
-            "The user wrote in English. Reply only in English. Do not switch to Telugu unless the user switches language.\n\n"
+            "The user wrote in English. Reply only in clear, natural English.\n"
+            "Keep the answer interactive and helpful.\n\n"
             f"User message: {message}"
         )
 
@@ -179,7 +203,7 @@ def _handle_general(message: str, history: list[dict], lang: str) -> dict:
             formatted = format_search_results(results)
             if not formatted or "couldn't find relevant information" in formatted.lower():
                 formatted = (
-                    "క్షమించండి, ప్రస్తుతం సరైన సమాధానం ఇవ్వలేకపోయాను. దయచేసి ప్రశ్నను కొంచెం వివరంగా అడగండి."
+                    "\u0c15\u0c4d\u0c37\u0c2e\u0c3f\u0c02\u0c1a\u0c02\u0c21\u0c3f, \u0c2a\u0c4d\u0c30\u0c38\u0c4d\u0c24\u0c41\u0c24\u0c02 \u0c38\u0c30\u0c48\u0c28 \u0c38\u0c2e\u0c3e\u0c27\u0c3e\u0c28\u0c02 \u0c07\u0c35\u0c4d\u0c35\u0c32\u0c47\u0c15\u0c2a\u0c4b\u0c2f\u0c3e\u0c28\u0c41. \u0c26\u0c2f\u0c1a\u0c47\u0c38\u0c3f \u0c2a\u0c4d\u0c30\u0c36\u0c4d\u0c28\u0c28\u0c41 \u0c15\u0c4a\u0c02\u0c1a\u0c46\u0c02 \u0c35\u0c3f\u0c35\u0c30\u0c02\u0c17\u0c3e \u0c05\u0c21\u0c17\u0c02\u0c21\u0c3f."
                     if lang == "te"
                     else "Sorry, I could not answer that clearly right now. Please ask with a bit more detail."
                 )
@@ -190,10 +214,11 @@ def _finalize_answer(answer: str, lang: str) -> str:
     text = str(answer or "").strip()
     if not text:
         return (
-            "క్షమించండి, సరైన సమాధానం దొరకలేదు. దయచేసి ప్రశ్నను ఇంకొంచెం స్పష్టంగా అడగండి."
+            "\u0c15\u0c4d\u0c37\u0c2e\u0c3f\u0c02\u0c1a\u0c02\u0c21\u0c3f, \u0c38\u0c30\u0c48\u0c28 \u0c38\u0c2e\u0c3e\u0c27\u0c3e\u0c28\u0c02 \u0c26\u0c4a\u0c30\u0c15\u0c32\u0c47\u0c26\u0c41. \u0c26\u0c2f\u0c1a\u0c47\u0c38\u0c3f \u0c2a\u0c4d\u0c30\u0c36\u0c4d\u0c28\u0c28\u0c41 \u0c07\u0c02\u0c15\u0c4a\u0c02\u0c1a\u0c46\u0c02 \u0c38\u0c4d\u0c2a\u0c37\u0c4d\u0c1f\u0c02\u0c17\u0c3e \u0c05\u0c21\u0c17\u0c02\u0c21\u0c3f."
             if lang == "te"
             else "Sorry, I could not find a clear answer. Please ask in a bit more detail."
         )
+
     for prefix in ("As an AI", "As an assistant", "Based on the provided"):
         if text.lower().startswith(prefix.lower()):
             parts = text.split(".", 1)

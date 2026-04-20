@@ -26,7 +26,7 @@ BEHAVIOR:
 - Keep answers clear and easy to understand.
 
 COLLEGE CONTACT (use when needed):
-- Phone: 0884-2384382 / 0884-2384381
+ - Phone: 0884-2384382 / 0884-2384381
 - Email: idealcolleges@gmail.com
 - Website: https://idealcollege.edu.in
 - Location: Vidyuth Nagar, Kakinada, Andhra Pradesh`;

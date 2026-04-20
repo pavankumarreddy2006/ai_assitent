@@ -1,21 +1,30 @@
-import { logger } from "../lib/logger";
+import os
+from typing import List, Dict, Any, Optional
+from openai import OpenAI
+from groq import Groq
+import logging
 
-const AI_BASE_URL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
-const AI_API_KEY = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+logger = logging.getLogger(__name__)
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const OPEN_ROUTER_API = process.env.OPEN_ROUTER_API;
-const GROQ_MODEL = "llama3-8b-8192";
-const OPENROUTER_MODEL = "openai/gpt-3.5-turbo";
-const REPLIT_MODEL = "gpt-5-mini";
+# ====================== ENVIRONMENT VARIABLES ======================
+AI_BASE_URL = os.getenv("AI_INTEGRATIONS_OPENAI_BASE_URL")
+AI_API_KEY = os.getenv("AI_INTEGRATIONS_OPENAI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPEN_ROUTER_API_KEY = os.getenv("OPEN_ROUTER_API")  # renamed for clarity
 
-export const COLLEGE_SYSTEM_PROMPT = `You are the official AI assistant for Ideal College of Arts and Sciences,
+# ====================== MODEL CONFIG ======================
+GROQ_MODEL = "llama3-8b-8192"
+OPENROUTER_MODEL = "openai/gpt-3.5-turbo"
+REPLIT_MODEL = "gpt-5-mini"
+
+# ====================== SYSTEM PROMPTS (FIXED) ======================
+COLLEGE_SYSTEM_PROMPT = """You are the official AI assistant for Ideal College of Arts and Sciences,
 located at Vidyuth Nagar, Kakinada, Andhra Pradesh.
 
 LANGUAGE RULE (VERY IMPORTANT):
-# If the user writes in Telugu → reply ONLY in Telugu.
-# If the user writes in English → reply ONLY in English.
-# If the user writes Roman Telugu → reply in Telugu.
+# If the user writes in Telugu - reply ONLY in Telugu.
+# If the user writes in English - reply ONLY in English.
+# If the user writes Roman Telugu - reply in Telugu.
 # Never switch languages unless the user switches first.
 
 BEHAVIOR:
@@ -26,12 +35,12 @@ BEHAVIOR:
 - Keep answers clear and easy to understand.
 
 COLLEGE CONTACT (use when needed):
- - Phone: 0884-2384382 / 0884-2384381
+- Phone: "0884-2384382" / "0884-2384381"
 - Email: idealcolleges@gmail.com
 - Website: https://idealcollege.edu.in
-- Location: Vidyuth Nagar, Kakinada, Andhra Pradesh`;
+- Location: Vidyuth Nagar, Kakinada, Andhra Pradesh"""
 
-export const TELUGU_SYSTEM_PROMPT = `మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.
+TELUGU_SYSTEM_PROMPT = """మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.
 
 భాషా నియమం: వినియోగదారు తెలుగులో మాట్లాడితే తెలుగులోనే సమాధానం ఇవ్వండి.
 
@@ -41,135 +50,158 @@ export const TELUGU_SYSTEM_PROMPT = `మీరు ఐడియల్ కాల�
 - సమాధానాలు సంక్షిప్తంగా ఉండాలి.
 
 కాలేజీ సంప్రదింపు:
-- ఫోన్: 0884-2384382 / 0884-2384381
+- ఫోన్: "0884-2384382" / "0884-2384381"
 - ఇమెయిల్: idealcolleges@gmail.com
 - వెబ్‌సైట్: https://idealcollege.edu.in
-- చిరునామా: విద్యుత్ నగర్, కాకినాడ, ఆంధ్రప్రదేశ్`;
+- చిరునామా: విద్యుత్ నగర్, కాకినాడ, ఆంధ్రప్రదేశ్"""
 
-interface ChatMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+# ====================== HELPER FUNCTIONS ======================
+def build_messages(
+    prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    system_prompt: Optional[str] = None,
+    lang: str = "en"
+) -> List[Dict[str, str]]:
+    if history is None:
+        history = []
 
-function buildMessages(
-  prompt: string,
-  history: Array<{ role: string; content: string }> = [],
-  systemPrompt?: string,
-  lang = "en"
-): ChatMessage[] {
-  const sys = systemPrompt ?? (lang === "te" ? TELUGU_SYSTEM_PROMPT : COLLEGE_SYSTEM_PROMPT);
-  const messages: ChatMessage[] = [{ role: "system", content: sys }];
+    sys_prompt = system_prompt or (TELUGU_SYSTEM_PROMPT if lang == "te" else COLLEGE_SYSTEM_PROMPT)
+    messages: List[Dict[str, str]] = [{"role": "system", "content": sys_prompt}]
 
-  for (const msg of history.slice(-10)) {
-    if ((msg.role === "user" || msg.role === "assistant") && msg.content?.trim()) {
-      messages.push({ role: msg.role as "user" | "assistant", content: msg.content.trim() });
+    # Keep only last 10 valid messages
+    for msg in history[-10:]:
+        if msg.get("role") in ("user", "assistant") and str(msg.get("content", "")).strip():
+            messages.append({
+                "role": msg["role"],
+                "content": str(msg["content"]).strip()
+            })
+
+    messages.append({"role": "user", "content": prompt})
+    return messages
+
+
+def call_openai_compatible(
+    base_url: str,
+    api_key: str,
+    model: str,
+    messages: List[Dict[str, str]],
+    use_completion_tokens: bool = False,
+    skip_temperature: bool = False,
+) -> str:
+    client = OpenAI(base_url=base_url.rstrip("/"), api_key=api_key)
+
+    params: Dict[str, Any] = {
+        "model": model,
+        "messages": messages,
     }
-  }
 
-  messages.push({ role: "user", content: prompt });
-  return messages;
-}
+    if use_completion_tokens:
+        params["max_completion_tokens"] = 1200
+    else:
+        params["max_tokens"] = 1200
 
-async function callOpenAICompatible(
-  baseUrl: string,
-  apiKey: string,
-  model: string,
-  messages: ChatMessage[],
-  opts: { useCompletionTokens?: boolean; skipTemperature?: boolean } = {}
-): Promise<string> {
-  const body: Record<string, unknown> = { model, messages };
-  if (opts.useCompletionTokens) {
-    body.max_completion_tokens = 1200;
-  } else {
-    body.max_tokens = 1200;
-  }
-  if (!opts.skipTemperature) {
-    body.temperature = 0.7;
-  }
+    if not skip_temperature:
+        params["temperature"] = 0.7
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(30000),
-  });
+    try:
+        response = client.chat.completions.create(**params)
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"OpenAI-compatible API error: {e}")
+        raise
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`API error ${response.status}: ${text}`);
-  }
 
-  const data = await response.json() as { choices: Array<{ message: { content: string } }> };
-  return data.choices[0].message.content;
-}
+def query_replit_ai(
+    prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    system_prompt: Optional[str] = None,
+    lang: str = "en"
+) -> str:
+    if not AI_BASE_URL or not AI_API_KEY:
+        raise ValueError("Replit AI integration not configured")
+    messages = build_messages(prompt, history, system_prompt, lang)
+    return call_openai_compatible(
+        AI_BASE_URL,
+        AI_API_KEY,
+        REPLIT_MODEL,
+        messages,
+        use_completion_tokens=True,
+        skip_temperature=True,
+    )
 
-async function queryReplitAI(
-  prompt: string,
-  history: Array<{ role: string; content: string }> = [],
-  systemPrompt?: string,
-  lang = "en"
-): Promise<string> {
-  if (!AI_BASE_URL || !AI_API_KEY) throw new Error("Replit AI integration not configured");
-  const messages = buildMessages(prompt, history, systemPrompt, lang);
-  return callOpenAICompatible(AI_BASE_URL, AI_API_KEY, REPLIT_MODEL, messages, { useCompletionTokens: true, skipTemperature: true });
-}
 
-async function queryGroq(
-  prompt: string,
-  history: Array<{ role: string; content: string }> = [],
-  systemPrompt?: string,
-  lang = "en"
-): Promise<string> {
-  if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY not configured");
-  const messages = buildMessages(prompt, history, systemPrompt, lang);
-  return callOpenAICompatible("https://api.groq.com/openai/v1", GROQ_API_KEY, GROQ_MODEL, messages, {});
-}
+def query_groq(
+    prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    system_prompt: Optional[str] = None,
+    lang: str = "en"
+) -> str:
+    if not GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY not configured")
 
-async function queryOpenRouter(
-  prompt: string,
-  history: Array<{ role: string; content: string }> = [],
-  systemPrompt?: string,
-  lang = "en"
-): Promise<string> {
-  if (!OPEN_ROUTER_API) throw new Error("OPEN_ROUTER_API not configured");
-  const messages = buildMessages(prompt, history, systemPrompt, lang);
-  return callOpenAICompatible("https://openrouter.ai/api/v1", OPEN_ROUTER_API, OPENROUTER_MODEL, messages, {});
-}
+    messages = build_messages(prompt, history, system_prompt, lang)
+    client = Groq(api_key=GROQ_API_KEY)
 
-export async function queryAI(
-  prompt: string,
-  history: Array<{ role: string; content: string }> = [],
-  systemPrompt?: string,
-  lang = "en"
-): Promise<string> {
-  // Try Replit AI first (always available), then Groq, then OpenRouter as fallbacks
-  if (AI_BASE_URL && AI_API_KEY) {
-    try {
-      return await queryReplitAI(prompt, history, systemPrompt, lang);
-    } catch (err) {
-      logger.warn({ err }, "Replit AI failed, trying Groq");
-    }
-  }
+    try:
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1200,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"Groq API error: {e}")
+        raise
 
-  if (GROQ_API_KEY) {
-    try {
-      return await queryGroq(prompt, history, systemPrompt, lang);
-    } catch (err) {
-      logger.warn({ err }, "Groq failed, trying OpenRouter");
-    }
-  }
 
-  if (OPEN_ROUTER_API) {
-    try {
-      return await queryOpenRouter(prompt, history, systemPrompt, lang);
-    } catch (err) {
-      logger.error({ err }, "All AI providers failed");
-      throw err;
-    }
-  }
+def query_openrouter(
+    prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    system_prompt: Optional[str] = None,
+    lang: str = "en"
+) -> str:
+    if not OPEN_ROUTER_API_KEY:
+        raise ValueError("OPEN_ROUTER_API not configured")
+    messages = build_messages(prompt, history, system_prompt, lang)
+    return call_openai_compatible(
+        "https://openrouter.ai/api/v1",
+        OPEN_ROUTER_API_KEY,
+        OPENROUTER_MODEL,
+        messages,
+    )
 
-  throw new Error("No AI providers configured");
-}
+
+# ====================== MAIN ENTRY POINT ======================
+def query_ai(
+    prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    system_prompt: Optional[str] = None,
+    lang: str = "en"
+) -> str:
+    if history is None:
+        history = []
+
+    # 1. Try Replit AI first (primary)
+    if AI_BASE_URL and AI_API_KEY:
+        try:
+            return query_replit_ai(prompt, history, system_prompt, lang)
+        except Exception as err:
+            logger.warning(f"Replit AI failed: {err}. Trying Groq...")
+
+    # 2. Try Groq
+    if GROQ_API_KEY:
+        try:
+            return query_groq(prompt, history, system_prompt, lang)
+        except Exception as err:
+            logger.warning(f"Groq failed: {err}. Trying OpenRouter...")
+
+    # 3. Try OpenRouter as last fallback
+    if OPEN_ROUTER_API_KEY:
+        try:
+            return query_openrouter(prompt, history, system_prompt, lang)
+        except Exception as err:
+            logger.error(f"All AI providers failed: {err}")
+            raise
+
+    raise RuntimeError("No AI providers are configured. Check environment variables.")

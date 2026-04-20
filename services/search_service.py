@@ -1,49 +1,91 @@
-import { logger } from "../lib/logger";
+import os
+import re
+import requests
+import logging
+from typing import List, Dict, Any, Optional
 
-export async function searchDuckDuckGo(query: string): Promise<Array<{ title: string; snippet: string; url: string }>> {
-  try {
-    const formData = new URLSearchParams({ q: query });
-    const response = await fetch("https://html.duckduckgo.com/html/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-      body: formData.toString(),
-      signal: AbortSignal.timeout(10000),
-    });
+logger = logging.getLogger(__name__)
 
-    if (!response.ok) return [];
+def search_duckduckgo(query: str) -> List[Dict[str, str]]:
+    """
+    Search DuckDuckGo HTML version and return up to 5 results.
+    Returns list of dictionaries: [{"title": , "snippet": , "url": }]
+    """
+    if not query or not isinstance(query, str):
+        return []
 
-    const html = await response.text();
-    const results: Array<{ title: string; snippet: string; url: string }> = [];
+    query = query.strip()
+    results: List[Dict[str, str]] = []
 
-    const resultMatches = html.matchAll(/<a[^>]+class="result__a"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/g);
-    const snippetMatches = html.matchAll(/<a[^>]+class="result__snippet"[^>]*>([^<]*)<\/a>/g);
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
 
-    const snippetArr = Array.from(snippetMatches).map(m => m[1].trim());
-    let i = 0;
+        data = {"q": query}
 
-    for (const match of resultMatches) {
-      if (results.length >= 5) break;
-      results.push({
-        url: match[1],
-        title: match[2].trim(),
-        snippet: snippetArr[i++] || "",
-      });
-    }
+        response = requests.post(
+            "https://html.duckduckgo.com/html/",
+            headers=headers,
+            data=data,
+            timeout=10
+        )
 
-    return results;
-  } catch (err) {
-    logger.warn({ err }, "DuckDuckGo search failed");
-    return [];
-  }
-}
+        if response.status_code != 200:
+            logger.warning(f"DuckDuckGo search returned status {response.status_code}")
+            return []
 
-export function formatSearchResults(results: Array<{ title: string; snippet: string; url: string }>): string {
-  if (!results.length) return "I couldn't find relevant information.";
-  return results
-    .slice(0, 5)
-    .map((r, i) => `${i + 1}. ${r.snippet || r.title}`)
-    .join("\n\n");
-}
+        html = response.text
+
+        # Extract result links (title + url)
+        result_pattern = r'<a[^>]+class="result__a"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>'
+        result_matches = re.findall(result_pattern, html, re.IGNORECASE)
+
+        # Extract snippets
+        snippet_pattern = r'<a[^>]+class="result__snippet"[^>]*>([^<]*)<\/a>'
+        snippet_matches = re.findall(snippet_pattern, html, re.IGNORECASE)
+
+        # Combine results
+        for i, (url, title) in enumerate(result_matches):
+            if len(results) >= 5:
+                break
+
+            snippet = snippet_matches[i].strip() if i < len(snippet_matches) else ""
+
+            results.append({
+                "title": title.strip(),
+                "snippet": snippet,
+                "url": url
+            })
+
+        return results
+
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"DuckDuckGo search request failed for '{query}': {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Unexpected error in DuckDuckGo search for '{query}': {e}")
+        return []
+
+
+def format_search_results(results: List[Dict[str, str]]) -> str:
+    """
+    Format search results into a readable string for AI prompt or response.
+    """
+    if not results:
+        return "I couldn't find any relevant information from the web."
+
+    formatted = []
+    for i, result in enumerate(results[:5], 1):
+        text = result.get("snippet") or result.get("title") or "No description available"
+        formatted.append(f"{i}. {text.strip()}")
+
+    return "\n\n".join(formatted)
+
+
+# Optional: Combined helper function
+def search_and_format(query: str) -> str:
+    """Convenience function: Search and return formatted string"""
+    results = search_duckduckgo(query)
+    return format_search_results(results)

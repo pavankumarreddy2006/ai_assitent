@@ -377,16 +377,41 @@ def _safe_string(data):
     except:
         return ""
 
-COLLEGE_CONTEXT = f"""
-================= ENGLISH =================
-{_safe_string(college_info_en)}
+# ====================== COLLEGE INFORMATION ======================
 
-================= TELUGU =================
-{_safe_string(college_info_te)}
-
-================= STRUCTURED =================
-{_safe_string(college_data)}
+college_info_en = f"""
+Ideal College of Arts & Sciences, Kakinada is a reputed educational institution 
+offering various undergraduate and postgraduate courses in Arts, Sciences, and Commerce.
 """
 
-def get_college_context_prompt():
-    return COLLEGE_CONTEXT
+college_info_te = f"""
+ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ & సైన్సెస్, కాకినాడా ఒక ప్రముఖ విద్యా సంస్థ. 
+ఇక్కడ ఆర్ట్స్, సైన్సెస్, కామర్స్ విభాగాల్లో అండర్ గ్రాడ్యుయేట్ & పోస్ట్ గ్రాడ్యుయేట్ కోర్సులు అందుబాటులో ఉన్నాయి.
+"""
+
+# Safe string function
+def _safe_string(text):
+    return str(text).replace("{", "{{").replace("}", "}}")
+
+# Final college summary dictionary
+COLLEGE_SUMMARY = {
+    "name": COLLEGE_NAME,
+    "phone": COLLEGE_PHONE,
+    "email": COLLEGE_EMAIL,
+    "website": COLLEGE_WEBSITE,
+    "location": COLLEGE_LOCATION,
+    "description_en": college_info_en,
+    "description_te": college_info_te,
+    "established": "1998",
+    "courses": ["B.Sc", "B.Com", "B.A", "M.Sc", "M.Com", "MBA"]
+}
+
+def get_college_summary():
+    return {
+        "name": COLLEGE_NAME,
+        "contact": COLLEGE_PHONE,
+        "email": COLLEGE_EMAIL,
+        "website": COLLEGE_WEBSITE,
+        "location": COLLEGE_LOCATION,
+        "summary": college_info_en.strip()
+    }

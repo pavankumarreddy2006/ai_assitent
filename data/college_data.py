@@ -5,6 +5,15 @@
 # Last Updated: April 2026
 # =====================================================
 
+# =====================================================
+# COLLEGE BASIC INFORMATION (DEFINED FIRST)
+# =====================================================
+COLLEGE_NAME = "Ideal College of Arts and Sciences"
+COLLEGE_PHONE = "0884-2384382 / 0884-2384381"
+COLLEGE_EMAIL = "idealcolleges@gmail.com"
+COLLEGE_WEBSITE = "https://idealcollege.edu.in"
+COLLEGE_LOCATION = "Vidyuth Nagar, Kakinada, Andhra Pradesh"
+
 COLLEGE_KEYWORDS = [
     "college", "admissions", "courses", "fees", "placements", "campus", "facilities",
     "hostel", "library", "principal", "location", "contact", "faculty", "hod", "staff",
@@ -371,27 +380,23 @@ COLLEGE_DATABASE = {
 # ✅ FINAL FIX (DO NOT REMOVE / DO NOT MODIFY ABOVE DATA)
 # =====================================================
 
-def _safe_string(data):
-    try:
-        return str(data)
-    except:
+def _safe_string(text):
+    """Safe string function to handle braces in f-strings"""
+    if text is None:
         return ""
+    return str(text).replace("{", "{{").replace("}", "}}")
 
 # ====================== COLLEGE INFORMATION ======================
 
 college_info_en = f"""
-Ideal College of Arts & Sciences, Kakinada is a reputed educational institution 
+{_safe_string(COLLEGE_NAME)} is a reputed educational institution 
 offering various undergraduate and postgraduate courses in Arts, Sciences, and Commerce.
 """
 
 college_info_te = f"""
-ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ & సైన్సెస్, కాకినాడా ఒక ప్రముఖ విద్యా సంస్థ. 
+{_safe_string(COLLEGE_NAME)} ఒక ప్రముఖ విద్యా సంస్థ. 
 ఇక్కడ ఆర్ట్స్, సైన్సెస్, కామర్స్ విభాగాల్లో అండర్ గ్రాడ్యుయేట్ & పోస్ట్ గ్రాడ్యుయేట్ కోర్సులు అందుబాటులో ఉన్నాయి.
 """
-
-# Safe string function
-def _safe_string(text):
-    return str(text).replace("{", "{{").replace("}", "}}")
 
 # Final college summary dictionary
 COLLEGE_SUMMARY = {
@@ -402,8 +407,8 @@ COLLEGE_SUMMARY = {
     "location": COLLEGE_LOCATION,
     "description_en": college_info_en,
     "description_te": college_info_te,
-    "established": "1998",
-    "courses": ["B.Sc", "B.Com", "B.A", "M.Sc", "M.Com", "MBA"]
+    "established": "1970",
+    "courses": ["B.Sc Computers", "BCA", "B.Sc AI", "BBA", "Agriculture", "Food Technology", "Aqua & Fisheries", "MCA", "M.Sc Organic Chemistry", "M.Sc Analytical Chemistry", "M.Sc Food Science & Technology", "M.Sc Aquaculture"]
 }
 
 def get_college_summary():

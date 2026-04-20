@@ -1,20 +1,15 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import logging
 
+# Import only what we need
 from core.router import route_message
-from services.college_service import get_college_summary
-from services.media_service import get_college_images, get_college_video
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, 
-            template_folder="templates", 
-            static_folder="static", 
-            static_url_path="/static")
-
-CORS(app, resources={r"/*": {"origins": "*"}})
+app = Flask(__name__, template_folder="templates", static_folder="static")
+CORS(app)
 
 @app.route("/")
 def index():
@@ -23,33 +18,25 @@ def index():
 @app.route("/api/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json(silent=True) or {}
+        data = request.get_json() or {}
         message = (data.get("message") or "").strip()
 
         if not message:
-            return jsonify({"reply": "Please say something.", "intent": "general"}), 400
+            return jsonify({"reply": "Please say something.", "intent": "general"})
 
-        logger.info(f"User asked: {message}")
+        logger.info(f"User: {message}")
 
         response = route_message(message)
 
-        logger.info(f"AI Reply: {response.get('reply')[:100]}...")
+        logger.info(f"AI Reply: {response.get('reply', '')[:100]}")
         return jsonify(response)
 
     except Exception as e:
-        logger.exception("Chat API Error")
+        logger.exception("Backend Error")
         return jsonify({
             "reply": "Something went wrong. Please try again.",
             "intent": "general"
         }), 500
-
-@app.route("/api/healthz")
-def health():
-    return jsonify({"status": "ok"})
-
-@app.route("/static/<path:filename>")
-def serve_static(filename):
-    return send_from_directory("static", filename)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False)

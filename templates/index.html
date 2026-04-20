@@ -9,22 +9,20 @@
 </head>
 <body class="bg-black text-white min-h-screen flex flex-col">
 
-    <div class="border-b border-white/10 bg-black p-4 flex items-center justify-between">
+    <div class="p-4 border-b border-white/10 flex items-center justify-between bg-black">
         <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
             <h1 class="text-2xl font-bold">IDEAL AI</h1>
         </div>
     </div>
 
-    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+    <div id="chat-container" class="flex-1 p-6 overflow-y-auto"></div>
 
-    <!-- JARVIS MIC -->
-    <div class="fixed bottom-8 left-1/2 -translate-x-1/2">
+    <!-- Big JARVIS Mic -->
+    <div class="fixed bottom-10 left-1/2 -translate-x-1/2">
         <button onclick="toggleVoiceInput()" id="mic-btn"
-                class="mic-button w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center shadow-2xl shadow-emerald-500/50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-.5-15a3.5 3.5 0 10-7 0v4a3.5 3.5 0 007 0V6z" />
-            </svg>
+                class="mic-button w-24 h-24 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-full flex items-center justify-center shadow-2xl">
+            <span class="text-5xl">🎤</span>
         </button>
     </div>
 

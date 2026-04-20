@@ -443,3 +443,17 @@ def get_college_summary():
         "location": COLLEGE_LOCATION,
         "summary": college_info_en.strip()
     }
+    def get_college_answer(query: str, lang: str = "en") -> str | None:
+    q = query.lower().strip()
+    for section in COLLEGE_DATABASE["sections"].values():
+        keywords = section.get(f"keywords_{lang}", section.get("keywords_en", []))
+        if any(kw.lower() in q for kw in keywords):
+            data = section["data"].get(lang, section["data"].get("en", {}))
+            if isinstance(data, str):
+                return data
+            return "\n".join(str(v) for v in data.values() if v)
+    return None
+
+
+def get_college_context() -> str:
+    return COLLEGE_CONTEXT

@@ -1,82 +1,81 @@
-// static/js/main.js
+// static/js/main.js - PRO LEVEL IDEAL AI FRONTEND
 let conversationHistory = [];
-let currentLanguage = "en";
-let slideIndex = 0;
-let mediaTimeout = null;
 let recognition = null;
+let isListening = false;
+let currentMediaTimeout = null;
 
-const API_BASE = window.location.origin;
+const API_CHAT = "/api/chat";
 
-// Tailwind script already loaded in HTML
+// Tailwind script already loaded via CDN
 
-function detectTimeGreeting() {
-    const hour = new Date().getHours();
-    const el = document.getElementById("greeting-time");
-    if (hour < 12) el.textContent = "GOOD MORNING";
-    else if (hour < 17) el.textContent = "GOOD AFTERNOON";
-    else el.textContent = "GOOD EVENING";
-}
+// Add message to chat
+function addMessage(role, text) {
+    const container = document.getElementById("chat-container");
+    const div = document.createElement("div");
+    div.className = `flex ${role === "user" ? "justify-end" : "justify-start"} mb-6`;
 
-function toggleVoiceInput() {
-    const micBtn = document.getElementById("mic-btn");
-    const icon = document.getElementById("mic-icon");
-    
-    if (!recognition) {
-        if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.continuous = false;
-            recognition.lang = currentLanguage === "te" ? "te-IN" : "en-US";
-            
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById("message-input").value = transcript;
-                sendMessage(true); // auto send
-            };
-            
-            recognition.onerror = () => {
-                micBtn.classList.remove("listening");
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-.5-15a3.5 3.5 0 10-7 0v4a3.5 3.5 0 007 0V6z" />`;
-            };
-            
-            recognition.onend = () => {
-                micBtn.classList.remove("listening");
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-.5-15a3.5 3.5 0 10-7 0v4a3.5 3.5 0 007 0V6z" />`;
-            };
-        } else {
-            alert("Voice input not supported in your browser.");
-            return;
-        }
-    }
-    
-    if (micBtn.classList.contains("listening")) {
-        recognition.stop();
+    if (role === "user") {
+        div.innerHTML = `
+            <div class="chat-bubble-user max-w-[75%] px-5 py-3.5 text-black font-medium">
+                ${text}
+            </div>`;
     } else {
-        micBtn.classList.add("listening");
-        icon.innerHTML = `<circle cx="12" cy="12" r="10" stroke="#00ff9d" stroke-width="4" fill="none"/><circle cx="12" cy="12" r="3" fill="#00ff9d"/>`;
-        recognition.start();
+        div.innerHTML = `
+            <div class="chat-bubble-ai max-w-[75%] px-5 py-3.5">
+                ${text}
+            </div>`;
     }
+
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
 }
 
-async function sendMessage(isVoice = false) {
+// Show typing indicator
+function showTyping() {
+    const container = document.getElementById("chat-container");
+    const id = "typing-indicator";
+    let typingDiv = document.getElementById(id);
+
+    if (!typingDiv) {
+        typingDiv = document.createElement("div");
+        typingDiv.id = id;
+        typingDiv.className = "flex justify-start mb-6";
+        typingDiv.innerHTML = `
+            <div class="chat-bubble-ai px-5 py-3 flex items-center gap-1">
+                <div class="w-2 h-2 bg-zinc-400 rounded-full animate-bounce"></div>
+                <div class="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+            </div>`;
+        container.appendChild(typingDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+    return id;
+}
+
+function removeTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+// Send message
+async function sendMessage() {
     const input = document.getElementById("message-input");
     const message = input.value.trim();
+
     if (!message) return;
-    
-    // Hide welcome screen
-    document.getElementById("welcome-screen").classList.add("hidden");
-    document.getElementById("chat-container").classList.remove("hidden");
-    
-    // Add user message
-    addMessageToChat("user", message);
-    
-    // Clear input
+
+    // Hide welcome screen if visible
+    const welcome = document.getElementById("welcome-screen");
+    if (welcome) welcome.style.display = "none";
+
+    addMessage("user", message);
+    conversationHistory.push({ role: "user", content: message });
     input.value = "";
-    
-    // Show typing indicator
-    const typingId = addTypingIndicator();
-    
+
+    const typingId = showTyping();
+
     try {
-        const res = await fetch(`${API_BASE}/api/chat`, {
+        const response = await fetch(API_CHAT, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -84,193 +83,173 @@ async function sendMessage(isVoice = false) {
                 conversationHistory: conversationHistory
             })
         });
-        
-        const data = await res.json();
-        
-        // Remove typing
-        removeTypingIndicator(typingId);
-        
-        // Save to history
-        conversationHistory.push({ role: "user", content: message });
-        conversationHistory.push({ role: "assistant", content: data.reply });
-        
-        // Detect language for TTS
-        currentLanguage = data.language || "en";
-        
-        // Display AI reply
-        addMessageToChat("ai", data.reply, data.source || null);
-        
-        // Voice response (lady voice + correct Telugu/English)
+
+        const data = await response.json();
+
+        removeTyping(typingId);
+
         if (data.reply) {
-            speakResponse(data.reply, currentLanguage);
+            addMessage("ai", data.reply);
+            conversationHistory.push({ role: "assistant", content: data.reply });
+
+            // Speak response (Natural voice)
+            speakResponse(data.reply, data.language || "en");
+
+            // Handle Media (Images or Video)
+            if (data.show_images && data.images && data.images.length > 0) {
+                showImageCarousel(data.images, data.media_duration || 8);
+            } else if (data.show_video && data.video_url) {
+                showVideo(data.video_url, data.media_duration || 15);
+            }
+        } else {
+            addMessage("ai", "Sorry, I couldn't understand that. Please try again.");
         }
-        
-        // Handle media (images / video) - FULL SCREEN AUTO RETURN
-        if (data.show_images && data.images && data.images.length) {
-            showImageCarousel(data.images, data.media_duration || 8);
-        } else if (data.show_video && data.video_url) {
-            showVideo(data.video_url, data.media_duration || 18);
-        }
-        
-    } catch (e) {
-        removeTypingIndicator(typingId);
-        addMessageToChat("ai", "Sorry, something went wrong. Please try again.");
+
+    } catch (error) {
+        console.error("API Error:", error);
+        removeTyping(typingId);
+        addMessage("ai", "Something went wrong. Please check your connection and try again.");
     }
 }
 
-function sendQuickMessage(text) {
-    document.getElementById("message-input").value = text;
-    sendMessage();
-}
+// Voice Input (JARVIS Style)
+function toggleVoiceInput() {
+    const micBtn = document.getElementById("mic-btn");
 
-function addMessageToChat(role, text, source = null) {
-    const container = document.getElementById("chat-container");
-    
-    const div = document.createElement("div");
-    div.className = `flex ${role === "user" ? "justify-end" : "justify-start"}`;
-    
-    if (role === "user") {
-        div.innerHTML = `
-            <div class="chat-bubble-user max-w-[70%] px-5 py-3 text-black font-medium">
-                ${text}
-            </div>`;
+    if (!recognition) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US"; // Change to "te-IN" for Telugu only
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            document.getElementById("message-input").value = transcript;
+            sendMessage();
+        };
+
+        recognition.onerror = () => {
+            stopListening();
+        };
+
+        recognition.onend = () => {
+            stopListening();
+        };
+    }
+
+    if (isListening) {
+        stopListening();
     } else {
-        div.innerHTML = `
-            <div class="chat-bubble-ai max-w-[70%] px-5 py-3">
-                ${text}
-                ${source ? `<div class="text-[10px] text-emerald-400/60 mt-2">${source}</div>` : ''}
-            </div>`;
+        try {
+            recognition.start();
+            isListening = true;
+            micBtn.classList.add("listening");
+        } catch (e) {
+            console.error("Speech recognition error", e);
+        }
     }
-    
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
 }
 
-function addTypingIndicator() {
-    const container = document.getElementById("chat-container");
-    const id = "typing-" + Date.now();
-    const div = document.createElement("div");
-    div.id = id;
-    div.className = "flex justify-start";
-    div.innerHTML = `
-        <div class="bg-[#1f2937] rounded-3xl px-5 py-3 flex gap-x-1">
-            <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce"></div>
-            <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay:150ms"></div>
-            <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay:300ms"></div>
-        </div>`;
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-    return id;
+function stopListening() {
+    if (recognition) recognition.stop();
+    isListening = false;
+    document.getElementById("mic-btn").classList.remove("listening");
 }
 
-function removeTypingIndicator(id) {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-}
-
+// Text-to-Speech (Natural Lady Voice)
 function speakResponse(text, lang) {
     if (!('speechSynthesis' in window)) return;
-    
+
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Prefer female voice
-    const voices = speechSynthesis.getVoices();
-    let preferredVoice = voices.find(v => 
-        (lang === "te" && v.lang.includes("te")) || 
-        (v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("raveena") || v.name.toLowerCase().includes("priya"))
-    );
-    
-    if (preferredVoice) utterance.voice = preferredVoice;
     utterance.lang = lang === "te" ? "te-IN" : "en-US";
     utterance.pitch = 1.05;
-    utterance.rate = 0.98;
-    
+    utterance.rate = 0.97;
+
+    // Try to use female voice
+    const voices = speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => 
+        v.name.toLowerCase().includes("female") || 
+        v.name.toLowerCase().includes("raveena") || 
+        v.name.toLowerCase().includes("priya")
+    );
+    if (femaleVoice) utterance.voice = femaleVoice;
+
     speechSynthesis.speak(utterance);
 }
 
-// Media Full-Screen Functions
-let currentMediaIndex = 0;
-let imagesArray = [];
-
+// Media Functions (Full Screen)
 function showImageCarousel(images, duration) {
-    imagesArray = images;
-    currentMediaIndex = 0;
-    document.getElementById("image-carousel").classList.remove("hidden");
-    document.getElementById("video-container").classList.add("hidden");
-    document.getElementById("media-modal").classList.remove("hidden");
-    renderCarousel();
-    
-    if (mediaTimeout) clearTimeout(mediaTimeout);
-    mediaTimeout = setTimeout(hideMedia, duration * 1000);
-}
+    const modal = document.getElementById("media-modal");
+    const carousel = document.getElementById("image-carousel");
+    carousel.innerHTML = "";
+    carousel.classList.remove("hidden");
 
-function renderCarousel() {
-    const container = document.getElementById("carousel-images");
-    container.innerHTML = `
-        <img src="${imagesArray[currentMediaIndex]}" class="w-full max-h-[70vh] object-contain" alt="College image">
-    `;
-}
+    images.forEach((src, index) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.className = `w-full max-h-[75vh] object-contain ${index !== 0 ? 'hidden' : ''}`;
+        carousel.appendChild(img);
+    });
 
-function nextSlide() {
-    currentMediaIndex = (currentMediaIndex + 1) % imagesArray.length;
-    renderCarousel();
-}
+    modal.classList.remove("hidden");
 
-function prevSlide() {
-    currentMediaIndex = (currentMediaIndex - 1 + imagesArray.length) % imagesArray.length;
-    renderCarousel();
+    let current = 0;
+    const interval = setInterval(() => {
+        const imgs = carousel.querySelectorAll("img");
+        imgs.forEach(img => img.classList.add("hidden"));
+        current = (current + 1) % imgs.length;
+        imgs[current].classList.remove("hidden");
+    }, 2000);
+
+    currentMediaTimeout = setTimeout(() => {
+        clearInterval(interval);
+        hideMedia();
+    }, duration * 1000);
 }
 
 function showVideo(videoUrl, duration) {
-    document.getElementById("image-carousel").classList.add("hidden");
+    const modal = document.getElementById("media-modal");
     const videoContainer = document.getElementById("video-container");
-    videoContainer.classList.remove("hidden");
-    document.getElementById("media-modal").classList.remove("hidden");
-    
     const videoEl = document.getElementById("modal-video");
+
+    videoContainer.classList.remove("hidden");
     videoEl.src = videoUrl;
     videoEl.play();
-    
-    if (mediaTimeout) clearTimeout(mediaTimeout);
-    mediaTimeout = setTimeout(() => {
+
+    modal.classList.remove("hidden");
+
+    currentMediaTimeout = setTimeout(() => {
         hideMedia();
     }, duration * 1000);
 }
 
 function hideMedia() {
-    if (mediaTimeout) {
-        clearTimeout(mediaTimeout);
-        mediaTimeout = null;
-    }
     const modal = document.getElementById("media-modal");
     modal.classList.add("hidden");
-    // Reset video
+
     const videoEl = document.getElementById("modal-video");
     if (videoEl) {
         videoEl.pause();
         videoEl.src = "";
     }
+
+    if (currentMediaTimeout) {
+        clearTimeout(currentMediaTimeout);
+    }
 }
 
-// Load latest updates (static for now - can be fetched later)
-function loadLatestUpdates() {
-    const container = document.getElementById("latest-updates");
-    container.innerHTML = `
-        <div class="flex gap-2 text-xs"><span class="text-emerald-400">📌</span> Promising Partnerships: Kenya’s Healthcare Professionals Forge Links in India</div>
-        <div class="flex gap-2 text-xs"><span class="text-emerald-400">📌</span> CBSE class 12 result 2026 today or not? Big update after class 10 results</div>
-        <div class="flex gap-2 text-xs"><span class="text-emerald-400">📌</span> PM Modi Unveils Sri Guru Bhairavaikya Mandira</div>
-    `;
+// Quick message from suggestions (if you add later)
+function sendQuickMessage(text) {
+    document.getElementById("message-input").value = text;
+    sendMessage();
 }
 
-// Initialize everything
-window.onload = () => {
-    detectTimeGreeting();
-    loadLatestUpdates();
-    
-    // Preload voices for better Telugu pronunciation
+// Initialize
+document.addEventListener("DOMContentLoaded", () => {
+    // Preload voices
     if ('speechSynthesis' in window) {
         speechSynthesis.getVoices();
     }
-    
-    console.log("%c✅ Ideal AI Frontend loaded successfully with mic animation, full-screen media & voice", "color:#00ff9d; font-family:monospace");
-};
+
+    console.log("%c✅ Ideal AI Pro Frontend Loaded Successfully", "color:#10b981; font-size:14px; font-weight:bold");
+});

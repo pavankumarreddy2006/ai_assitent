@@ -4,299 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ideal AI • College Assistant</title>
-    
-    <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom CSS (No @tailwind directives) -->
     <link rel="stylesheet" href="/static/css/style.css">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
-        
-        :root {
-            --primary: #00ff9d;
-        }
-        
-        * {
-            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 150ms;
-        }
         
         body {
             font-family: 'Inter', system_ui, sans-serif;
         }
-        
         .header-font {
             font-family: 'Space Grotesk', sans-serif;
         }
-
-        .chat-bubble-user {
-            background: linear-gradient(90deg, #00ff9d, #00cc7a);
-            color: #000;
-            border-radius: 20px 20px 4px 20px;
-        }
         
-        .chat-bubble-ai {
-            background: #1f2937;
-            border-radius: 20px 20px 20px 4px;
-        }
-        
-        .mic-button {
-            animation: micPulse 2s infinite ease-in-out;
-        }
-        
-        @keyframes micPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-        }
-        
-        .listening {
-            animation: listeningRing 1.5s infinite ease-in-out;
-        }
-        
-        .suggestion-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .suggestion-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 25px -5px rgb(0 255 157 / 0.1);
+        .chat-container::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
-<body class="bg-[#0a0a0a] text-white min-h-screen flex flex-col">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col overflow-hidden">
+
     <!-- HEADER -->
-    <div class="border-b border-white/10 bg-black/80 backdrop-blur-lg sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
-            <!-- Left -->
-            <div class="flex items-center gap-x-3">
-                <div class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-                <h1 class="header-font text-2xl tracking-[-1px]">IDEAL COLLEGE</h1>
-                <span class="text-xs uppercase tracking-[1px] text-emerald-400 font-medium">Arts &amp; Sciences</span>
+    <header class="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-screen-2xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <h1 class="header-font text-3xl tracking-tighter font-semibold">IDEAL AI</h1>
+                </div>
             </div>
-            
-            <!-- Center greeting -->
-            <div class="flex items-center gap-x-2 text-sm text-white/70">
-                <span id="greeting-time" class="font-medium"></span>
-                <span class="text-white/40">•</span>
-                <span>Ideal College, Kakinada</span>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+                <span class="text-emerald-400">●</span>
+                Ideal College of Arts & Sciences, Kakinada
             </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 max-w-screen-2xl mx-auto w-full overflow-hidden">
+        
+        <!-- MAIN CHAT AREA -->
+        <div class="flex-1 flex flex-col">
             
-            <!-- Right location -->
-            <div class="flex items-center gap-x-2 bg-white/5 text-white/80 text-xs px-4 h-9 rounded-2xl border border-white/10">
-                <span class="text-emerald-400">📍</span>
-                Vidyuth Nagar, Kakinada<br>
-                <span class="text-white/40 text-[10px]">Andhra Pradesh</span>
+            <!-- Messages Container -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-8 space-y-8 bg-zinc-950">
+                
+                <!-- Welcome Screen -->
+                <div id="welcome-screen" class="flex flex-col items-center justify-center min-h-[70vh] text-center">
+                    <div class="w-28 h-28 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-emerald-500/40">
+                        <span class="text-6xl">🤖</span>
+                    </div>
+                    <h2 class="text-4xl font-semibold tracking-tight mb-3">Hello, I'm Ideal AI</h2>
+                    <p class="text-zinc-400 max-w-md text-lg leading-relaxed">
+                        Ask me anything about courses, admissions, fees, hostel, placements, faculty or campus life.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PRO INPUT BAR -->
+            <div class="p-6 bg-zinc-900 border-t border-zinc-800">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex items-center gap-4 bg-zinc-800 rounded-3xl px-6 py-4 border border-zinc-700 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all">
+                        
+                        <!-- JARVIS Mic Button -->
+                        <button onclick="toggleVoiceInput()" id="mic-btn"
+                                class="mic-button w-12 h-12 flex items-center justify-center text-emerald-400 hover:text-emerald-300 rounded-2xl hover:bg-zinc-700 transition-all duration-200">
+                            <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-.5-15a3.5 3.5 0 10-7 0v4a3.5 3.5 0 007 0V6z" />
+                            </svg>
+                        </button>
+
+                        <!-- Input Field -->
+                        <input id="message-input" 
+                               type="text"
+                               placeholder="Message Ideal AI... (English or తెలుగు)"
+                               class="flex-1 bg-transparent text-lg outline-none placeholder-zinc-500"
+                               onkeydown="if(event.key === 'Enter') sendMessage()">
+
+                        <!-- Send Button -->
+                        <button onclick="sendMessage()" 
+                                class="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-black rounded-2xl flex items-center justify-center font-bold text-2xl transition-all active:scale-95">
+                            ↑
+                        </button>
+                    </div>
+                    
+                    <p class="text-center text-xs text-zinc-500 mt-4">Ideal AI can make mistakes. Always verify important information.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDE INFORMATION PANEL -->
+        <div class="w-80 border-l border-zinc-800 bg-zinc-950 p-6 hidden lg:flex flex-col overflow-y-auto">
+            <div class="sticky top-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="bg-emerald-500 text-black font-bold w-10 h-10 rounded-2xl flex items-center justify-center text-2xl">IC</div>
+                    <div>
+                        <h3 class="font-semibold text-xl">Ideal College</h3>
+                        <p class="text-emerald-400 text-sm">NAAC A Grade</p>
+                    </div>
+                </div>
+
+                <div class="mb-10">
+                    <p class="uppercase text-xs tracking-widest text-zinc-500 mb-4">Key Courses</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-4 py-2 bg-zinc-800 text-zinc-300 text-sm rounded-3xl">B.Sc Computers</span>
+                        <span class="px-4 py-2 bg-zinc-800 text-zinc-300 text-sm rounded-3xl">BCA</span>
+                        <span class="px-4 py-2 bg-zinc-800 text-zinc-300 text-sm rounded-3xl">B.Sc AI</span>
+                        <span class="px-4 py-2 bg-zinc-800 text-zinc-300 text-sm rounded-3xl">BBA</span>
+                        <span class="px-4 py-2 bg-zinc-800 text-zinc-300 text-sm rounded-3xl">Agriculture</span>
+                        <span class="px-4 py-2 bg-zinc-800 text-zinc-300 text-sm rounded-3xl">Food Technology</span>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="uppercase text-xs tracking-widest text-zinc-500 mb-4">Facilities</p>
+                    <div class="space-y-4 text-zinc-300">
+                        <div class="flex items-center gap-3"><span class="text-emerald-400 text-xl">📚</span> Library</div>
+                        <div class="flex items-center gap-3"><span class="text-emerald-400 text-xl">💻</span> Computer Labs</div>
+                        <div class="flex items-center gap-3"><span class="text-emerald-400 text-xl">🧪</span> Science Labs</div>
+                        <div class="flex items-center gap-3"><span class="text-emerald-400 text-xl">🏠</span> Separate Hostels</div>
+                        <div class="flex items-center gap-3"><span class="text-emerald-400 text-xl">🚌</span> Bus Facility</div>
+                        <div class="flex items-center gap-3"><span class="text-emerald-400 text-xl">📶</span> Wi-Fi Campus</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="flex flex-1 max-w-screen-2xl mx-auto w-full">
-        
-        <!-- CHAT AREA -->
-        <div class="flex-1 flex flex-col h-[calc(100vh-65px)]">
-            
-            <!-- Welcome / Suggestion Screen -->
-            <div id="welcome-screen" class="flex-1 flex flex-col items-center justify-center px-8">
-                <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/30">
-                    <span class="text-5xl">👋</span>
-                </div>
-                <h2 class="text-4xl font-semibold tracking-[-1px] text-center mb-2">How can I help you today?</h2>
-                <p class="text-white/60 text-center max-w-md">Ask about courses, admissions, fees, faculty, hostel, placements or anything else.</p>
-                
-                <!-- Suggestion Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-12 w-full max-w-2xl">
-                    <button onclick="sendQuickMessage('What courses are offered?')" 
-                            class="suggestion-card bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl px-5 py-4 text-left flex flex-col">
-                        <span class="text-emerald-400 text-xs font-medium mb-1">COURSES</span>
-                        <span class="font-medium">What courses are offered?</span>
-                    </button>
-                    <button onclick="sendQuickMessage('What is the fee structure?')" 
-                            class="suggestion-card bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl px-5 py-4 text-left flex flex-col">
-                        <span class="text-emerald-400 text-xs font-medium mb-1">FEES</span>
-                        <span class="font-medium">What is the fee structure?</span>
-                    </button>
-                    <button onclick="sendQuickMessage('Who is the Principal?')" 
-                            class="suggestion-card bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl px-5 py-4 text-left flex flex-col">
-                        <span class="text-emerald-400 text-xs font-medium mb-1">ADMIN</span>
-                        <span class="font-medium">Who is the Principal?</span>
-                    </button>
-                    <button onclick="sendQuickMessage('Tell me about the hostel.')" 
-                            class="suggestion-card bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl px-5 py-4 text-left flex flex-col">
-                        <span class="text-emerald-400 text-xs font-medium mb-1">HOSTEL</span>
-                        <span class="font-medium">Tell me about the hostel.</span>
-                    </button>
-                    <button onclick="sendQuickMessage('కోర్సులు ఏమిటి?')" 
-                            class="suggestion-card bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl px-5 py-4 text-left flex flex-col">
-                        <span class="text-emerald-400 text-xs font-medium mb-1">తెలుగు</span>
-                        <span class="font-medium">కోర్సులు ఏమిటి?</span>
-                    </button>
-                    <button onclick="sendQuickMessage('హాస్టల్ గురించి చెప్పండి?')" 
-                            class="suggestion-card bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl px-5 py-4 text-left flex flex-col">
-                        <span class="text-emerald-400 text-xs font-medium mb-1">తెలుగు</span>
-                        <span class="font-medium">హాస్టల్ గురించి చెప్పండి?</span>
-                    </button>
-                </div>
-                
-                <!-- AI Chatbot Info -->
-                <div class="mt-12 text-center">
-                    <div class="inline-flex items-center gap-2 bg-white/5 text-xs px-4 h-8 rounded-3xl border border-emerald-400/30 text-emerald-400">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-                        </span>
-                        Powered by Ideal AI • Groq + College Data
-                    </div>
-                    <p class="text-xs text-white/50 mt-3">I know everything about Ideal College of Arts &amp; Sciences</p>
-                </div>
-            </div>
-            
-            <!-- Chat Messages -->
-            <div id="chat-container" class="hidden flex-1 overflow-y-auto px-6 py-8 space-y-6" style="scrollbar-width: thin;">
-                <!-- Messages injected by JS -->
-            </div>
-            
-            <!-- Input Area -->
-            <div class="border-t border-white/10 bg-black/90 px-6 py-4">
-                <div class="max-w-3xl mx-auto flex items-center gap-x-3 bg-white/5 rounded-3xl px-6 py-2 border border-white/10">
-                    
-                    <!-- Mic Button -->
-                    <button onclick="toggleVoiceInput()" 
-                            id="mic-btn"
-                            class="mic-button w-10 h-10 flex items-center justify-center text-emerald-400 hover:text-white rounded-2xl hover:bg-white/10 focus:outline-none">
-                        <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-.5-15a3.5 3.5 0 10-7 0v4a3.5 3.5 0 007 0V6z" />
-                        </svg>
-                    </button>
-                    
-                    <!-- Text Input -->
-                    <input id="message-input" 
-                           type="text"
-                           placeholder="Message Ideal AI... (Type in English or Telugu)"
-                           class="flex-1 bg-transparent outline-none text-white placeholder:text-white/40 text-[15px]"
-                           onkeydown="if(event.keyCode===13) sendMessage()">
-                    
-                    <!-- Send Button -->
-                    <button onclick="sendMessage()" 
-                            class="w-9 h-9 bg-emerald-400 hover:bg-emerald-500 text-black rounded-2xl flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.874L5.999 12zm0 0h7.07" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="text-[10px] text-center text-white/30 mt-3">AI can make mistakes. Verify important information.</div>
-            </div>
-        </div>
-        
-        <!-- INFORMATION HUB (SIDE PANEL) -->
-        <div class="w-80 border-l border-white/10 bg-[#111] flex flex-col overflow-hidden">
-            <div class="px-6 pt-6">
-                <div class="flex items-center gap-x-3">
-                    <div class="bg-emerald-400 text-black text-xs font-bold w-8 h-8 rounded-2xl flex items-center justify-center">IC</div>
-                    <div>
-                        <h3 class="font-semibold">Ideal College</h3>
-                        <div class="text-emerald-400 text-xs flex items-center gap-1">
-                            <span>NAAC A GRADE</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Key Courses -->
-            <div class="px-6 mt-8">
-                <div class="uppercase text-xs tracking-widest text-white/50 mb-3">Key Courses</div>
-                <div class="flex flex-wrap gap-2">
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">B.Sc Computers</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">BCA</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">B.Sc AI</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">BBA</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">B.Sc Agriculture</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">Food Technology</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">Aqua &amp; Fisheries</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">MCA</span>
-                    <span class="text-xs bg-white/10 text-white/80 px-4 py-1 rounded-3xl">M.Sc Organic Chemistry</span>
-                </div>
-            </div>
-            
-            <!-- Facilities -->
-            <div class="px-6 mt-8">
-                <div class="uppercase text-xs tracking-widest text-white/50 mb-3">Facilities</div>
-                <div class="text-sm grid grid-cols-2 gap-y-3 text-white/80">
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">📚</span> Library</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">💻</span> Computer Labs</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">🧪</span> Science Labs</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">🏠</span> Hostel</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">🚌</span> Bus Facility</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">📶</span> Wi-Fi</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">🍽️</span> Cafeteria</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">🏟️</span> Playground</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">📹</span> CCTV Security</div>
-                    <div class="flex items-center gap-2"><span class="text-emerald-400">🎤</span> Auditorium</div>
-                </div>
-            </div>
-            
-            <!-- Contact -->
-            <div class="mt-auto px-6 py-6 border-t border-white/10 text-xs">
-                <div class="flex justify-between text-white/60 mb-1">
-                    <span>📞</span>
-                    <span>0884-2384382 / 0884-2384381</span>
-                </div>
-                <div class="flex justify-between text-white/60 mb-1">
-                    <span>✉️</span>
-                    <span>idealcolleges@gmail.com</span>
-                </div>
-                <div class="flex justify-between text-white/60">
-                    <span>🌐</span>
-                    <a href="https://idealcollege.edu.in" target="_blank" class="underline">idealcollege.edu.in</a>
-                </div>
-                <div class="text-[10px] text-white/40 mt-6">Timings: 9:30 AM – 3:45 PM (Mon-Sat)</div>
-            </div>
-            
-            <!-- Latest Updates -->
-            <div class="px-6 pb-6 text-xs border-t border-white/10 pt-4">
-                <div class="uppercase text-white/50 mb-2">Latest Updates</div>
-                <div id="latest-updates" class="space-y-4 text-white/70 text-[13px]">
-                    <!-- JS injected -->
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- MEDIA MODAL (Images / Video) -->
-    <div onclick="if(event.target.id === 'media-modal') hideMedia()" 
-         id="media-modal"
-         class="hidden fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
-        
-        <div id="modal-content" class="max-w-5xl w-full mx-4 relative">
-            
-            <!-- Images Carousel -->
-            <div id="image-carousel" class="hidden">
-                <div id="carousel-images" class="flex overflow-hidden rounded-3xl"></div>
-                <div class="flex justify-center gap-x-3 mt-6">
-                    <button onclick="prevSlide()" class="px-6 py-2 bg-white/10 rounded-2xl text-sm">← Previous</button>
-                    <button onclick="nextSlide()" class="px-6 py-2 bg-white/10 rounded-2xl text-sm">Next →</button>
-                </div>
-            </div>
-            
-            <!-- Video -->
-            <div id="video-container" class="hidden rounded-3xl overflow-hidden bg-black">
-                <video id="modal-video" class="w-full rounded-3xl" controls autoplay></video>
-            </div>
-            
-            <div class="absolute top-4 right-4 bg-black/70 text-white text-xs px-4 py-1 rounded-3xl flex items-center">
-                <span id="media-timer">Auto closing in <span id="countdown">8</span>s</span>
-            </div>
-            
+    <!-- MEDIA MODAL (Full Screen Images / Video) -->
+    <div id="media-modal" class="hidden fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center">
+        <div class="max-w-5xl w-full mx-6 relative">
             <button onclick="hideMedia()" 
-                    class="absolute top-4 left-4 bg-white/10 hover:bg-white/20 text-white px-5 h-9 rounded-3xl text-sm flex items-center">
-                ← Back to Chat
-            </button>
+                    class="absolute -top-14 right-6 text-white text-2xl hover:text-emerald-400">✕</button>
+            
+            <div id="image-carousel" class="hidden rounded-3xl overflow-hidden"></div>
+            <div id="video-container" class="hidden rounded-3xl overflow-hidden bg-black">
+                <video id="modal-video" class="w-full" controls autoplay></video>
+            </div>
         </div>
     </div>
-    
-    <!-- Main JavaScript -->
+
     <script src="/static/js/main.js"></script>
 </body>
 </html>

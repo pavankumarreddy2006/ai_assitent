@@ -1,503 +1,371 @@
-# ✅ ADD THIS AT TOP (FIX FOR ERROR)
+# =====================================================
+# data.py - COMPLETE COLLEGE DATA ARCHITECTURE
+# =====================================================
+# Exact Architecture as per your requirement
+# Last Updated: April 2026
+# =====================================================
+
 COLLEGE_KEYWORDS = [
-    "college",
-    "admissions",
-    "courses",
-    "fees",
-    "placements",
-    "campus",
-    "facilities",
-    "hostel",
-    "library",
-    "principal",
-    "location",
-    "contact"
+    "college", "admissions", "courses", "fees", "placements", "campus", "facilities",
+    "hostel", "library", "principal", "location", "contact", "faculty", "hod", "staff",
+    "rules", "exams", "scholarship", "bus", "wifi", "sports", "history", "agriculture",
+    "fisheries", "bba", "computer science", "food technology", "fsn"
 ]
 
-# (your existing data below - unchanged)
-
-
-COLLEGE_INFO = """Ideal College of Arts and Sciences, Kakinada.
-
-Courses:
-- BSc
-- BCom
-- BA
-
-Facilities:
-- Library
-- Labs
-- Placements
-"""
-
 # =====================================================
-# English College Information Database
+# MAIN COLLEGE DATABASE
 # =====================================================
-college_info_en = {
-    "college name": "The name of the college is Ideal College of Arts and Sciences.",
-    "principal": "The Principal is Dr. T. Satyanarayana.",
-    "vice principal": "The Vice Principal is Mr. V. Kama Raju.",
-    "directors": "Academic Director is Ranjith Sir and Administrative Director is Vasu Sir.",
-    "college timings": "College timings are from 9:30 AM to 3:45 PM, Monday to Saturday.",
-    "lunch break": "Lunch break is from 1:00 PM to 1:45 PM.",
-    "location": "The college is located at Vidyuth Nagar, Kakinada, Andhra Pradesh.",
-    "administrative office": "Administrative office is located at Vidyuth Nagar campus, near Ideal Junior College.",
-    "contact": "You can contact the college at 0884-2384382 or 0884-2384381.",
-    "email": "You can email us at idealcolleges@gmail.com.",
-    "website": "The official website is https://idealcollege.edu.in.",
-    "saturday working": "Yes, Saturday is a working day.",
-    "office timings": "Office is open from 9:00 AM to 5:00 PM on working days.",
-    "ug courses": "UG courses include B.Sc Computers, BCA, B.Sc AI, BBA, Agriculture, Food Technology, and Aqua & Fisheries.",
-    "bsc computers": "B.Sc Computers covers Mathematics, Electronics, and Computer Science.",
-    "bca": "BCA is Bachelor of Computer Applications.",
-    "bsc ai": "B.Sc AI is Artificial Intelligence / Computer Science with AI focus.",
-    "bba": "BBA is Bachelor of Business Administration.",
-    "agriculture": "B.Sc Agriculture covers agricultural sciences and practices.",
-    "food technology": "B.Sc Food Technology covers food processing and technology.",
-    "aqua fisheries": "B.Sc Aquaculture & Fisheries covers aquatic sciences.",
-    "course duration ug": "All UG courses are 3 years duration.",
-    "pg courses": "PG courses include MCA, M.Sc Organic Chemistry, M.Sc Analytical Chemistry, M.Sc Food Science & Technology, and M.Sc Aquaculture.",
-    "mca": "MCA is Master of Computer Applications, a 2-year program.",
-    "msc organic": "M.Sc Organic Chemistry is a 2-year postgraduate program.",
-    "msc analytical": "M.Sc Analytical Chemistry is a 2-year postgraduate program.",
-    "msc food science": "M.Sc Food Science & Technology is a 2-year program.",
-    "msc aquaculture": "M.Sc Aquaculture is a 2-year postgraduate program.",
-    "course duration pg": "All PG courses are 2 years duration.",
-    "bsc computers fee": "B.Sc Computers fee is Rs. 50,000 per year.",
-    "bca fee": "BCA fee is Rs. 50,000 per year.",
-    "bsc ai fee": "B.Sc AI fee is Rs. 50,000 per year.",
-    "bba fee": "BBA fee is Rs. 50,000 per year.",
-    "agriculture fee": "Agriculture fee is Rs. 55,000 per year.",
-    "food technology fee": "Food Technology fee is Rs. 60,000 per year.",
-    "aqua fisheries fee": "Aqua & Fisheries fee is Rs. 45,000 per year.",
-    "fee structure": "Fee structure ranges from Rs. 45,000 to Rs. 60,000 per year depending on the course.",
-    "hostel": "Separate hostels are available for boys and girls with good facilities.",
-    "boys hostel": "Boys hostel is available with comfortable rooms and facilities.",
-    "girls hostel": "Girls hostel is available with security and modern facilities.",
-    "hostel fee": "Hostel fee is Rs. 60,000 per year for both boys and girls.",
-    "hostel food": "Breakfast, lunch, and dinner are provided in the hostel.",
-    "hostel rules": "Students must follow hostel rules, maintain discipline, and respect authority.",
-    "hostel timings": "Hostel gate timings are typically 8:00 PM on weekdays and 10:00 PM on weekends.",
-    "hostel warden": "Each hostel has a dedicated warden for discipline and welfare.",
-    "bus facility": "Bus facility is available from various areas in and around Kakinada.",
-    "bus routes": "Buses cover major residential areas within and around Kakinada city.",
-    "bus fee": "Bus fee depends on the route distance and is collected monthly.",
-    "library": "The college has a well-equipped library with textbooks, journals, and reference materials.",
-    "library timing": "Library is open during college working hours from 9:30 AM to 3:45 PM.",
-    "book issue": "Students can borrow books using their college ID card.",
-    "library rules": "Late return of books will incur fine as per college norms.",
-    "librarian": "Library is managed by Mrs. K. Vara Lakshmi.",
-    "reference materials": "Library has competitive exam materials, research journals, and e-resources.",
-    "exams": "Internal exams are conducted every semester along with university final exams.",
-    "internal exams": "Internal exams test practical knowledge and subject understanding.",
-    "semester exams": "Semester exams are conducted by the university as per academic schedule.",
-    "attendance": "Minimum 75% attendance is mandatory to appear for exams.",
-    "results": "University results are announced officially by the university authorities.",
-    "exam cell": "Exam cell incharge is Mr. K. Suresh Kumar.",
-    "academic calendar": "Academic calendar follows university and college schedules.",
-    "computer labs": "Well-equipped computer labs with modern systems and software.",
-    "science labs": "Science labs for Physics, Chemistry, Biology, and specialized subjects.",
-    "playground": "Large playground for cricket, volleyball, badminton, and other sports.",
-    "cafeteria": "On-campus cafeteria with hygienic food and beverages.",
-    "water facility": "RO purified drinking water available on every floor.",
-    "wifi facility": "Wi-Fi facility available for academic and official use.",
-    "cctv security": "24/7 CCTV surveillance ensures student and staff safety.",
-    "parking": "Parking facility available for students and staff vehicles.",
-    "placements": "Campus placements are conducted every year for eligible students.",
-    "placement training": "Soft skills, technical training, and interview preparation provided.",
-    "placement companies": "IT companies, pharma companies, and other organizations visit campus.",
-    "placement rate": "College maintains good placement records annually.",
-    "career guidance": "Career guidance and counseling services available for all students.",
-    "industry connect": "College has collaborations with various industries.",
-    "nss": "NSS unit conducts blood donation camps, tree plantation, and awareness programs.",
-    "ncc": "NCC is available for interested students with parade training and camps.",
-    "cultural activities": "Annual fests, cultural programs, and sports meets are conducted.",
-    "sports": "Sports activities include cricket, volleyball, badminton, table tennis, and more.",
-    "clubs": "Various student clubs for different interests and hobbies.",
-    "scholarship": "Government scholarships available for eligible students from SC, ST, BC, EBC, and minority categories.",
-    "scholarship eligibility": "Students from reserved categories with required income certificates can apply.",
-    "scholarship application": "Apply through college office with necessary certificates.",
-    "scholarship subsidy": "Subsidy varies: Computers Rs. 15,000, BBA Rs. 18,000, Agriculture Rs. 15,000, Food Tech Rs. 30,000, Aqua & MLT Rs. 15,000.",
-    "fee concession": "Fee concessions available for meritorious and economically weak students.",
-    "computer science hod": "Head of Computer Science Department is Mr. V.S.V. Deepak with Mr. M. Kameswara Rao as Additional HOD.",
-    "cs faculty strength": "Computer Science department has 17 dedicated faculty members.",
-    "bba hod": "Head of BBA Department is Mr. E. Srinilasa Rao.",
-    "bba faculty": "BBA department has 10 experienced faculty members.",
-    "agriculture hod": "Head of Agriculture Department is Mr. K. Raju.",
-    "agriculture faculty": "Agriculture department has 4 faculty members including experts.",
-    "fisheries hod": "Head of Fisheries Department is Mr. P. Lova Raju.",
-    "fisheries faculty": "Fisheries department has 5 specialized faculty members.",
-    "food tech hod": "Head of Food Technology is Ms. G. Deekshitha.",
-    "food tech faculty": "Food Technology department has 5 faculty members.",
-    "fsn hod": "Head of FSN (Food Science & Nutrition) is Mr. S. Vinod Kumar.",
-    "fsn faculty": "FSN department has 4 qualified faculty members.",
-    "soft skills trainers": "Y. Harini and P. Pooja provide soft skills training.",
-    "competitive coaching": "M. Leela Mohan Krishna, K. Rambabu, P. Kiran Kumar, K. Satish Kumar handle competitive exams coaching.",
-    "telugu faculty": "Dr. V.V. Satya Narayana teaches Telugu language.",
-    "total faculty": "College has total 54 dedicated faculty members across all departments.",
-    "uniform": "College uniform and ID card are compulsory on all working days.",
-    "uniform policy": "Students must wear prescribed uniform properly during college hours.",
-    "ragging": "Ragging is strictly prohibited with zero tolerance policy.",
-    "ragging helpline": "Students can report ragging incidents to college administration.",
-    "mobile phones": "Mobile phones are restricted during class hours.",
-    "discipline": "Students must maintain discipline, respect teachers, and follow college rules.",
-    "conduct": "Good conduct and behavior expected inside and outside campus.",
-    "medical facility": "Basic first aid facility available on campus.",
-    "emergency services": "Emergency medical services can be arranged through college.",
-    "health checkup": "Regular health checkups arranged for students.",
-    "women safety": "24/7 CCTV surveillance and security guards ensure women safety.",
-    "grievance redressal": "Grievance redressal cell available for student concerns.",
-    "ug eligibility": "Students who have passed Intermediate (10+2) from recognized board.",
-    "pg eligibility": "Bachelor's degree in relevant subject required for PG admission.",
-    "admission process": "Visit college office with required documents and complete admission form.",
-    "documents needed": "10th, 12th marks memo, Transfer Certificate, Study Certificate, Caste Certificate, Aadhaar, passport photos.",
-    "admission open": "Admissions start after Intermediate results announcement.",
-    "management quota": "Management quota available. Contact administrative director for details.",
-    "merit admission": "Admissions also based on merit and qualifying exams.",
-    "college accreditation": "College has NAAC 'A' grade accreditation.",
-    "research facilities": "Research facilities available for interested students.",
-    "alumni network": "Strong alumni network for student placements and guidance.",
-    "industry partnerships": "College maintains partnerships with leading industries.",
-    "internship programs": "Internship programs available for practical experience.",
-    "seminar halls": "Seminar halls and conference rooms available.",
-    "auditorium": "College auditorium for cultural and academic events.",
-    "counseling services": "Counseling and mentoring services for student welfare.",
-    "placement highlights": "Recent drives have seen strong participation: hundreds of students attend placement training, and recruiters include major IT and BPO firms. For exact current-year numbers, contact the Training & Placement cell at the college office.",
-    "placement stats": "The Training & Placement cell runs aptitude, soft skills, and interview preparation. Recruiting partners include TCS, Infosys, HCL, Cognizant, Tech Mahindra, Sutherland, and other IT, pharma, and analytics firms. Visit the office for the latest selection statistics.",
-    "top recruiters": "Campus visitors have included TCS, Infosys, HCL, Cognizant, Tech Mahindra, and Sutherland, along with pharma and regional companies.",
-    "highest package": "Package details vary by year and program. The placement cell publishes updated figures each season; call 0884-2384382 or visit the office for verified numbers.",
-    "internship": "Internships and industry projects are encouraged through departmental coordinators and the placement cell.",
-    "campus life": "Campus life blends academics with NSS, NCC, sports, cultural fests, seminars, and student clubs. Hostel students have evening study hours and supervised activities.",
-    "student clubs": "Students can join departmental associations, cultural teams, and sports squads announced at the start of each academic year.",
-    "history": "Ideal College has a long legacy in Kakinada (junior college from 1970, degree programs from 1974) and has grown into a NAAC 'A' grade institution focused on placements and holistic development.",
-    "founders": "The institution was shaped by visionary founders including Dr. Col. D. S. Raju, Dr. P. V. N. Raju, Dr. P. Chiranjeevini Kumari, and Dr. N. S. R. Sastry.",
-    "affiliation": "The college is affiliated to Adikavi Nannaya University.",
-    "mlt": "Medical Lab Technology (MLT) related programs and fee subsidies are handled as per current university-approved offerings—confirm at the admissions desk.",
-    "digital learning": "Computer labs, e-resources in the library, and Wi-Fi for academic use support digital learning.",
-    "anti ragging": "Anti-ragging committees, CCTV, and strict discipline policies keep the campus safe; violations should be reported immediately to the administration.",
-}
-
-# =====================================================
-# Telugu College Information Database
-# =====================================================
-college_info_te = {
-    "కాలేజీ పేరు": "ఈ కాలేజీ పేరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్.",
-    "ప్రిన్సిపల్": "ప్రిన్సిపల్ డా. టి. సత్యనారాయణ గారు.",
-    "వైస్ ప్రిన్సిపల్": "వైస్ ప్రిన్సిపల్ శ్రీ వి. కామరాజు గారు.",
-    "డైరెక్టర్లు": "ఎకాడమిక్ డైరెక్టర్ రంజిత్ సర్, అడ్మినిస్ట్రేటివ్ డైరెక్టర్ వాసు సర్.",
-    "కాలేజీ సమయం": "కాలేజీ ఉదయం 9:30 నుండి మధ్యాహ్నం 3:45 వరకు, సోమవారం-శనివారం.",
-    "లంచ్ బ్రేక్": "లంచ్ బ్రేక్ 1:00 PM నుండి 1:45 PM వరకు.",
-    "కాలేజీ ఎక్కడ": "కాలేజీ విద్యుత్ నగర్, కాకినాడ, ఆంధ్రప్రదేశ్‌లో ఉంది.",
-    "అడ్మిన్ ఆఫీస్": "అడ్మినిస్ట్రేటివ్ ఆఫీస్ విద్యుత్ నగర్ క్యాంపస్‌లో ఉంది.",
-    "ఫోన్ నెంబర్": "కాలేజీ సంప్రదించండి: 0884-2384382 లేదా 0884-2384381.",
-    "ఇమెయిల్": "ఇమెయిల్: idealcolleges@gmail.com.",
-    "వెబ్‌సైట్": "వెబ్‌సైట్: https://idealcollege.edu.in.",
-    "శనివారం": "శనివారం సాధారణ పని దినం.",
-    "ఆఫీస్ సమయం": "ఆఫీస్ సమయం ఉదయం 9:00 నుండి సాయంత్రం 5:00 వరకు.",
-    "యూజీ కోర్సులు": "బీఎస్సీ కంప్యూటర్స్, బీసీఏ, బీఎస్సీ ఏఐ, బీబీఏ, వ్యవసాయం, ఫుడ్ టెక్, ఫిషరీస్.",
-    "బీఎస్సీ కంప్యూటర్స్": "బీఎస్సీ కంప్యూటర్స్ గణితం, ఎలక్ట్రానిక్స్, కంప్యూటర్ సైన్స్ కలిగి ఉంటుంది.",
-    "బీసీఏ": "బీసీఏ కంప్యూటర్ అప్లికేషన్‌ల బ్యాచిలర్ డిగ్రీ.",
-    "బీఎస్సీ ఏఐ": "బీఎస్సీ ఏఐ ఆర్టిఫిషియల్ ఇంటెలిజెన్స్ ఫోకస్‌తో.",
-    "బీబీఏ": "బీబీఏ వ్యాపార నిర్వహణ బ్యాచిలర్ డిగ్రీ.",
-    "వ్యవసాయం": "బీఎస్సీ వ్యవసాయం కృషి శాస్త్రం కలిగి ఉంటుంది.",
-    "ఫుడ్ టెక్": "బీఎస్సీ ఫుడ్ టెక్నాలజీ ఆహార ప్రక్రియ కలిగి ఉంటుంది.",
-    "ఫిషరీస్": "బీఎస్సీ ఆక్వాకల్చర్ & ఫిషరీస్ జలీయ విజ్ఞానం కలిగి ఉంటుంది.",
-    "యూజీ వ్యవధి": "అన్ని యూజీ కోర్సులు 3 సంవత్సరాలు.",
-    "పీజీ కోర్సులు": "ఎంసీఏ, ఎమ్మెస్సీ ఆర్గానిక్, ఎమ్మెస్సీ అనలిటికల్, ఎమ్మెస్సీ ఫుడ్ సైన్స్, ఎమ్మెస్సీ ఆక్వాకల్చర్.",
-    "ఎంసీఏ": "ఎంసీఏ కంప్యూటర్ అప్లికేషన్‌ల మాస్టర్ డిగ్రీ, 2 సంవత్సరాలు.",
-    "ఎమ్మెస్సీ ఆర్గానిక్": "ఎమ్మెస్సీ ఆర్గానిక్ కెమిస్ట్రీ 2 సంవత్సర ప్రోగ్రామ్.",
-    "ఎమ్మెస్సీ అనలిటికల్": "ఎమ్మెస్సీ అనలిటికల్ కెమిస్ట్రీ 2 సంవత్సర ప్రోగ్రామ్.",
-    "ఎమ్మెస్సీ ఫుడ్": "ఎమ్మెస్సీ ఫుడ్ సైన్స్ & టెక్నాలజీ 2 సంవత్సరాలు.",
-    "ఎమ్మెస్సీ ఆక్వా": "ఎమ్మెస్సీ ఆక్వాకల్చర్ పోస్ట్‌గ్రాడ్యువేట్ ప్రోగ్రామ్.",
-    "పీజీ వ్యవధి": "అన్ని పీజీ కోర్సులు 2 సంవత్సరాలు.",
-    "బీఎస్సీ కంప్యూటర్స్ ఫీజు": "బీఎస్సీ కంప్యూటర్స్ ఫీజు సంవత్సరానికి రూ. 50,000.",
-    "బీసీఏ ఫీజు": "బీసీఏ ఫీజు సంవత్సరానికి రూ. 50,000.",
-    "బీఎస్సీ ఏఐ ఫీజు": "బీఎస్సీ ఏఐ ఫీజు సంవత్సరానికి రూ. 50,000.",
-    "బీబీఏ ఫీజు": "బీబీఏ ఫీజు సంవత్సరానికి రూ. 50,000.",
-    "వ్యవసాయం ఫీజు": "వ్యవసాయం ఫీజు సంవత్సరానికి రూ. 55,000.",
-    "ఫుడ్ టెక్ ఫీజు": "ఫుడ్ టెక్ ఫీజు సంవత్సరానికి రూ. 60,000.",
-    "ఫిషరీస్ ఫీజు": "ఫిషరీస్ ఫీజు సంవత్సరానికి రూ. 45,000.",
-    "ఫీ స్ట్రక్చర్": "ఫీజు రూ. 45,000 నుండి రూ. 60,000 వరకు కోర్సుపై ఆధారపడుతుంది.",
-    "హాస్టల్": "అబ్బాయిలు మరియు అమ్మాయిలకు విడిగా హాస్టల్ ఉంటాయి.",
-    "అబ్బాయి హాస్టల్": "అబ్బాయుల హాస్టల్ సుఖకరమైన గదులు మరియు సదుపాయాలతో ఉంటుంది.",
-    "అమ్మాయి హాస్టల్": "అమ్మాయుల హాస్టల్ సురక్షితమైన ఆధునిక సదుపాయాలతో ఉంటుంది.",
-    "హాస్టల్ ఫీజు": "హాస్టల్ ఫీజు సంవత్సరానికి అబ్బాయిలకు, అమ్మాయిలకు రూ. 60,000.",
-    "హాస్టల్ భోజనం": "హాస్టల్‌లో అల్పాహారం, మధ్యాహ్నం, రాత్రి భోజనం అందిస్తారు.",
-    "హాస్టల్ నియమాలు": "విద్యార్థులు హాస్టల్ నియమాలు పాటించాలి మరియు క్రమశిక్షణ కాపాడాలి.",
-    "హాస్టల్ సమయం": "హాస్టల్ గేట్ సమయం పని రోజులకు 8:00 PM, వారాంతానికి 10:00 PM.",
-    "హాస్టల్ వార్డెన్": "ప్రతి హాస్టల్‌కు విద్యార్థుల సంక్షేమం కోసం వార్డెన్ ఉంటారు.",
-    "బస్సు సౌకర్యం": "కాకినాడ మరియు చుట్టుపక్క ప్రాంతాల నుండి బస్సు సౌకర్యం ఉంది.",
-    "బస్సు మార్గాలు": "బస్సులు కాకినాడ నగరం లోపల మరియు చుట్టుపక్క ప్రధాన నివాస ప్రాంతాలను కవర్ చేస్తాయి.",
-    "బస్సు ఫీజు": "బస్సు ఫీజు మార్గ దూరం ఆధారంగా నెలవారీ సేకరిస్తారు.",
-    "లైబ్రరీ": "కాలేజీ బాగా-సజ్జీకృత లైబ్రరీ పుస్తకాలు, జర్నల్స్, సూచన గ్రంథాలతో కలిగి ఉంది.",
-    "లైబ్రరీ సమయం": "లైబ్రరీ కాలేజీ పని సమయాల్లో తెరిచి ఉంటుంది.",
-    "పుస్తకాలు": "విద్యార్థులు కాలేజీ ఐడీ కార్డ్‌తో పుస్తకాలు తీసుకోవచ్చు.",
-    "లైబ్రరీ నియమాలు": "ఆలస్యంగా పుస్తకాలు వస్తే కాలేజీ నిబంధనల ప్రకారం జరిమానా చెల్లించాలి.",
-    "లైబ్రేరియన్": "లైబ్రరీని శ్రీమతి కె. వరలక్ష్మి నిర్వహిస్తారు.",
-    "సూచన సామగ్రి": "పోటీ పరీక్ష సామగ్రి, రీసెర్చ్ జర్నల్స్ మరియు ఆన్‌లైన్ వనరులు ఉన్నాయి.",
-    "పరీక్షలు": "ప్రతి సెమిస్టర్‌లో అంతర్గత పరీక్షలు మరియు విశ్వవిద్యాలయ చివరి పరీక్షలు జరుగుతాయి.",
-    "అంతర్గత పరీక్షలు": "ఆచరణాత్మక జ్ఞానం మరియు విషయ అవగాహన పరీక్షించే అంతర్గత పరీక్షలు.",
-    "సెమిస్టర్ పరీక్షలు": "విశ్వవిద్యాలయ పరీక్షలు విశ్వవిద్యాలయ అకాడమిక్ షెడ్యూల్ ప్రకారం జరుగుతాయి.",
-    "హాజరు": "కనీసం 75% హాజరు పరీక్షల్లో కూర్చోవడానికి తప్పనిసరి.",
-    "ఫలితాలు": "విశ్వవిద్యాలయ ఫలితాలను సంబంధిత అధికారులు ప్రకటిస్తారు.",
-    "ఎగ్జామ్ సెల్": "ఎగ్జామ్ సెల్ ఇన్‌ఛార్జి శ్రీ కె. సురేష్ కుమార్.",
-    "అకాడమిక్ కాలెండర్": "అకాడమిక్ కాలెండర్ విశ్వవిద్యాలయ మరియు కాలేజీ షెడ్యూల్ అనుసరిస్తుంది.",
-    "కంప్యూటర్ ల్యాబ్‌లు": "ఆధునిక కంప్యూటర్‌లు మరియు సాఫ్ట్‌వేర్‌తో బాగా సజ్జీకృత ల్యాబ్‌లు.",
-    "సైన్స్ ల్యాబ్‌లు": "భౌతికశాస్త్రం, రసాయనశాస్త్రం, జీవశాస్త్రం కోసం ల్యాబ్‌లు.",
-    "ఆడుకునే మైదానం": "క్రికెట్, వాలీబాల్, ఫుట్‌బాల్ కోసం పెద్ద మైదానం.",
-    "ఆహారశాల": "స్వచ్ఛమైన ఆహారం మరియు పానీయాలతో క్యాంపస్ ఆహారశాల.",
-    "నీటి సదుపాయం": "ప్రతి అంతస్తులో RO నీరు అందుబాటులో ఉంది.",
-    "వైఫై సదుపాయం": "విద్యాపరమైన ఉపయోగం కోసం వైఫై అందుబాటులో ఉంది.",
-    "సీసీటీవీ సురక్షత": "24/7 సీసీటీవీ పర్యవేక్షణ విద్యార్థులు మరియు సిబ్బందికి భద్రత కల్పిస్తుంది.",
-    "పార్కింగ్": "విద్యార్థులు మరియు సిబ్బంది వాహనాల కోసం పార్కింగ్ సదుపాయం.",
-    "ప్లేస్‌మెంట్లు": "అర్హతైన విద్యార్థుల కోసం ప్రతి సంవత్సరం క్యాంపస్ ప్లేస్‌మెంట్లు జరుగుతాయి.",
-    "ప్లేస్‌మెంట్ శిక్షణ": "సాఫ్ట్ స్కిల్స్, సాంకేతిక శిక్షణ, ఇంటర్వ్యూ సన్నాహం చేయబడుతుంది.",
-    "ప్లేస్‌మెంట్ కంపెనీలు": "ఐటీ, ఫార్మా, ఇతర సంస్థలు క్యాంపస్‌కు సందర్శిస్తాయి.",
-    "ప్లేస్‌మెంట్ రేటు": "కాలేజీ వార్షిక ప్లేస్‌మెంట్ రిపోర్టు మంచిది.",
-    "కెరీర్ గైడెన్స్": "సమస్త విద్యార్థుల కోసం కెరీర్ గైడెన్స్ సేవలు అందుబాటులో ఉన్నాయి.",
-    "ఇండస్ట్రీ సంబంధం": "కాలేజీ వివిధ పరిశ్రమలతో సహకారం కలిగి ఉంది.",
-    "ఎన్‌ఎస్‌ఎస్": "ఎన్‌ఎస్‌ఎస్ రక్తదాన శిబిరాలు, చెట్టు నాటడం, అవగాహన కార్యక్రమాలు నిర్వహిస్తుంది.",
-    "ఎన్‌సిసి": "ఇష్టపడే విద్యార్థులకు ఎన్‌సిసి శిక్షణ మరియు శిబిరాలు ఉంటాయి.",
-    "సాంస్కృతిక కార్యక్రమాలు": "సంవత్సరాంత ఫెస్టివల్‌లు, సాంస్కృతిక కార్యక్రమాలు, క్రీడా సమావేశాలు జరుగుతాయి.",
-    "క్రీడలు": "క్రికెట్, వాలీబాల్, బ్యాడ్మింటన్, టేబుల్ టెన్నిస్ మరియు ఇతర కార్యకలాపాలు.",
-    "క్లబ్‌లు": "విభిన్న ఆసక్తుల కోసం విభిన్న విద్యార్థుల క్లబ్‌లు ఉన్నాయి.",
-    "స్కాలర్‌షిప్": "అర్హతైన ఎస్సీ, ఎస్టీ, బీసీ, ఈబీసీ, మైనారిటీ విద్యార్థులకు ప్రభుత్వ స్కాలర్‌షిప్ అందుబాటులో ఉంది.",
-    "స్కాలర్‌షిప్ అర్హత": "నిర్దిష్ట ఆదాయ సర్టిఫికెట్‌తో రిజర్వ్డ్ విద్యార్థులు దరఖాస్తు చేయవచ్చు.",
-    "స్కాలర్‌షిప్ దరఖాస్తు": "కాలేజీ ఆఫీస్‌ను సంప్రదించి సర్టిఫికెట్‌లతో దరఖాస్తు చేయండి.",
-    "స్కాలర్‌షిప్ సబ్‌సిడీ": "కంప్యూటర్స్ రూ. 15,000, బీబీఏ రూ. 18,000, వ్యవసాయం రూ. 15,000, ఫుడ్ టెక్ రూ. 30,000.",
-    "ఫీ కుదరణ": "మెరిట్ విద్యార్థులు మరియు ఆర్థికంగా బలహీన విద్యార్థులకు ఫీ కుదరణ ఉంది.",
-    "కంప్యూటర్ సైన్స్ హెడ్": "కంప్యూటర్ సైన్స్ హెడ్ శ్రీ వి.ఎస్.వి. దీపక్, అదనపు హెడ్ శ్రీ ఎం. కామేశ్వర రావు.",
-    "సిఎస్ సిబ్బంది": "కంప్యూటర్ సైన్స్‌లో 17 అర్హత గల సిబ్బంది ఉన్నారు.",
-    "బిబిఎ హెడ్": "బిబిఎ విభాగ హెడ్ శ్రీ ఇ. శ్రీనివాస రావు.",
-    "బిబిఎ సిబ్బంది": "బిబిఎ విభాగంలో 10 అనుభవశీల సిబ్బంది ఉన్నారు.",
-    "వ్యవసాయం హెడ్": "వ్యవసాయం విభాగ హెడ్ శ్రీ కె. రాజు.",
-    "వ్యవసాయం సిబ్బంది": "వ్యవసాయం విభాగంలో 4 సిబ్బంది ఉన్నారు.",
-    "ఫిషరీస్ హెడ్": "ఫిషరీస్ విభాగ హెడ్ శ్రీ పి. లోవ రాజు.",
-    "ఫిషరీస్ సిబ్బంది": "ఫిషరీస్ విభాగంలో 5 విశేషజ్ఞ సిబ్బంది ఉన్నారు.",
-    "ఫుడ్ టెక్ హెడ్": "ఫుడ్ టెక్నాలజీ హెడ్ శ్రీమతి జి. దీక్షిత.",
-    "ఫుడ్ టెక్ సిబ్బంది": "ఫుడ్ టెక్‌లో 5 సిబ్బంది ఉన్నారు.",
-    "ఎఫ్‌ఎస్‌ఎన్ హెడ్": "ఎఫ్‌ఎస్‌ఎన్ హెడ్ శ్రీ ఎస్. వినోద్ కుమార్.",
-    "ఎఫ్‌ఎస్‌ఎన్ సిబ్బంది": "ఎఫ్‌ఎస్‌ఎన్‌లో 4 సిబ్బంది ఉన్నారు.",
-    "సాఫ్ట్ స్కిల్స్": "సాఫ్ట్ స్కిల్స్ శిక్షకులు వై. హరిని మరియు పి. పూజ.",
-    "కాంపిటిటివ్ కోచింగ్": "కాంపిటిటివ్ కోచింగ్ ఎం. లీలా మోహన్ కృష్ణ, కె. రాంబాబు, పి. కిరణ్ కుమార్, కె. సతీష్ కుమార్ అందిస్తున్నారు.",
-    "తెలుగు సిబ్బంది": "తెలుగు డా. వి.వి. సత్యనారాయణ చేత బోధించబడుతుంది.",
-    "మొత్తం సిబ్బంది": "కాలేజీలో మొత్తం 54 సిబ్బంది ఉన్నారు.",
-    "యూనిఫాం": "యూనిఫాం మరియు ఐడీ కార్డ్ అన్ని పని దినాల్లో తప్పనిసరి.",
-    "యూనిఫాం నియమం": "విద్యార్థులు నిబంధనల ప్రకారం యూనిఫాం ధరించాలి.",
-    "ర్యాగింగ్": "ర్యాగింగ్ పూర్తిగా నిషిద్ధం, జీరో టాలరెన్స్ పాలసీ ఉంది.",
-    "ర్యాగింగ్ సహాయక కేంద్రం": "విద్యార్థులు ర్యాగింగ్ ఘటనల నివేదన కాలేజీ నిర్వహణకు చేయవచ్చు.",
-    "మొబైల్ ఫోన్‌లు": "క్లాస్ సమయంలో మొబైల్ ఫోన్‌లు నిషిద్ధం.",
-    "క్రమశిక్షణ": "విద్యార్థులు క్రమశిక్షణ, గురువుల గౌరవం, నియమాలు పాటించాలి.",
-    "ఆచరణ": "క్యాంపస్ లోపల, బయట మంచి ఆచరణ ఆశించబడుతుంది.",
-    "వైద్య సదుపాయం": "క్యాంపస్‌లో ప్రాథమిక ఫస్ట్ ఎయిడ్ సదుపాయం ఉంది.",
-    "అత్యవసర సేవలు": "అత్యవసర వైద్య సేవలను కాలేజీ ద్వారా ఏర్పాటు చేయవచ్చు.",
-    "ఆరోగ్య పరీక్ష": "విద్యార్థుల కోసం క్రమం తప్పకుండా ఆరోగ్య పరీక్షలు నిర్వహిస్తారు.",
-    "మహిళల సురక్షత": "24/7 సీసీటీవీ మరియు సెక్యూరిటీ మహిళల సురక్షతను కల్పిస్తుంది.",
-    "ఫిర్యాదు పరిష్కారం": "విద్యార్థుల ఆందోళనల కోసం ఫిర్యాదు పరిష్కార సెల్ అందుబాటులో ఉంది.",
-    "యూజీ అర్హత": "ఇంటర్మీడియట్ (10+2) పాస్ అయిన విద్యార్థులు అర్హులు.",
-    "పీజీ అర్హత": "సంబంధిత విషయంలో బ్యాచిలర్ డిగ్రీ అవసరం.",
-    "ఆడ్మిషన్ ప్రక్రియ": "సర్టిఫికేట్‌లతో కాలేజీ ఆఫీసుకు వచ్చి దరఖాస్తు పూర్తి చేయాలి.",
-    "అవసరమైన డాక్యుమెంట్లు": "10వ, ఇంటర్ మార్క్స్ మెమోలు, ట్రాన్స్‌ఫర్ సర్టిఫికేట్, ఆధార్, ఫోటోలు.",
-    "ఆడ్మిషన్‌లు ప్రారంభం": "ఇంటర్ ఫలితాలు వచ్చిన తర్వాత ఆడ్మిషన్‌లు ప్రారంభమవుతాయి.",
-    "మేనేజ్‌మెంట్ కోటా": "మేనేజ్‌మెంట్ కోటా ఉంది. అడ్మినిస్ట్రేటివ్ డైరెక్టర్‌ను సంప్రదించండి.",
-    "మెరిట్ ఆడ్మిషన్": "ఆడ్మిషన్‌లు మెరిట్ మరియు పరీక్షల ఆధారంగా కూడా ఉంటాయి.",
-    "కాలేజీ ఆక్రిడిటేషన్": "కాలేజీకు ఎన్‌ఏఏసీ 'ఎ' గ్రేడ్ ఆక్రిడిటేషన్ ఉంది.",
-    "గవేషణ సదుపాయాలు": "ఆసక్తి గల విద్యార్థుల కోసం గవేషణ సదుపాయాలు ఉన్నాయి.",
-    "అలుమ్ని నెట్‌వర్క్": "బలమైన అలుమ్ని నెట్‌వర్క్ ప్లేస్‌మెంట్‌లకు సహకరిస్తుంది.",
-    "ఇండస్ట్రీ భాగస్వామ్యం": "కాలేజీ ప్రముఖ పరిశ్రమలతో సంబంధాలను నిర్వహిస్తుంది.",
-    "ఇంటర్న్‌షిప్ కార్యక్రమాలు": "ప్రాక్టికల్ అనుభవం కోసం ఇంటర్న్‌షిప్‌లు ఉన్నాయి.",
-    "సెమినార్ హాల్‌లు": "సెమినార్ హాల్‌లు మరియు సమావేశ గదులు అందుబాటులో ఉన్నాయి.",
-    "ఆడిటోరియం": "సాంస్కృతిక మరియు అకాడమిక్ ఈవెంట్‌ల కోసం ఆడిటోరియం ఉంది.",
-    "కౌన్సెలింగ్ సేవలు": "విద్యార్థుల సంక్షేమం కోసం కౌన్సెలింగ్, మెంటరింగ్ సేవలు ఉన్నాయి.",
-    "ప్లేస్‌మెంట్ హైలైట్స్": "ట్రైనింగ్ అండ్ ప్లేస్‌మెంట్ సెల్ ఇంటర్వ్యూ సన్నాహం, సాఫ్ట్ స్కిల్స్, అప్టిట్యూడ్ శిక్షణ నిర్వహిస్తుంది. ఐటీ, బీపీఓ, ఫార్మా సంస్థలు క్యాంపస్‌కు వస్తాయి. తాజా సంఖ్యల కోసం కాలేజీ ఆఫీసును సంప్రదించండి.",
-    "టాప్ రిక్రూటర్స్": "టీసీఎస్, ఇన్ఫోసిస్, హెచ్‌సీఎల్, కాగ్నిజాంట్, టెక్ మహీంద్రా, సదర్లాండ్ వంటి సంస్థలు క్యాంపస్ డ్రైవ్‌లలో పాల్గొన్నాయి.",
-    "అధిక ప్యాకేజ్": "ప్యాకేజ్ వివరాలు సంవత్సరానికి మారుతూ ఉంటాయి. ధృవీకరించిన సమాచారం కోసం 0884-2384382 కి కాల్ చేయండి లేదా ప్లేస్‌మెంట్ సెల్‌ను కలవండి.",
-    "ఇంటర్న్‌షిప్": "ఇంటర్న్‌షిప్‌లు మరియు పరిశ్రమ ప్రాజెక్టులు విభాగ కోఆర్డినేటర్లు మరియు ప్లేస్‌మెంట్ సెల్ ద్వారా ప్రోత్సహించబడతాయి.",
-    "క్యాంపస్ లైఫ్": "విద్యాబ్యాసం, ఎన్‌ఎస్‌ఎస్, ఎన్‌సిసి, క్రీడలు, సాంస్కృతిక ఫెస్ట్‌లు, సెమినార్లు కలిపి క్యాంపస్ జీవితం సమతుల్యంగా ఉంటుంది.",
-    "విద్యార్థి క్లబ్‌లు": "ప్రతి అకాడమిక్ సంవత్సరం ప్రారంభంలో విభాగ సంఘాలు మరియు క్రీడా జట్లు ప్రకటించబడతాయి.",
-    "చరిత్ర": "ఐడియల్ కాలేజ్ కాకినాడలో దీర్ఘ చరిత్ర కలిగి ఉంది (1970 జూనియర్, 1974 డిగ్రీ) మరియు ఎన్‌ఏఏసీ 'ఎ' గ్రేడ్‌తో అభివృద్ధి చెందింది.",
-    "స్థాపకులు": "డా. కలనల్ డి.ఎస్. రాజు, డా. పి.వి.ఎన్. రాజు, డా. పి. చిరంజీవిని కుమారి, డా. ఎన్.ఎస్.ఆర్. శాస్త్రి వంటి స్థాపక దృష్టికోణం ఈ సంస్థను నడిపింది.",
-    "అనుబంధం": "ఆదికవి నన్నయ్య విశ్వవిద్యాలయానికి అనుబంధ కాలేజీ.",
-    "డిజిటల్ లెర్నింగ్": "కంప్యూటర్ ల్యాబ్‌లు, లైబ్రరీ ఇ-రిసోర్సెస్, విద్యార్థులకు అకాడమిక్ వైఫై డిజిటల్ నేర్పుకునే వాతావరణాన్ని ఇస్తాయి.",
-    "ర్యాగింగ్ నిరోధం": "ర్యాగింగ్ నిషేధం కఠినంగా అమలవుతుంది; సీసీటీవీ మరియు గ్రివెన్స్ సెల్ అందుబాటులో ఉన్నాయి.",
-}
-
-college_data = {
-    "english": {
-        "name": "Ideal College of Arts and Sciences",
-        "location": "Kakinada, Andhra Pradesh, India",
-        "about": "Ideal College of Arts and Sciences is a reputed institution offering UG and PG programs with focus on academic excellence and student development.",
+COLLEGE_DATABASE = {
+    "metadata": {
+        "college_name_en": "Ideal College of Arts and Sciences",
+        "college_name_te": "ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్",
+        "location": "Vidyuth Nagar, Kakinada, Andhra Pradesh",
         "affiliation": "Adikavi Nannaya University",
         "accreditation": "NAAC 'A' Grade",
-        "administration": {
-            "principal": "Dr. T. Satyanarayana",
-            "vice_principal": "Mr. V. Kama Raju",
-            "academic_director": "Ranjith Sir",
-            "administrative_director": "Vasu Sir",
-        },
-        "timings": {
-            "college": "9:30 AM - 3:45 PM",
-            "office": "9:00 AM - 5:00 PM",
-            "lunch_break": "1:00 PM - 1:45 PM",
-            "working_days": "Monday to Saturday",
-        },
-        "contact": {
-            "address": "Vidyuth Nagar, Kakinada",
-            "phone": ["0884-2384382", "0884-2384381"],
-            "email": "idealcolleges@gmail.com",
-            "website": "https://idealcollege.edu.in",
-        },
-        "courses": {
-            "ug": [
-                "B.Sc Computers",
-                "BCA",
-                "B.Sc AI",
-                "BBA",
-                "Agriculture",
-                "Food Technology",
-                "Aqua & Fisheries",
-            ],
-            "pg": [
-                "MCA",
-                "M.Sc Organic Chemistry",
-                "M.Sc Analytical Chemistry",
-                "M.Sc Food Science & Technology",
-                "M.Sc Aquaculture",
-            ],
-        },
-        "fees": {"range": "Rs. 45,000 - Rs. 60,000 per year"},
-        "facilities": [
-            "Modern classrooms",
-            "Computer labs",
-            "Science labs",
-            "Library",
-            "Wi-Fi",
-            "CCTV security",
-            "Playground",
-            "Cafeteria",
-            "Parking",
-        ],
-        "hostel": {
-            "available": True,
-            "fee": "Rs. 60,000 per year",
-            "food": "Breakfast, Lunch, Dinner provided",
-            "timings": "8:00 PM weekdays, 10:00 PM weekends",
-        },
-        "transport": {"available": True, "coverage": "Kakinada and nearby areas"},
-        "placements": {
-            "training": ["Soft skills", "Aptitude", "Interview preparation"],
-            "companies": ["IT", "Pharma", "Other industries"],
-            "support": "Career guidance and internships available",
-        },
-        "library": {
-            "timing": "9:30 AM - 3:45 PM",
-            "features": ["Books", "Journals", "E-resources"],
-        },
-        "rules": [
-            "Uniform compulsory",
-            "75% attendance required",
-            "No ragging",
-            "Mobile restricted in class",
-        ],
-        "activities": ["NSS", "NCC", "Cultural events", "Sports", "Workshops"],
-        "scholarships": "Available for SC, ST, BC, EBC, Minority students",
-        "admissions": {
-            "ug": "Intermediate (10+2)",
-            "pg": "Relevant bachelor's degree",
-            "documents": ["10th memo", "12th memo", "TC", "Aadhaar", "Photos"],
-        },
-        "placement_summary": {
-            "training": "CRT, soft skills, aptitude, spoken English, mock interviews",
-            "recruiters_sample": ["TCS", "Infosys", "HCL", "Cognizant", "Tech Mahindra", "Sutherland"],
-            "note": "Contact the placement cell for verified year-wise statistics.",
-        },
+        "languages_supported": ["en", "te"],
+        "last_updated": "April 2026"
     },
-    "telugu": {
-        "name": "ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్",
-        "location": "కాకినాడ, ఆంధ్రప్రదేశ్, భారతదేశం",
-        "about": "ఈ కాలేజీ డిగ్రీ మరియు పీజీ కోర్సులతో మంచి విద్యను అందిస్తుంది.",
-        "affiliation": "ఆదికవి నన్నయ్య విశ్వవిద్యాలయం",
-        "accreditation": "NAAC 'A' గ్రేడ్",
-        "administration": {
-            "principal": "డా. టి. సత్యనారాయణ",
-            "vice_principal": "వి. కామరాజు",
-            "academic_director": "రంజిత్ సర్",
-            "administrative_director": "వాసు సర్",
+
+    "sections": {
+
+        "general_information": {
+            "keywords_en": ["college name", "location", "principal", "timings", "contact", "strength"],
+            "keywords_te": ["కాలేజీ పేరు", "స్థానం", "ప్రిన్సిపల్"],
+            "data": {
+                "en": {
+                    "name": "Ideal College of Arts and Sciences",
+                    "location": "Vidyuth Nagar, Kakinada, Andhra Pradesh",
+                    "principal": "Dr. T. Satyanarayana",
+                    "vice_principal": "Mr. V. Kama Raju",
+                    "academic_director": "Ranjith Sir",
+                    "administrative_director": "Vasu Sir",
+                    "college_timings": "9:30 AM - 3:45 PM (Monday to Saturday)",
+                    "lunch_break": "1:00 PM - 1:45 PM",
+                    "contact": "0884-2384382 / 0884-2384381",
+                    "email": "idealcolleges@gmail.com",
+                    "website": "https://idealcollege.edu.in",
+                    "college_strength": "1200 students (including Junior + Senior)"
+                }
+            }
         },
-        "timings": {
-            "college": "9:30 AM - 3:45 PM",
-            "office": "9:00 AM - 5:00 PM",
-            "lunch_break": "1:00 PM - 1:45 PM",
-            "working_days": "సోమవారం - శనివారం",
+
+        "governance_and_administration": {
+            "keywords_en": ["administration", "principal", "directors", "exam cell"],
+            "keywords_te": ["నిర్వహణ"],
+            "data": {
+                "en": {
+                    "academic_director": "Ranjith Sir",
+                    "administrative_director": "Vasu Sir",
+                    "exam_incharge": "Mr. K. Suresh Kumar"
+                }
+            }
         },
-        "contact": {
-            "address": "విద్యుత్ నగర్, కాకినాడ",
-            "phone": ["0884-2384382", "0884-2384381"],
-            "email": "idealcolleges@gmail.com",
-            "website": "https://idealcollege.edu.in",
-        },
+
         "courses": {
-            "ug": [
-                "బీఎస్సీ కంప్యూటర్స్",
-                "బీసీఏ",
-                "బీఎస్సీ ఏఐ",
-                "బీబీఏ",
-                "వ్యవసాయం",
-                "ఫుడ్ టెక్నాలజీ",
-                "ఫిషరీస్",
-            ],
-            "pg": [
-                "ఎంసీఏ",
-                "ఎమ్మెస్సీ ఆర్గానిక్ కెమిస్ట్రీ",
-                "ఎమ్మెస్సీ అనలిటికల్ కెమిస్ట్రీ",
-                "ఎమ్మెస్సీ ఫుడ్ సైన్స్",
-                "ఎమ్మెస్సీ ఆక్వా",
-            ],
+            "keywords_en": ["courses", "ug", "pg"],
+            "keywords_te": ["కోర్సులు"],
+            "data": {
+                "en": {
+                    "ug": ["B.Sc Computers", "BCA", "B.Sc AI", "BBA", "Agriculture", "Food Technology", "Aqua & Fisheries"],
+                    "pg": ["MCA", "M.Sc Organic Chemistry", "M.Sc Analytical Chemistry", "M.Sc Food Science & Technology", "M.Sc Aquaculture"],
+                    "ug_duration": "3 Years",
+                    "pg_duration": "2 Years"
+                }
+            }
         },
-        "fees": {"range": "రూ. 45,000 - రూ. 60,000 సంవత్సరానికి"},
-        "facilities": [
-            "ఆధునిక తరగతి గదులు",
-            "కంప్యూటర్ ల్యాబ్స్",
-            "సైన్స్ ల్యాబ్స్",
-            "లైబ్రరీ",
-            "వైఫై",
-            "సీసీటీవీ",
-            "మైదానం",
-            "క్యాంటీన్",
-        ],
-        "hostel": {
-            "available": True,
-            "fee": "రూ. 60,000 సంవత్సరానికి",
-            "food": "ఉపలభ్యం",
-            "timings": "8:00 PM / 10:00 PM",
+
+        "fee_structure": {
+            "keywords_en": ["fees", "fee structure"],
+            "keywords_te": ["ఫీజులు"],
+            "data": {
+                "en": {
+                    "range": "₹45,000 - ₹60,000 per year",
+                    "bsc_computers": "₹50,000/year",
+                    "bca": "₹50,000/year",
+                    "bsc_ai": "₹50,000/year",
+                    "bba": "₹50,000/year",
+                    "agriculture": "₹55,000/year",
+                    "food_technology": "₹60,000/year",
+                    "aqua_fisheries": "₹45,000/year"
+                }
+            }
         },
-        "transport": {"available": True, "coverage": "కాకినాడ మరియు సమీప ప్రాంతాలు"},
-        "placements": {
-            "training": ["సాఫ్ట్ స్కిల్స్", "అప్టిట్యూడ్", "ఇంటర్వ్యూ ప్రిపరేషన్"],
+
+        "hostel_and_amenities": {
+            "keywords_en": ["hostel", "hostel fee"],
+            "keywords_te": ["హాస్టల్"],
+            "data": {
+                "en": {
+                    "available": True,
+                    "fee": "₹60,000 per year",
+                    "features": ["Separate Boys & Girls Hostels", "Mess Facility (Breakfast, Lunch, Dinner)", "Warden Supervision"]
+                }
+            }
         },
+
+        "transport": {
+            "keywords_en": ["bus", "transport"],
+            "keywords_te": ["బస్సు"],
+            "data": {
+                "en": "Bus facility available from various areas in and around Kakinada."
+            }
+        },
+
         "library": {
-            "timing": "కాలేజీ సమయాల్లో",
-            "features": ["పుస్తకాలు", "జర్నల్స్"],
+            "keywords_en": ["library"],
+            "keywords_te": ["లైబ్రరీ"],
+            "data": {
+                "en": {
+                    "librarian": "Mrs. K. Vara Lakshmi",
+                    "timing": "9:30 AM - 3:45 PM",
+                    "features": "Textbooks, Journals, E-resources"
+                }
+            }
         },
-        "rules": [
-            "యూనిఫాం తప్పనిసరి",
-            "75% హాజరు అవసరం",
-            "ర్యాగింగ్ నిషేధం",
-            "మొబైల్ ఫోన్లు క్లాస్‌లో వద్దు",
-        ],
-        "activities": ["ఎన్‌ఎస్‌ఎస్", "ఎన్‌సీసీ", "సాంస్కృతిక కార్యక్రమాలు", "క్రీడలు"],
-        "scholarships": "ప్రభుత్వ స్కాలర్‌షిప్ అందుబాటులో ఉంది",
+
+        "examinations": {
+            "keywords_en": ["exams", "attendance"],
+            "keywords_te": ["పరీక్షలు"],
+            "data": {
+                "en": {
+                    "minimum_attendance": "75%",
+                    "system": "Internal + University Semester exams"
+                }
+            }
+        },
+
+        "campus_facilities": {
+            "keywords_en": ["labs", "wifi", "playground", "cafeteria", "cctv"],
+            "keywords_te": ["సదుపాయాలు"],
+            "data": {
+                "en": ["Computer Labs", "Science Labs", "Wi-Fi", "Playground", "Cafeteria", "RO Water", "24/7 CCTV", "Parking"]
+            }
+        },
+
+        "placements": {
+            "keywords_en": ["placements", "selected", "companies", "drives", "2025", "2026"],
+            "keywords_te": ["ప్లేస్‌మెంట్లు"],
+            "data": {
+                "en": {
+                    "college_strength": "1200 students (including Junior + Senior)",
+                    "statistics": {
+                        "2025": {
+                            "selected_students": 95
+                        },
+                        "2026": {
+                            "seniors_drive": {
+                                "visited_companies": 9,
+                                "opportunity_companies": 9,
+                                "students_participated": 362,
+                                "students_selected": 329,
+                                "branch_wise_participation": {
+                                    "computer_science": 193,
+                                    "bba": 85,
+                                    "agriculture": 25
+                                }
+                            },
+                            "passouts": 435
+                        }
+                    },
+                    "companies_visited_physical": [
+                        "Tech Mahindra",
+                        "Sutherland",
+                        "Concutix",
+                        "Sagility",
+                        "Teleperformance",
+                        "Vidyant",
+                        "Sand Space",
+                        "First Source"
+                    ],
+                    "companies_online_exam": [
+                        "TCS",
+                        "Infosys",
+                        "HCL",
+                        "Cognizant",
+                        "Intouch EX",
+                        "L & T Mind Tree"
+                    ],
+                    "training": "CRT, Soft Skills, Aptitude, Spoken English, Mock Interviews",
+                    "note": "Contact the Training & Placement Cell for latest detailed reports."
+                }
+            }
+        },
+
+        "faculty_and_departments": {
+            "keywords_en": ["faculty", "hod", "staff", "teachers", "agriculture", "fisheries", "bba", "computer science"],
+            "keywords_te": ["సిబ్బంది"],
+            "data": {
+                "en": {
+                    "total_faculty": 54,
+                    "departments": {
+                        "agriculture": {
+                            "name": "Department of Agriculture",
+                            "hod": "K. Raju",
+                            "faculty": [
+                                {"name": "K. Raju", "designation": "HOD"},
+                                {"name": "N. Mounica", "designation": "Assistant Professor"},
+                                {"name": "A. Pavan Kumar", "designation": "Assistant Professor"},
+                                {"name": "E. Anusha", "designation": "Assistant Professor"}
+                            ]
+                        },
+                        "fisheries": {
+                            "name": "Department of Fisheries",
+                            "hod": "P. Lova Raju",
+                            "faculty": [
+                                {"name": "P. Lova Raju", "designation": "HOD"},
+                                {"name": "D. Madhu", "designation": "Assistant Professor"},
+                                {"name": "V. Ahalya", "designation": "Assistant Professor"},
+                                {"name": "Md. Reshma", "designation": "Assistant Professor"},
+                                {"name": "Ch. Neelima", "designation": "Assistant Professor"}
+                            ]
+                        },
+                        "fsn_and_food_technology": {
+                            "name": "Department of FSN & Food Technology",
+                            "hods": {
+                                "fsn": "S. Vinod Kumar",
+                                "food_technology": "G. Deekshitha"
+                            },
+                            "faculty": [
+                                {"name": "P. Prasanna", "designation": "Professor of Practice"},
+                                {"name": "S. Vinod Kumar", "designation": "HOD - FSN"},
+                                {"name": "G. Deekshitha", "designation": "HOD - Food Technology"},
+                                {"name": "A. Lalitha", "designation": "Assistant Professor (FSN)"},
+                                {"name": "K. Satya Srikshya", "designation": "Assistant Professor (FSN)"},
+                                {"name": "G. Vasantha", "designation": "Assistant Professor (FT)"},
+                                {"name": "Ch. Gnapika", "designation": "Assistant Professor (FT)"},
+                                {"name": "P. Dasu Babu", "designation": "Assistant Professor (FT)"},
+                                {"name": "K. D. Mahalakshmi Kalyani", "designation": "Assistant Professor (FT)"}
+                            ]
+                        },
+                        "bba": {
+                            "name": "Department of BBA",
+                            "hod": "E. Srinilasa Rao",
+                            "vice_principal": "V. Kama Raju",
+                            "faculty": [
+                                {"name": "V. Kama Raju", "designation": "Vice Principal"},
+                                {"name": "E. Srinilasa Rao", "designation": "HOD"},
+                                {"name": "M. Sasi Rekha", "designation": "Assistant Professor"},
+                                {"name": "M. Pavana Kumari", "designation": "Assistant Professor"},
+                                {"name": "V. Srinivas", "designation": "Assistant Professor"},
+                                {"name": "K.V.S.L. Narashima Rao", "designation": "Assistant Professor"},
+                                {"name": "S. Ramana", "designation": "Assistant Professor"},
+                                {"name": "K. Mounika", "designation": "Assistant Professor"},
+                                {"name": "N. Arjun Rao", "designation": "Assistant Professor"},
+                                {"name": "P. Sirisha", "designation": "Assistant Professor"},
+                                {"name": "G. Stephen", "designation": "Assistant Professor"}
+                            ]
+                        },
+                        "computer_science": {
+                            "name": "Department of Computer Science",
+                            "hod": "V.S.V. Deepak",
+                            "additional_hod": "M. Kameswara Rao",
+                            "head_of_idc": "M.A. Sayeed",
+                            "faculty": [
+                                {"name": "M.A. Sayeed", "designation": "Head of IDC"},
+                                {"name": "V.S.V. Deepak", "designation": "Head of the Department"},
+                                {"name": "M. Kameswara Rao", "designation": "Additional Head of the Department"},
+                                {"name": "V. Jeevan Kanth", "designation": "Assistant Professor"},
+                                {"name": "T. Pridhvi Krishna", "designation": "Assistant Professor"},
+                                {"name": "B. Venkata Ratnam", "designation": "Assistant Professor"},
+                                {"name": "K. Macha Rao", "designation": "Assistant Professor"},
+                                {"name": "P. Vidyadar Reddy", "designation": "Assistant Professor"},
+                                {"name": "A. Thulasi", "designation": "Assistant Professor"},
+                                {"name": "K. Prabhakar", "designation": "Assistant Professor"},
+                                {"name": "K. Srilaxmi", "designation": "Assistant Professor"},
+                                {"name": "V. Raj Kumar", "designation": "Assistant Professor"},
+                                {"name": "P.N. Jyoshna Sree", "designation": "Assistant Professor"},
+                                {"name": "S. Laxmi Prasanna", "designation": "Assistant Professor"},
+                                {"name": "M. Jeeela Rathanam", "designation": "Assistant Professor"}
+                            ]
+                        }
+                    },
+                    "support_staff": {
+                        "soft_skills": [
+                            {"name": "Y. Harini", "designation": "Soft Skills Trainer"},
+                            {"name": "P. Pooja", "designation": "Soft Skills Trainer"}
+                        ],
+                        "competitive_exams": [
+                            {"name": "M. Leela Mohan Krishna", "designation": "Competitive Exam Trainer"},
+                            {"name": "K. Rambabu", "designation": "Competitive Exam Trainer"},
+                            {"name": "P. Kiran Kumar", "designation": "Competitive Exam Trainer"},
+                            {"name": "K. Satish Kumar", "designation": "Competitive Exam Trainer"}
+                        ],
+                        "librarian": [
+                            {"name": "K. Vara Lakshmi", "designation": "Librarian"}
+                        ],
+                        "telugu": [
+                            {"name": "Dr. V.V. Satya Narayana", "designation": "Assistant Professor of Telugu"}
+                        ]
+                    }
+                }
+            }
+        },
+
+        "crt_and_soft_skills": {
+            "keywords_en": ["crt", "soft skills", "spoken english"],
+            "data": {
+                "en": "Dedicated training in CRT, Soft Skills, Spoken English and Competitive Exams"
+            }
+        },
+
+        "sports_and_activities": {
+            "keywords_en": ["sports", "nss", "ncc", "cultural"],
+            "data": {
+                "en": ["Cricket", "Volleyball", "Badminton", "NSS", "NCC", "Cultural Events"]
+            }
+        },
+
+        "student_rules": {
+            "keywords_en": ["rules", "uniform", "ragging"],
+            "data": {
+                "en": {
+                    "uniform": "College uniform and ID card are compulsory",
+                    "ragging": "Strictly prohibited with zero tolerance",
+                    "mobile": "Mobile phones restricted during class hours",
+                    "attendance": "Minimum 75% attendance mandatory"
+                }
+            }
+        },
+
+        "health_and_safety": {
+            "keywords_en": ["safety", "cctv", "medical"],
+            "data": {
+                "en": "24/7 CCTV surveillance, First Aid facility and Security"
+            }
+        },
+
         "admissions": {
-            "ug": "ఇంటర్మీడియట్",
-            "pg": "డిగ్రీ అవసరం",
-            "documents": ["10వ మార్క్స్", "ఇంటర్ మార్క్స్", "టీసీ", "ఆధార్", "ఫోటోలు"],
+            "keywords_en": ["admission", "eligibility", "documents"],
+            "data": {
+                "en": {
+                    "ug_eligibility": "Passed Intermediate (10+2)",
+                    "pg_eligibility": "Relevant Bachelor's Degree",
+                    "documents_required": ["10th Memo", "12th Memo", "Transfer Certificate", "Aadhaar", "Photos"]
+                }
+            }
         },
-        "placement_summary": {
-            "training": "సీఆర్‌టీ, సాఫ్ట్ స్కిల్స్, స్పోకెన్ ఇంగ్లీష్, మాక్ ఇంటర్వ్యూలు",
-            "recruiters_sample": ["టీసీఎస్", "ఇన్ఫోసిస్", "హెచ్‌సీఎల్", "కాగ్నిజాంట్", "టెక్ మహీంద్రా", "సదర్లాండ్"],
-            "note": "ధృవీకరించిన గణాంకాల కోసం ప్లేస్‌మెంట్ సెల్‌ను సంప్రదించండి.",
+
+        "historical_journey": {
+            "keywords_en": ["history", "founders"],
+            "data": {
+                "en": {
+                    "established": "Junior College (1970), Degree College (1974)",
+                    "founders": ["Dr. Col. D. S. Raju", "Dr. P. V. N. Raju", "Dr. P. Chiranjeevini Kumari", "Dr. N. S. R. Sastry"]
+                }
+            }
         },
-    },
+
+        "ai_responses": {
+            "keywords_en": ["about college", "placements", "courses"],
+            "data": {
+                "en": {
+                    "about_college": "Ideal College is a NAAC 'A' Grade institution with 1200 students and excellent placements.",
+                    "placements": "In 2026, 329 students were selected from 362 participants.",
+                    "courses": "UG & PG courses in Computers, BBA, Agriculture, Food Technology & Fisheries."
+                }
+            }
+        }
+    }
 }
 # =====================================================
 # ✅ FINAL FIX (DO NOT REMOVE / DO NOT MODIFY ABOVE DATA)

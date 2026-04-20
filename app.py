@@ -1,10 +1,8 @@
 """
-Flask entrypoint for IDEAL AI College Assistant (Production Ready)
+Ideal College AI - Flask App (Fixed for Render Deployment)
 """
 import logging
-from typing import Any
-
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 
 from core.router import route_message
@@ -15,28 +13,33 @@ from services.news_service import fetch_news
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger("ideal-ai.api")
 
-app = Flask(__name__, static_folder="static", static_url_path="/static")
+app = Flask(__name__, 
+            template_folder="templates", 
+            static_folder="static", 
+            static_url_path="/static")
+
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-class ChatRequest:
-    def __init__(self, data: dict):
-        self.message = data.get("message", "").strip()
-        self.conversationHistory = data.get("conversationHistory", [])
+# ====================== MAIN ROUTE (This was missing!) ======================
+@app.route("/")
+@app.route("/index")
+@app.route("/home")
+def index():
+    """Serve the frontend"""
+    return render_template("index.html")
 
+# ====================== API ROUTES ======================
 @app.route("/api/chat", methods=["POST"])
 @app.route("/assistant-api/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid JSON"}), 400
+        data = request.get_json() or {}
+        message = data.get("message", "").strip()
+        history = data.get("conversationHistory", [])
 
-        payload = ChatRequest(data)
-        message = payload.message
         if not message:
             return jsonify({"error": "Message is required"}), 400
 
-        history = payload.conversationHistory if isinstance(payload.conversationHistory, list) else []
         response = route_message(message, history)
         return jsonify(response)
 
@@ -48,23 +51,19 @@ def chat():
         }), 500
 
 @app.route("/api/college-info")
-@app.route("/assistant-api/college-info")
 def college_info():
     return jsonify(get_college_summary())
 
 @app.route("/api/news")
-@app.route("/assistant-api/news")
 def news():
     query = request.args.get("query", "education India")
     return jsonify({"articles": fetch_news(query)})
 
 @app.route("/api/media/images")
-@app.route("/assistant-api/media/images")
 def media_images():
     return jsonify(get_college_images())
 
 @app.route("/api/media/video")
-@app.route("/assistant-api/media/video")
 def media_video():
     return jsonify({"video_url": get_college_video()})
 
@@ -72,6 +71,7 @@ def media_video():
 def health():
     return jsonify({"status": "ok"})
 
+# Serve static files explicitly (helps on Render)
 @app.route("/static/<path:filename>")
 def static_files(filename):
     return send_from_directory("static", filename)

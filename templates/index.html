@@ -12,11 +12,12 @@
     <!-- CHAT PANEL -->
     <div class="chat-panel">
 
-      <!-- Welcome screen -->
+      <!-- Welcome Screen -->
       <div class="welcome-screen" id="welcomeScreen">
-        <div class="welcome-icon">A</div>
+        <div class="welcome-icon">△</div>
         <h1 class="welcome-title">How can I help you today?</h1>
         <p class="welcome-sub">ASK ABOUT COURSES, ADMISSIONS, FEES, FACULTY, OR ANYTHING ELSE</p>
+        
         <div class="suggestions-grid">
           <button class="suggestion-btn" onclick="sendSuggestion('What courses are offered?')">What courses are offered?</button>
           <button class="suggestion-btn" onclick="sendSuggestion('What is the fee structure?')">What is the fee structure?</button>
@@ -27,49 +28,44 @@
         </div>
       </div>
 
-      <!-- Messages area -->
-      <div class="messages-area" id="messagesArea" style="display:none;"></div>
+      <!-- Messages Area -->
+      <div class="messages-area" id="messagesArea"></div>
 
-      <!-- Input area -->
+      <!-- Input Area -->
       <div class="input-area">
-        <div id="transcriptPreview" class="transcript-preview" style="display:none;"></div>
+        <div id="transcriptPreview" class="transcript-preview"></div>
         <div class="input-bar">
-          <button class="mic-btn" id="micBtn" title="Speak" onclick="toggleVoice()">
-            <svg id="micIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="mic-btn" id="micBtn" onclick="toggleVoice()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <line x1="12" y1="19" x2="12" y2="23"/>
               <line x1="8" y1="23" x2="16" y2="23"/>
             </svg>
           </button>
-          <input
-            type="text"
-            id="chatInput"
-            class="chat-input"
-            placeholder="Message Ideal AI... (Type in English or Telugu)"
-            autocomplete="off"
-          />
-          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <input type="text" id="chatInput" class="chat-input" 
+                 placeholder="Message Ideal AI... (Type in English or Telugu)" autocomplete="off"/>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </button>
         </div>
-        <p class="disclaimer">AI CAN MAKE MISTAKES. VERIFY IMPORTANT INFORMATION</p>
+        <p class="disclaimer">AI CAN MAKE MISTAKES. VERIFY IMPORTANT INFORMATION.</p>
       </div>
     </div>
 
-    <!-- INFO HUB SIDEBAR -->
+    <!-- INFORMATION HUB SIDEBAR -->
     <aside class="info-hub">
-      <div class="hub-header">&#9776; INFORMATION HUB</div>
+      <div class="hub-header">INFORMATION HUB</div>
 
       <div class="hub-card">
         <div class="college-card">
           <div class="college-logo">IC</div>
           <div>
             <div class="college-name">Ideal College</div>
-            <div class="college-sub">B.Sc &middot; BBA &middot; B.Com</div>
+            <div class="college-sub">NAAC A GRADE</div>
           </div>
         </div>
       </div>
@@ -103,7 +99,6 @@
           <span class="tag">Playground</span>
           <span class="tag">CCTV Security</span>
           <span class="tag">Auditorium</span>
-          <span class="tag">Placements</span>
         </div>
       </div>
 
@@ -111,15 +106,15 @@
         <div class="hub-section-title">CONTACT</div>
         <div class="contact-list">
           <div class="contact-item">
-            <span class="contact-icon">&#128222;</span>
+            <span class="contact-icon">☎</span>
             <span>0884-2384382 / 0884-2384381</span>
           </div>
           <div class="contact-item">
-            <span class="contact-icon">&#9993;</span>
+            <span class="contact-icon">✉</span>
             <span>idealcolleges@gmail.com</span>
           </div>
           <div class="contact-item">
-            <span class="contact-icon">&#127760;</span>
+            <span class="contact-icon">🌐</span>
             <a href="https://idealcollege.edu.in" target="_blank">https://idealcollege.edu.in</a>
           </div>
         </div>
@@ -128,19 +123,18 @@
       <div class="hub-section">
         <div class="hub-section-title">TIMINGS</div>
         <div class="contact-item">
-          <span class="contact-icon">&#128336;</span>
-          <span>9:30 AM &ndash; 3:45 PM (Mon-Sat)</span>
+          <span class="contact-icon">🕒</span>
+          <span>9:30 AM – 3:45 PM (Mon-Sat)</span>
         </div>
       </div>
 
       <div class="hub-section hub-section--news">
         <div class="hub-section-title">LATEST UPDATES</div>
         <div class="news-list" id="newsList">
-          <div class="news-loading">Loading updates&hellip;</div>
+          <!-- Populated by JavaScript -->
         </div>
       </div>
     </aside>
-
   </div>
 
   <script src="/static/script.js"></script>

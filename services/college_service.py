@@ -207,3 +207,13 @@ def get_college_answer(query: str, lang: str = "en") -> str | None:
 
 def get_college_context() -> str:
     return COLLEGE_CONTEXT
+    # services/college_service.py
+
+from data.college_data import (
+    COLLEGE_KEYWORDS,
+    get_college_answer,
+    get_college_context
+)
+
+# Old code compatibility kosam export chestunnam
+__all__ = ['get_college_answer', 'get_college_context', 'COLLEGE_KEYWORDS']

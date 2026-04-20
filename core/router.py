@@ -6,7 +6,8 @@ import { getWeather } from "./weather_service";
 import { fetchNews } from "./news_service";
 import { searchDuckDuckGo, formatSearchResults } from "./search_service";
 import { IMAGE_PATHS, VIDEO_PATH } from "./media_data";
-
+from services.college_service import get_college_answer, get_college_context
+# ... remaining imports
 const MEDIA_DEFAULTS = {
   show_images: false,
   images: [] as string[],

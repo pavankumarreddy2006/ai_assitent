@@ -1,9 +1,7 @@
 import os
-import json
-import requests
 from flask import Flask, request, jsonify, render_template, send_from_directory
-from college_service import get_college_answer, get_college_context, COLLEGE_KEYWORDS
-
+from config.config import COLLEGE_SYSTEM_PROMPT, TELUGU_SYSTEM_PROMPT, IMAGE_PATHS, VIDEO_PATH
+from core.router import handle_chat_request
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 # ── ENV ──────────────────────────────────────────────────────

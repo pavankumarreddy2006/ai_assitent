@@ -22,6 +22,29 @@ COLLEGE_KEYWORDS = [
 ]
 
 # =====================================================
+# COLLEGE CONTEXT FOR AI PROMPTS
+# =====================================================
+COLLEGE_CONTEXT = f"""
+College Name: {COLLEGE_NAME}
+Location: {COLLEGE_LOCATION}
+Contact: {COLLEGE_PHONE}
+Email: {COLLEGE_EMAIL}
+Website: {COLLEGE_WEBSITE}
+
+About: Ideal College of Arts and Sciences is a NAAC 'A' Grade institution affiliated with Adikavi Nannaya University, Kakinada.
+
+Courses Offered:
+- UG: B.Sc Computers, BCA, B.Sc AI, BBA, Agriculture, Food Technology, Aqua & Fisheries
+- PG: MCA, M.Sc Organic Chemistry, M.Sc Analytical Chemistry, M.Sc Food Science & Technology, M.Sc Aquaculture
+
+Placements (2026): 329 students selected from 362 participants
+Companies: Tech Mahindra, Sutherland, TCS, Infosys, HCL, Cognizant, and more.
+
+Fee Range: ₹45,000 - ₹60,000 per year
+Hostel Fee: ₹60,000 per year (with mess facility)
+"""
+
+# =====================================================
 # MAIN COLLEGE DATABASE
 # =====================================================
 COLLEGE_DATABASE = {
@@ -376,8 +399,9 @@ COLLEGE_DATABASE = {
         }
     }
 }
+
 # =====================================================
-# ✅ FINAL FIX (DO NOT REMOVE / DO NOT MODIFY ABOVE DATA)
+# ✅ COLLEGE INFORMATION STRINGS
 # =====================================================
 
 def _safe_string(text):
@@ -386,8 +410,7 @@ def _safe_string(text):
         return ""
     return str(text).replace("{", "{{").replace("}", "}}")
 
-# ====================== COLLEGE INFORMATION ======================
-
+# College info strings for export
 college_info_en = f"""
 {_safe_string(COLLEGE_NAME)} is a reputed educational institution 
 offering various undergraduate and postgraduate courses in Arts, Sciences, and Commerce.

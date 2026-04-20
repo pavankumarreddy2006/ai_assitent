@@ -1,104 +1,98 @@
-import requests
-from config.config import WEATHER_API_KEY
+import { logger } from "../lib/logger";
 
-WEATHER_CODES = {
-    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-    45: "Foggy", 48: "Rime fog",
-    51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
-    61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
-    71: "Slight snowfall", 73: "Moderate snowfall", 75: "Heavy snowfall",
-    80: "Rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
-    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Severe thunderstorm",
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+
+const WEATHER_CODES: Record<number, string> = {
+  0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+  45: "Foggy", 48: "Rime fog",
+  51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
+  61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
+  71: "Slight snowfall", 73: "Moderate snowfall", 75: "Heavy snowfall",
+  80: "Rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
+  95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Severe thunderstorm",
+};
+
+const WEATHER_CODES_TE: Record<number, string> = {
+  0: "ఆకాశం స్వచ్ఛంగా ఉంది", 1: "ప్రధానంగా స్వచ్ఛంగా", 2: "పాక్షికంగా మేఘావృతం",
+  3: "పూర్తిగా మేఘావృతం", 51: "తేలికపాటి జల్లు", 61: "తేలికపాటి వర్షం",
+  63: "మితమైన వర్షం", 65: "భారీ వర్షం", 80: "వర్షపు జల్లులు",
+  95: "పిడుగుపాటు వర్షం",
+};
+
+interface WeatherResult {
+  city: string;
+  temperature: number;
+  description: string;
+  humidity: number;
+  wind_speed: number;
 }
 
-WEATHER_CODES_TE = {
-    0: "ఆకాశం స్వచ్ఛంగా ఉంది", 1: "ప్రధానంగా స్వచ్ఛంగా", 2: "పాక్షికంగా మేఘావృతం", 3: "పూర్తిగా మేఘావృతం",
-    45: "మంచు పొర", 48: "మంచు పొర",
-    51: "తేలికపాటి జల్లు", 53: "మితమైన జల్లు", 55: "దట్టమైన జల్లు",
-    61: "తేలికపాటి వర్షం", 63: "మితమైన వర్షం", 65: "భారీ వర్షం",
-    80: "వర్షపు జల్లులు", 81: "మితమైన వర్షపు జల్లులు", 82: "భారీ వర్షపు జల్లులు",
-    95: "పిడుగుపాటు వర్షం", 96: "వడగళ్ళతో పిడుగుపాటు", 99: "తీవ్రమైన పిడుగుపాటు",
+async function getWeatherApi(city: string): Promise<WeatherResult | null> {
+  const response = await fetch(
+    `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${encodeURIComponent(city)}&aqi=no`,
+    { signal: AbortSignal.timeout(10000) }
+  );
+  if (!response.ok) return null;
+
+  const payload = await response.json() as {
+    current: { temp_c: number; humidity: number; wind_kph: number; condition: { text: string } };
+    location: { name: string };
+  };
+  const current = payload.current;
+  const location = payload.location;
+
+  return {
+    city: location.name,
+    temperature: current.temp_c,
+    description: current.condition.text,
+    humidity: current.humidity,
+    wind_speed: current.wind_kph,
+  };
 }
 
+async function getOpenMeteoWeather(city: string, lang: string): Promise<WeatherResult | null> {
+  const geoResp = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`,
+    { signal: AbortSignal.timeout(10000) }
+  );
+  if (!geoResp.ok) return null;
 
-def get_weather(city: str, lang: str = "en") -> dict | None:
-    """
-    Get current weather for any city using Open-Meteo (free, no API key).
-    Returns dict with city, temperature, description, humidity, wind_speed or None.
-    """
-    try:
-        if WEATHER_API_KEY:
-            return _get_weatherapi(city, lang)
-        return _get_open_meteo_weather(city, lang)
-    except Exception as e:
-        print(f"[Weather Error] {e}")
-        return None
+  const geoData = await geoResp.json() as { results?: Array<{ latitude: number; longitude: number; name: string }> };
+  const results = geoData.results;
+  if (!results || results.length === 0) return null;
 
+  const { latitude: lat, longitude: lon, name } = results[0];
 
-def _get_weatherapi(city: str, lang: str) -> dict | None:
-    response = requests.get(
-        "https://api.weatherapi.com/v1/current.json",
-        params={"key": WEATHER_API_KEY, "q": city, "aqi": "no"},
-        timeout=10,
-    )
-    response.raise_for_status()
-    payload = response.json()
-    current = payload.get("current", {})
-    location = payload.get("location", {})
-    condition = current.get("condition", {})
-    desc_en = condition.get("text", "Unknown")
-    description = desc_en if lang == "en" else desc_en
-    return {
-        "city": location.get("name", city),
-        "temperature": current.get("temp_c", 0),
-        "description": description,
-        "humidity": current.get("humidity", 0),
-        "wind_speed": current.get("wind_kph", 0),
+  const weatherResp = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`,
+    { signal: AbortSignal.timeout(10000) }
+  );
+  if (!weatherResp.ok) return null;
+
+  const weatherData = await weatherResp.json() as {
+    current: { temperature_2m: number; relative_humidity_2m: number; wind_speed_10m: number; weather_code: number };
+  };
+  const current = weatherData.current;
+  const code = current.weather_code ?? 0;
+
+  return {
+    city: name,
+    temperature: current.temperature_2m,
+    description: lang === "te" ? (WEATHER_CODES_TE[code] ?? "తెలియదు") : (WEATHER_CODES[code] ?? "Unknown"),
+    humidity: current.relative_humidity_2m,
+    wind_speed: current.wind_speed_10m,
+  };
+}
+
+export async function getWeather(city: string, lang = "en"): Promise<WeatherResult | null> {
+  try {
+    if (WEATHER_API_KEY) {
+      const result = await getWeatherApi(city);
+      if (result) return result;
     }
-
-
-def _get_open_meteo_weather(city: str, lang: str) -> dict | None:
-    try:
-        geo_response = requests.get(
-            "https://geocoding-api.open-meteo.com/v1/search",
-            params={"name": city, "count": 1},
-            timeout=10
-        )
-        geo_response.raise_for_status()
-        geo_data = geo_response.json()
-
-        results = geo_data.get("results")
-        if not results:
-            return None
-
-        loc = results[0]
-        lat, lon, name = loc["latitude"], loc["longitude"], loc["name"]
-
-        weather_response = requests.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code"
-            },
-            timeout=10
-        )
-        weather_response.raise_for_status()
-        weather_data = weather_response.json()
-
-        current = weather_data.get("current", {})
-        code = current.get("weather_code", 0)
-
-        description = WEATHER_CODES_TE.get(code, "తెలియదు") if lang == "te" else WEATHER_CODES.get(code, "Unknown")
-
-        return {
-            "city": name,
-            "temperature": current.get("temperature_2m", 0),
-            "description": description,
-            "humidity": current.get("relative_humidity_2m", 0),
-            "wind_speed": current.get("wind_speed_10m", 0),
-        }
-
-    except Exception as e:
-        print(f"[OpenMeteo Weather Error] {e}")
-        return None
+    return await getOpenMeteoWeather(city, lang);
+  } catch (err) {
+    logger.warn({ err }, "Weather fetch failed");
+    return null;
+  }
+}

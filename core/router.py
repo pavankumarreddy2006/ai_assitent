@@ -1,58 +1,222 @@
-import logging
-import re
+import { logger } from "../lib/logger";
+import { classifyIntent, detectLanguage, extractCity, stripWakePhrase } from "./intent";
+import { queryAI, COLLEGE_SYSTEM_PROMPT, TELUGU_SYSTEM_PROMPT } from "./llm_service";
+import { getCollegeAnswer, getCollegeContext } from "./college_service";
+import { getWeather } from "./weather_service";
+import { fetchNews } from "./news_service";
+import { searchDuckDuckGo, formatSearchResults } from "./search_service";
+import { IMAGE_PATHS, VIDEO_PATH } from "./media_data";
 
-import services.media_service as media_service
-from core.intent import classify_intent, detect_language, extract_city, strip_wake_phrase
-from core.responder import (
-    format_college_response,
-    format_error_response,
-    format_general_response,
-    format_news_response,
-    format_search_response,
-    format_weather_response,
-)
-from services.college_service import get_college_answer, get_college_context_prompt
-from services.llm_service import query_groq, query_openrouter
-from services.news_service import fetch_news
-from services.search_service import format_search_results, search_duckduckgo
-from services.weather_service import get_weather
+const MEDIA_DEFAULTS = {
+  show_images: false,
+  images: [] as string[],
+  show_video: false,
+  video_url: null as string | null,
+};
 
-logger = logging.getLogger("college-ai.router")
+interface ChatResponse {
+  reply: string;
+  intent: string;
+  source: string;
+  language: string;
+  show_images: boolean;
+  images: string[];
+  show_video: boolean;
+  video_url: string | null;
+}
 
-def route_message(message: str, conversation_history: list[dict] | None = None) -> dict:
-    # ... (exact same code as you provided earlier – no changes needed)
-    # I kept it 100% identical for balance
-    history = conversation_history or []
-    clean_message = strip_wake_phrase(str(message or "").strip())
-    if not clean_message:
-        return _with_language(format_error_response("Please say or type a message."), "en")
+export async function routeMessage(
+  message: string,
+  history: Array<{ role: string; content: string }> = []
+): Promise<ChatResponse> {
+  const clean = stripWakePhrase(message.trim());
 
-    lang = detect_language(clean_message)
-    intent = classify_intent(clean_message)
+  if (!clean) {
+    return {
+      reply: "Please say or type a message.",
+      intent: "general",
+      source: "System",
+      language: "en",
+      ...MEDIA_DEFAULTS,
+    };
+  }
 
-    try:
-        if intent == "images_intent":
-            return _with_language({"reply": "Showing campus images now." if lang == "en" else "ఇప్పుడు క్యాంపస్ చిత్రాలు చూపిస్తున్నాను.", "intent": "images", "show_images": True, "images": media_service.get_college_images(), "show_video": False}, lang)
-        if intent == "video_intent":
-            return _with_language({"reply": "Playing the college video now." if lang == "en" else "కాలేజీ వీడియో ప్లే చేస్తున్నాను.", "intent": "video", "show_video": True, "video_url": media_service.get_college_video()}, lang)
-        if intent == "college":
-            return _with_language(_handle_college(clean_message, history, lang), lang)
-        if intent == "weather":
-            return _with_language(_handle_weather(clean_message, lang), lang)
-        if intent == "news":
-            return _with_language(_handle_news(clean_message, lang), lang)
-        if intent == "search":
-            return _with_language(_handle_search(clean_message, history, lang), lang)
-        return _with_language(_handle_general(clean_message, history, lang), lang)
-    except Exception as exc:
-        logger.exception("Router error: %s", exc)
-        msg = "క్షమించండి, ఏదో సమస్య వచ్చింది. దయచేసి మళ్లీ ప్రయత్నించండి." if lang == "te" else "Something went wrong. Please try again."
-        return _with_language(format_error_response(msg), lang)
+  const lang = detectLanguage(clean);
+  const intent = classifyIntent(clean);
 
-def _with_language(payload: dict, lang: str) -> dict:
-    enriched = dict(payload)
-    enriched.setdefault("language", lang)
-    return enriched
+  logger.info({ intent, lang, message: clean }, "Routing message");
 
-# ... rest of the router functions (_handle_college, _handle_weather, etc.) are EXACTLY the same as you gave earlier
-# (I am not repeating 300+ lines here to keep response clean – copy them from your original router.py)
+  try {
+    if (intent === "images_intent") {
+      return {
+        reply: lang === "te" ? "ఇప్పుడు క్యాంపస్ చిత్రాలు చూపిస్తున్నాను." : "Here are the campus images for you.",
+        intent: "images",
+        source: "Media Service",
+        language: lang,
+        show_images: true,
+        images: IMAGE_PATHS,
+        show_video: false,
+        video_url: null,
+      };
+    }
+
+    if (intent === "video_intent") {
+      return {
+        reply: lang === "te" ? "కాలేజీ వీడియో ప్లే చేస్తున్నాను." : "Playing the college promotional video for you.",
+        intent: "video",
+        source: "Media Service",
+        language: lang,
+        show_images: false,
+        images: [],
+        show_video: true,
+        video_url: VIDEO_PATH,
+      };
+    }
+
+    if (intent === "college") {
+      return await handleCollege(clean, history, lang);
+    }
+
+    if (intent === "weather") {
+      return await handleWeather(clean, lang);
+    }
+
+    if (intent === "news") {
+      return await handleNews(lang);
+    }
+
+    if (intent === "search") {
+      return await handleSearch(clean, history, lang);
+    }
+
+    return await handleGeneral(clean, history, lang);
+  } catch (err) {
+    logger.error({ err }, "Router error");
+    const msg = lang === "te"
+      ? "క్షమించండి, ఏదో సమస్య వచ్చింది. దయచేసి మళ్లీ ప్రయత్నించండి."
+      : "Something went wrong. Please try again.";
+    return {
+      reply: msg,
+      intent: "general",
+      source: "Error",
+      language: lang,
+      ...MEDIA_DEFAULTS,
+    };
+  }
+}
+
+async function handleCollege(
+  message: string,
+  history: Array<{ role: string; content: string }>,
+  lang: string
+): Promise<ChatResponse> {
+  const localAnswer = getCollegeAnswer(message, lang);
+  if (localAnswer) {
+    return {
+      reply: localAnswer,
+      intent: "college",
+      source: "College Database",
+      language: lang,
+      ...MEDIA_DEFAULTS,
+    };
+  }
+
+  const context = getCollegeContext();
+  const systemPrompt = (lang === "te" ? TELUGU_SYSTEM_PROMPT : COLLEGE_SYSTEM_PROMPT) +
+    `\n\nCOLLEGE INFORMATION:\n${context}`;
+
+  const reply = await queryAI(message, history, systemPrompt, lang);
+  return {
+    reply,
+    intent: "college",
+    source: "Groq AI + College Database",
+    language: lang,
+    ...MEDIA_DEFAULTS,
+  };
+}
+
+async function handleWeather(message: string, lang: string): Promise<ChatResponse> {
+  const city = extractCity(message) ?? "Kakinada";
+  const weatherData = await getWeather(city, lang);
+
+  let reply: string;
+  if (weatherData) {
+    if (lang === "te") {
+      reply = `${weatherData.city}లో వాతావరణం: ${weatherData.description}, ఉష్ణోగ్రత: ${weatherData.temperature}°C, తేమ: ${weatherData.humidity}%, గాలి వేగం: ${weatherData.wind_speed} km/h.`;
+    } else {
+      reply = `Weather in ${weatherData.city}: ${weatherData.description}, Temperature: ${weatherData.temperature}°C, Humidity: ${weatherData.humidity}%, Wind: ${weatherData.wind_speed} km/h.`;
+    }
+  } else {
+    reply = lang === "te"
+      ? `'${city}' వాతావరణ సమాచారం దొరకలేదు. నగరం పేరు తనిఖీ చేయండి.`
+      : `Couldn't find weather data for '${city}'. Please check the city name.`;
+  }
+
+  return {
+    reply,
+    intent: "weather",
+    source: "Open-Meteo Weather API",
+    language: lang,
+    ...MEDIA_DEFAULTS,
+  };
+}
+
+async function handleNews(lang: string): Promise<ChatResponse> {
+  const articles = await fetchNews("India education college news");
+
+  let reply: string;
+  if (articles.length > 0) {
+    const header = lang === "te" ? "తాజా వార్తలు:\n" : "Here are the latest headlines:\n";
+    const lines = articles.slice(0, 5).map((a, i) => `${i + 1}. ${a.title} — ${a.source}`);
+    reply = header + lines.join("\n");
+  } else {
+    reply = lang === "te"
+      ? "ప్రస్తుతం వార్తలు తీసుకోలేకపోయాము. తర్వాత మళ్ళీ ప్రయత్నించండి."
+      : "Couldn't fetch the latest news right now. Please try again later.";
+  }
+
+  return {
+    reply,
+    intent: "news",
+    source: "News API",
+    language: lang,
+    ...MEDIA_DEFAULTS,
+  };
+}
+
+async function handleSearch(
+  message: string,
+  history: Array<{ role: string; content: string }>,
+  lang: string
+): Promise<ChatResponse> {
+  const results = await searchDuckDuckGo(message);
+  const searchContext = formatSearchResults(results);
+
+  const prompt = results.length > 0
+    ? `Based on this search info, answer the question: "${message}"\n\nSearch results:\n${searchContext}\n\nProvide a clear, direct answer.`
+    : message;
+
+  const reply = await queryAI(prompt, history, undefined, lang);
+  return {
+    reply,
+    intent: "search",
+    source: results.length > 0 ? "Live Web + Groq AI" : "Groq AI",
+    language: lang,
+    ...MEDIA_DEFAULTS,
+  };
+}
+
+async function handleGeneral(
+  message: string,
+  history: Array<{ role: string; content: string }>,
+  lang: string
+): Promise<ChatResponse> {
+  const reply = await queryAI(message, history, undefined, lang);
+  return {
+    reply,
+    intent: "general",
+    source: "Groq AI",
+    language: lang,
+    ...MEDIA_DEFAULTS,
+  };
+}

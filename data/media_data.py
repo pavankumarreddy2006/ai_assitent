@@ -1,8 +1,6 @@
-"""Static media URLs served from /static (FastAPI mount)."""
+export const IMAGE_PATHS = [
+  "/api/media/images/1.png",
+  "/api/media/images/2.png",
+];
 
-IMAGE_PATHS = [
-    "/static/media/images/1.png",
-    "/static/media/images/2.png",
-]
-
-VIDEO_PATH = "/static/media/videos/college.mp4"
+export const VIDEO_PATH = "/api/media/videos/college.mp4";

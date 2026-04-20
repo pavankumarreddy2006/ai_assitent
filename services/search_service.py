@@ -1,78 +1,49 @@
-import requests
-from bs4 import BeautifulSoup
-import logging
+import { logger } from "../lib/logger";
 
-logger = logging.getLogger("college-ai.search")
+export async function searchDuckDuckGo(query: string): Promise<Array<{ title: string; snippet: string; url: string }>> {
+  try {
+    const formData = new URLSearchParams({ q: query });
+    const response = await fetch("https://html.duckduckgo.com/html/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+      body: formData.toString(),
+      signal: AbortSignal.timeout(10000),
+    });
 
+    if (!response.ok) return [];
 
-def search_duckduckgo(query: str) -> list[dict]:
-    """Scrape DuckDuckGo HTML results"""
-    try:
-        url = "https://html.duckduckgo.com/html/"
-        response = requests.post(
-            url,
-            data={"q": query},
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=10
-        )
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        results = []
-        for result in soup.select(".result")[:5]:
-            title_tag = result.select_one(".result__a")
-            snippet_tag = result.select_one(".result__snippet")
-            if title_tag:
-                href = title_tag.get("href") or ""
-                results.append({
-                    "title": title_tag.get_text(strip=True),
-                    "snippet": snippet_tag.get_text(strip=True) if snippet_tag else "",
-                    "url": href
-                })
-        return results
-    except Exception as e:
-        logger.exception("Search error: %s", e)
-        return []
+    const html = await response.text();
+    const results: Array<{ title: string; snippet: string; url: string }> = [];
 
+    const resultMatches = html.matchAll(/<a[^>]+class="result__a"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/g);
+    const snippetMatches = html.matchAll(/<a[^>]+class="result__snippet"[^>]*>([^<]*)<\/a>/g);
 
-def format_search_results(results: list[dict]) -> str:
-    """Convert search results into readable text"""
-    if not results:
-        return "I couldn't find relevant information."
-    output = []
-    for i, r in enumerate(results[:5], 1):
-        snippet = r.get("snippet", "")
-        output.append(f"{i}. {snippet}")
-    return "\n\n".join(output)
+    const snippetArr = Array.from(snippetMatches).map(m => m[1].trim());
+    let i = 0;
 
+    for (const match of resultMatches) {
+      if (results.length >= 5) break;
+      results.push({
+        url: match[1],
+        title: match[2].trim(),
+        snippet: snippetArr[i++] || "",
+      });
+    }
 
-def extract_page_content(url: str) -> str:
-    """Extract main text from webpage"""
-    try:
-        response = requests.get(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=8
-        )
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        paragraphs = soup.find_all("p")
-        text = " ".join(p.get_text() for p in paragraphs[:5])
-        return text.strip()
-    except Exception as e:
-        logger.exception("Scrape error: %s", e)
-        return ""
+    return results;
+  } catch (err) {
+    logger.warn({ err }, "DuckDuckGo search failed");
+    return [];
+  }
+}
 
-
-def smart_search_answer(query: str) -> str:
-    """Combine search + scraping for better answers"""
-    results = search_duckduckgo(query)
-    if not results:
-        return "I couldn't find useful information."
-    final_answer = ""
-    for r in results[:3]:
-        content = extract_page_content(r["url"])
-        if content:
-            final_answer += content + "\n\n"
-    if not final_answer:
-        return format_search_results(results)
-    return final_answer[:1500]
+export function formatSearchResults(results: Array<{ title: string; snippet: string; url: string }>): string {
+  if (!results.length) return "I couldn't find relevant information.";
+  return results
+    .slice(0, 5)
+    .map((r, i) => `${i + 1}. ${r.snippet || r.title}`)
+    .join("\n\n");
+}

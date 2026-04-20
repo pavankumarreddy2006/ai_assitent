@@ -1,23 +1,22 @@
-import requests
-import logging
-from config.config import (
-    GROQ_API_KEY, OPEN_ROUTER_API,
-    GROQ_MODEL, OPENROUTER_MODEL
-)
+import { logger } from "../lib/logger";
 
-logger = logging.getLogger("college-ai.llm")
+const AI_BASE_URL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+const AI_API_KEY = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
-COLLEGE_SYSTEM_PROMPT = """You are the official AI assistant for Ideal College of Arts and Sciences,
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const OPEN_ROUTER_API = process.env.OPEN_ROUTER_API;
+const GROQ_MODEL = "llama3-8b-8192";
+const OPENROUTER_MODEL = "openai/gpt-3.5-turbo";
+const REPLIT_MODEL = "gpt-5-mini";
+
+export const COLLEGE_SYSTEM_PROMPT = `You are the official AI assistant for Ideal College of Arts and Sciences,
 located at Vidyuth Nagar, Kakinada, Andhra Pradesh.
 
 LANGUAGE RULE (VERY IMPORTANT):
-- If the user writes in Telugu → you MUST reply ONLY in Telugu.
-- If the user writes in English → you MUST reply ONLY in English.
-- If the user writes Roman Telugu → reply in Telugu, not English.
-# If the user mixes both, reply in the dominant language used.
+- If the user writes in Telugu → reply ONLY in Telugu.
+- If the user writes in English → reply ONLY in English.
+- If the user writes Roman Telugu → reply in Telugu.
 - Never switch languages unless the user switches first.
-- Do not translate the user's question into English before answering.
-- Pronounce Telugu words clearly — speak naturally, not robotically.
 
 BEHAVIOR:
 - Be friendly, helpful, and professional.
@@ -30,118 +29,147 @@ COLLEGE CONTACT (use when needed):
 - Phone: 0884-2384382 / 0884-2384381
 - Email: idealcolleges@gmail.com
 - Website: https://idealcollege.edu.in
-- Location: Vidyuth Nagar, Kakinada, Andhra Pradesh
-"""
+- Location: Vidyuth Nagar, Kakinada, Andhra Pradesh`;
 
-TELUGU_SYSTEM_PROMPT = """మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.
+export const TELUGU_SYSTEM_PROMPT = `మీరు ఐడియల్ కాలేజ్ ఆఫ్ ఆర్ట్స్ అండ్ సైన్సెస్, కాకినాడ యొక్క అధికారిక AI అసిస్టెంట్.
 
-భాషా నియమం (చాలా ముఖ్యమైనది):
-- వినియోగదారు తెలుగులో మాట్లాడితే -> తెలుగులో మాత్రమే సమాధానం ఇవ్వండి.
-- వినియోగదారు ఇంగ్లీష్‌లో మాట్లాడితే -> ఇంగ్లీష్‌లో సమాధానం ఇవ్వండి.
-- వినియోగదారు Roman Telugu లో మాట్లాడితే -> తెలుగులోనే సమాధానం ఇవ్వండి.
-- ముందుగా English కి translate చేసి సమాధానం ఇవ్వకండి.
-- స్పష్టంగా, సహజంగా తెలుగులో మాట్లాడండి.
+భాషా నియమం: వినియోగదారు తెలుగులో మాట్లాడితే తెలుగులోనే సమాధానం ఇవ్వండి.
 
 ప్రవర్తన:
 - స్నేహపూర్వకంగా మరియు సహాయకరంగా ఉండండి.
-- కాలేజీ సమాచారాన్ని స్పష్టంగా మరియు నేరుగా ఇవ్వండి.
-- సమాధానాలు సంక్షిప్తంగా మరియు అర్థమయ్యేలా ఉండాలి.
+- కాలేజీ సమాచారాన్ని స్పష్టంగా ఇవ్వండి.
+- సమాధానాలు సంక్షిప్తంగా ఉండాలి.
 
 కాలేజీ సంప్రదింపు:
 - ఫోన్: 0884-2384382 / 0884-2384381
 - ఇమెయిల్: idealcolleges@gmail.com
 - వెబ్‌సైట్: https://idealcollege.edu.in
-- చిరునామా: విద్యుత్ నగర్, కాకినాడ, ఆంధ్రప్రదేశ్
-"""
+- చిరునామా: విద్యుత్ నగర్, కాకినాడ, ఆంధ్రప్రదేశ్`;
 
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
 
-def _build_messages(
-    prompt: str,
-    history: list[dict] | None = None,
-    system_prompt: str | None = None,
-    lang: str = "en"
-) -> list[dict]:
-    if system_prompt is None:
-        system_prompt = TELUGU_SYSTEM_PROMPT if lang == "te" else COLLEGE_SYSTEM_PROMPT
+function buildMessages(
+  prompt: string,
+  history: Array<{ role: string; content: string }> = [],
+  systemPrompt?: string,
+  lang = "en"
+): ChatMessage[] {
+  const sys = systemPrompt ?? (lang === "te" ? TELUGU_SYSTEM_PROMPT : COLLEGE_SYSTEM_PROMPT);
+  const messages: ChatMessage[] = [{ role: "system", content: sys }];
 
-    messages = [{"role": "system", "content": system_prompt}]
+  for (const msg of history.slice(-10)) {
+    if ((msg.role === "user" || msg.role === "assistant") && msg.content?.trim()) {
+      messages.push({ role: msg.role as "user" | "assistant", content: msg.content.trim() });
+    }
+  }
 
-    if history:
-        for msg in history[-10:]:
-            role = msg.get("role") if isinstance(msg, dict) else None
-            content = msg.get("content") if isinstance(msg, dict) else None
-            if role in {"user", "assistant"} and isinstance(content, str) and content.strip():
-                messages.append({"role": role, "content": content.strip()})
+  messages.push({ role: "user", content: prompt });
+  return messages;
+}
 
-    messages.append({"role": "user", "content": prompt})
-    return messages
+async function callOpenAICompatible(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  messages: ChatMessage[],
+  opts: { useCompletionTokens?: boolean; skipTemperature?: boolean } = {}
+): Promise<string> {
+  const body: Record<string, unknown> = { model, messages };
+  if (opts.useCompletionTokens) {
+    body.max_completion_tokens = 1200;
+  } else {
+    body.max_tokens = 1200;
+  }
+  if (!opts.skipTemperature) {
+    body.temperature = 0.7;
+  }
 
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30000),
+  });
 
-def query_groq(
-    prompt: str,
-    history: list[dict] | None = None,
-    system_prompt: str | None = None,
-    lang: str = "en"
-) -> str:
-    if not GROQ_API_KEY:
-        raise ValueError("GROQ_API_KEY not configured")
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`API error ${response.status}: ${text}`);
+  }
 
-    messages = _build_messages(prompt, history, system_prompt, lang)
+  const data = await response.json() as { choices: Array<{ message: { content: string } }> };
+  return data.choices[0].message.content;
+}
 
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": GROQ_MODEL,
-            "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 1600
-        },
-        timeout=30
-    )
+async function queryReplitAI(
+  prompt: string,
+  history: Array<{ role: string; content: string }> = [],
+  systemPrompt?: string,
+  lang = "en"
+): Promise<string> {
+  if (!AI_BASE_URL || !AI_API_KEY) throw new Error("Replit AI integration not configured");
+  const messages = buildMessages(prompt, history, systemPrompt, lang);
+  return callOpenAICompatible(AI_BASE_URL, AI_API_KEY, REPLIT_MODEL, messages, { useCompletionTokens: true, skipTemperature: true });
+}
 
-    response.raise_for_status()
-    data = response.json()
-    try:
-        return data["choices"][0]["message"]["content"]
-    except Exception:
-        logger.exception("Unexpected Groq response format")
-        raise ValueError("Invalid response from Groq API")
+async function queryGroq(
+  prompt: string,
+  history: Array<{ role: string; content: string }> = [],
+  systemPrompt?: string,
+  lang = "en"
+): Promise<string> {
+  if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY not configured");
+  const messages = buildMessages(prompt, history, systemPrompt, lang);
+  return callOpenAICompatible("https://api.groq.com/openai/v1", GROQ_API_KEY, GROQ_MODEL, messages, {});
+}
 
+async function queryOpenRouter(
+  prompt: string,
+  history: Array<{ role: string; content: string }> = [],
+  systemPrompt?: string,
+  lang = "en"
+): Promise<string> {
+  if (!OPEN_ROUTER_API) throw new Error("OPEN_ROUTER_API not configured");
+  const messages = buildMessages(prompt, history, systemPrompt, lang);
+  return callOpenAICompatible("https://openrouter.ai/api/v1", OPEN_ROUTER_API, OPENROUTER_MODEL, messages, {});
+}
 
-def query_openrouter(
-    prompt: str,
-    history: list[dict] | None = None,
-    system_prompt: str | None = None,
-    lang: str = "en"
-) -> str:
-    if not OPEN_ROUTER_API:
-        raise ValueError("OPEN_ROUTER_API not configured")
+export async function queryAI(
+  prompt: string,
+  history: Array<{ role: string; content: string }> = [],
+  systemPrompt?: string,
+  lang = "en"
+): Promise<string> {
+  // Try Replit AI first (always available), then Groq, then OpenRouter as fallbacks
+  if (AI_BASE_URL && AI_API_KEY) {
+    try {
+      return await queryReplitAI(prompt, history, systemPrompt, lang);
+    } catch (err) {
+      logger.warn({ err }, "Replit AI failed, trying Groq");
+    }
+  }
 
-    messages = _build_messages(prompt, history, system_prompt, lang)
+  if (GROQ_API_KEY) {
+    try {
+      return await queryGroq(prompt, history, systemPrompt, lang);
+    } catch (err) {
+      logger.warn({ err }, "Groq failed, trying OpenRouter");
+    }
+  }
 
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {OPEN_ROUTER_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": OPENROUTER_MODEL,
-            "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 1600
-        },
-        timeout=30
-    )
+  if (OPEN_ROUTER_API) {
+    try {
+      return await queryOpenRouter(prompt, history, systemPrompt, lang);
+    } catch (err) {
+      logger.error({ err }, "All AI providers failed");
+      throw err;
+    }
+  }
 
-    response.raise_for_status()
-    data = response.json()
-    try:
-        return data["choices"][0]["message"]["content"]
-    except Exception:
-        logger.exception("Unexpected OpenRouter response format")
-        raise ValueError("Invalid response from OpenRouter API")
+  throw new Error("No AI providers configured");
+}

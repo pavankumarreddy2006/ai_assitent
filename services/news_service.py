@@ -1,154 +1,89 @@
-import logging
-from datetime import date
+import { logger } from "../lib/logger";
 
-import requests
+const GNEWS_API = process.env.GNEWS_API;
+const NEWS_API_KEY = process.env.NEWS_API_KEY;
+const NEWS_DATA_API = process.env.NEWS_DATA_API;
 
-from config.config import GNEWS_API, NEWS_API_KEY, NEWS_DATA_API
-from services.llm_service import query_groq, query_openrouter
+interface Article {
+  title: string;
+  description?: string;
+  url: string;
+  source: string;
+  published_at: string;
+}
 
-logger = logging.getLogger("college-ai.news")
-_LAST_PRIMARY_RESET = date.today()
+async function fetchGNews(query: string): Promise<Article[]> {
+  if (!GNEWS_API) return [];
+  const resp = await fetch(
+    `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=10&apikey=${GNEWS_API}`,
+    { signal: AbortSignal.timeout(10000) }
+  );
+  if (!resp.ok) return [];
+  const data = await resp.json() as { articles?: Array<{ title: string; description: string; url: string; source: { name: string }; publishedAt: string }> };
+  return (data.articles || []).map(a => ({
+    title: a.title,
+    description: a.description,
+    url: a.url,
+    source: a.source?.name ?? "Unknown",
+    published_at: a.publishedAt,
+  }));
+}
 
+async function fetchNewsData(query: string): Promise<Article[]> {
+  if (!NEWS_DATA_API) return [];
+  const resp = await fetch(
+    `https://newsdata.io/api/1/news?q=${encodeURIComponent(query)}&language=en&apikey=${NEWS_DATA_API}`,
+    { signal: AbortSignal.timeout(10000) }
+  );
+  if (!resp.ok) return [];
+  const data = await resp.json() as { results?: Array<{ title: string; description: string; link: string; source_id: string; pubDate: string }> };
+  return (data.results || []).slice(0, 10).filter(a => a.title).map(a => ({
+    title: a.title,
+    description: a.description,
+    url: a.link,
+    source: a.source_id ?? "Unknown",
+    published_at: a.pubDate,
+  }));
+}
 
-def fetch_news(query: str | None = None) -> list[dict]:
-    """
-    Fetch news articles. Tries GNews first, falls back to NewsAPI.
-    Returns list of articles with title, description, url, source, published_at.
-    """
-    global _LAST_PRIMARY_RESET
-    if _LAST_PRIMARY_RESET != date.today():
-        _LAST_PRIMARY_RESET = date.today()
+async function fetchNewsApi(query: string): Promise<Article[]> {
+  if (!NEWS_API_KEY) return [];
+  const resp = await fetch(
+    `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=10&apiKey=${NEWS_API_KEY}`,
+    { signal: AbortSignal.timeout(10000) }
+  );
+  if (!resp.ok) return [];
+  const data = await resp.json() as { articles?: Array<{ title: string; description: string; url: string; source: { name: string }; publishedAt: string }> };
+  return (data.articles || []).map(a => ({
+    title: a.title,
+    description: a.description,
+    url: a.url,
+    source: a.source?.name ?? "Unknown",
+    published_at: a.publishedAt,
+  }));
+}
 
-    search_query = query or "latest India education"
-    providers = [
-        ("gnews", _fetch_gnews, bool(GNEWS_API)),
-        ("newsdata", _fetch_newsdata, bool(NEWS_DATA_API)),
-        ("newsapi", _fetch_newsapi, bool(NEWS_API_KEY)),
-    ]
+export async function fetchNews(query?: string): Promise<Article[]> {
+  const searchQuery = query || "latest India education news";
 
-    selected: list[dict] = []
-    for provider_name, provider_fn, enabled in providers:
-        if not enabled:
-            continue
-        try:
-            selected = provider_fn(search_query)
-            if selected:
-                logger.info("News fetched from %s", provider_name)
-                break
-        except Exception:
-            logger.exception("News provider failed: %s", provider_name)
+  const providers = [
+    { name: "gnews", fn: () => fetchGNews(searchQuery), enabled: !!GNEWS_API },
+    { name: "newsdata", fn: () => fetchNewsData(searchQuery), enabled: !!NEWS_DATA_API },
+    { name: "newsapi", fn: () => fetchNewsApi(searchQuery), enabled: !!NEWS_API_KEY },
+  ];
 
-    if not selected:
-        return []
-    return _summarize_news(selected, search_query)
+  for (const { name, fn, enabled } of providers) {
+    if (!enabled) continue;
+    try {
+      const articles = await fn();
+      if (articles.length > 0) {
+        logger.info({ provider: name }, "News fetched");
+        return articles;
+      }
+    } catch (err) {
+      logger.warn({ err, provider: name }, "News provider failed");
+    }
+  }
 
-
-def _fetch_gnews(query: str) -> list[dict]:
-    try:
-        response = requests.get(
-            "https://gnews.io/api/v4/search",
-            params={
-                "q": query,
-                "lang": "en",
-                "max": 10,
-                "apikey": GNEWS_API
-            },
-            timeout=10
-        )
-        response.raise_for_status()
-        data = response.json()
-        return [
-            {
-                "title": a.get("title", ""),
-                "description": a.get("description"),
-                "url": a.get("url", ""),
-                "source": a.get("source", {}).get("name", "Unknown"),
-                "published_at": a.get("publishedAt", "")
-            }
-            for a in data.get("articles", [])
-        ]
-    except Exception as e:
-        logger.warning("GNews error: %s", e)
-        return []
-
-
-def _fetch_newsdata(query: str) -> list[dict]:
-    try:
-        response = requests.get(
-            "https://newsdata.io/api/1/news",
-            params={
-                "q": query,
-                "language": "en",
-                "apikey": NEWS_DATA_API,
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        return [
-            {
-                "title": a.get("title", ""),
-                "description": a.get("description"),
-                "url": a.get("link", ""),
-                "source": a.get("source_id", "Unknown"),
-                "published_at": a.get("pubDate", ""),
-            }
-            for a in data.get("results", [])[:10]
-            if a.get("title")
-        ]
-    except Exception as e:
-        logger.warning("NewsData error: %s", e)
-        return []
-
-
-def _fetch_newsapi(query: str) -> list[dict]:
-    try:
-        response = requests.get(
-            "https://newsapi.org/v2/everything",
-            params={
-                "q": query,
-                "sortBy": "publishedAt",
-                "pageSize": 10,
-                "apiKey": NEWS_API_KEY
-            },
-            timeout=10
-        )
-        response.raise_for_status()
-        data = response.json()
-        return [
-            {
-                "title": a.get("title", ""),
-                "description": a.get("description"),
-                "url": a.get("url", ""),
-                "source": a.get("source", {}).get("name", "Unknown"),
-                "published_at": a.get("publishedAt", "")
-            }
-            for a in data.get("articles", [])
-        ]
-    except Exception as e:
-        logger.warning("NewsAPI error: %s", e)
-        return []
-
-
-def _summarize_news(articles: list[dict], query: str) -> list[dict]:
-    top = articles[:5]
-    bullets = [f"- {a.get('title', '')}" for a in top if a.get("title")]
-    if not bullets:
-        return top
-
-    prompt = (
-        "Summarize these headlines in 1 short sentence for a college assistant user. "
-        f"Query: {query}\n\nHeadlines:\n" + "\n".join(bullets)
-    )
-    summary = None
-    try:
-        summary = query_groq(prompt, history=[], lang="en")
-    except Exception:
-        try:
-            summary = query_openrouter(prompt, history=[], lang="en")
-        except Exception:
-            summary = None
-
-    if summary:
-        top[0]["summary"] = summary.strip()
-    return top
+  return [];
+}

@@ -1,7 +1,5 @@
-workers = 3
-worker_class = "sync"          # Flask doesn't need UvicornWorker
-bind = "0.0.0.0:8000"
+workers = 4
+worker_class = "sync"
+bind = "0.0.0.0:$PORT"
 timeout = 120
-accesslog = "-"
-errorlog = "-"
-loglevel = "info"
+keepalive = 5

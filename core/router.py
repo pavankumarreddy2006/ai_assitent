@@ -1,223 +1,160 @@
-import { logger } from "../lib/logger";
-import { classifyIntent, detectLanguage, extractCity, stripWakePhrase } from "./intent";
-import { queryAI, COLLEGE_SYSTEM_PROMPT, TELUGU_SYSTEM_PROMPT } from "./llm_service";
-import { getCollegeAnswer, getCollegeContext } from "./college_service";
-import { getWeather } from "./weather_service";
-import { fetchNews } from "./news_service";
-import { searchDuckDuckGo, formatSearchResults } from "./search_service";
-import { IMAGE_PATHS, VIDEO_PATH } from "./media_data";
+import re
+from flask import jsonify, request
+
+# Imports from other services
+from config.config import COLLEGE_SYSTEM_PROMPT, TELUGU_SYSTEM_PROMPT, IMAGE_PATHS, VIDEO_PATH
 from services.college_service import get_college_answer, get_college_context
-# ... remaining imports
-const MEDIA_DEFAULTS = {
-  show_images: false,
-  images: [] as string[],
-  show_video: false,
-  video_url: null as string | null,
-};
+from services.llm_service import query_ai
+from services.weather_service import get_weather
+from services.news_service import fetch_news
+from services.search_service import search_duckduckgo
 
-interface ChatResponse {
-  reply: string;
-  intent: string;
-  source: string;
-  language: string;
-  show_images: boolean;
-  images: string[];
-  show_video: boolean;
-  video_url: string | null;
+# Constants from old app.py
+ROMAN_TELUGU = {"nenu","meeru","nuvvu","enti","emiti","ela","enduku","undi","kavali","chesi","gurunchi"}
+WEATHER_KW   = ["weather","temperature","rain","sunny","cloudy","forecast","humidity","wind","climate"]
+NEWS_KW      = ["news","headlines","latest","breaking","current affairs","trending","update"]
+SEARCH_KW    = ["search","find","what is","who is","where is","how to","define","explain","tell me about"]
+IMAGE_KW     = ["college photos","campus photos","show photos","show images","college images","campus images",
+                "ఫోటోలు","చిత్రాలు","కాలేజీ ఫోటో"]
+VIDEO_KW     = ["college video","campus video","play video","show video","watch video","full details",
+                "కాలేజీ వీడియో","వీడియో"]
+COLLEGE_HINTS = {"admission","course","fee","principal","hostel","library","placement","college","campus",
+                 "scholarship","timings","contact","courses","fees","placements"}
+
+# Media defaults
+MEDIA_DEFAULTS = {
+    "show_images": False,
+    "images": [],
+    "show_video": False,
+    "video_url": None
 }
 
-export async function routeMessage(
-  message: string,
-  history: Array<{ role: string; content: string }> = []
-): Promise<ChatResponse> {
-  const clean = stripWakePhrase(message.trim());
+def detect_language(text: str) -> str:
+    telugu_chars = sum(1 for c in text if '\u0C00' <= c <= '\u0C7F')
+    total = max(len(text.replace(" ", "")), 1)
+    if telugu_chars / total > 0.15:
+        return "te"
+    words = [w.lower() for w in text.split() if w.isalpha()]
+    if sum(1 for w in words if w in ROMAN_TELUGU) >= 2:
+        return "te"
+    return "en"
 
-  if (!clean) {
-    return {
-      reply: "Please say or type a message.",
-      intent: "general",
-      source: "System",
-      language: "en",
-      ...MEDIA_DEFAULTS,
-    };
-  }
+def classify_intent(message: str) -> str:
+    msg = message.lower().strip()
+    if any(p in msg for p in VIDEO_KW):  return "video_intent"
+    if any(p in msg for p in IMAGE_KW):  return "images_intent"
+    words = set(msg.split())
+    if words & COLLEGE_HINTS:            return "college"
+    if any(kw in msg for kw in COLLEGE_KEYWORDS): return "college"   # COLLEGE_KEYWORDS from college_service
+    if any(kw in msg for kw in WEATHER_KW):       return "weather"
+    if any(kw in msg for kw in NEWS_KW):           return "news"
+    if any(kw in msg for kw in SEARCH_KW) or "?" in msg:
+        return "search"
+    return "general"
 
-  const lang = detectLanguage(clean);
-  const intent = classifyIntent(clean);
+def extract_city(message: str) -> str:
+    patterns = [
+        r'weather\s+(?:in|at|for|of)\s+([A-Za-z][A-Za-z\s]{1,30}?)(?:\?|$|\.)',
+        r'temperature\s+(?:in|at|of)\s+([A-Za-z][A-Za-z\s]{1,30})',
+        r'how(?:\'s| is)\s+(?:the\s+)?weather\s+(?:in|at)\s+([A-Za-z][A-Za-z\s]{1,30})',
+    ]
+    for p in patterns:
+        m = re.search(p, message, re.IGNORECASE)
+        if m:
+            city = m.group(1).strip().rstrip("?.,!")
+            if 2 <= len(city) <= 30:
+                return city
+    skip = {"weather","what","how","tell","the","for","now","today","check","please",
+            "show","give","temperature","forecast","update","current"}
+    for word in message.split():
+        w = word.strip("?.,!")
+        if w and w[0].isupper() and len(w) >= 3 and w.lower() not in skip:
+            return w
+    return "Kakinada"
 
-  logger.info({ intent, lang, message: clean }, "Routing message");
+def handle_chat_request(req):
+    data = req.get_json(force=True)
+    message = (data.get("message") or "").strip()
+    history = data.get("history", [])
 
-  try {
-    if (intent === "images_intent") {
-      return {
-        reply: lang === "te" ? "ఇప్పుడు క్యాంపస్ చిత్రాలు చూపిస్తున్నాను." : "Here are the campus images for you.",
-        intent: "images",
-        source: "Media Service",
-        language: lang,
-        show_images: true,
-        images: IMAGE_PATHS,
-        show_video: false,
-        video_url: null,
-      };
-    }
+    if not message:
+        return jsonify({"error": "Message is required"}), 400
 
-    if (intent === "video_intent") {
-      return {
-        reply: lang === "te" ? "కాలేజీ వీడియో ప్లే చేస్తున్నాను." : "Playing the college promotional video for you.",
-        intent: "video",
-        source: "Media Service",
-        language: lang,
-        show_images: false,
-        images: [],
-        show_video: true,
-        video_url: VIDEO_PATH,
-      };
-    }
+    lang = detect_language(message)
+    intent = classify_intent(message)
 
-    if (intent === "college") {
-      return await handleCollege(clean, history, lang);
-    }
+    defaults = MEDIA_DEFAULTS.copy()
 
-    if (intent === "weather") {
-      return await handleWeather(clean, lang);
-    }
+    # Images Intent
+    if intent == "images_intent":
+        return jsonify({
+            "reply": "ఇప్పుడు క్యాంపస్ చిత్రాలు చూపిస్తున్నాను." if lang == "te" else "Here are the campus images for you.",
+            "intent": "images",
+            "source": "Media Service",
+            "language": lang,
+            "show_images": True,
+            "images": IMAGE_PATHS,
+            "show_video": False,
+            "video_url": None
+        })
 
-    if (intent === "news") {
-      return await handleNews(lang);
-    }
+    # Video Intent
+    if intent == "video_intent":
+        return jsonify({
+            "reply": "కాలేజీ వీడియో ప్లే చేస్తున్నాను." if lang == "te" else "Playing the college promotional video.",
+            "intent": "video",
+            "source": "Media Service",
+            "language": lang,
+            "show_images": False,
+            "images": [],
+            "show_video": True,
+            "video_url": VIDEO_PATH
+        })
 
-    if (intent === "search") {
-      return await handleSearch(clean, history, lang);
-    }
+    # College
+    if intent == "college":
+        local = get_college_answer(message, lang)
+        if local:
+            return jsonify({"reply": local, "intent": "college",
+                            "source": "College Database", "language": lang, **defaults})
+        
+        ctx = get_college_context()
+        sys_prompt = (TELUGU_SYSTEM_PROMPT if lang == "te" else COLLEGE_SYSTEM_PROMPT) + f"\n\nCOLLEGE INFO:\n{ctx}"
+        reply = query_ai(message, history, sys_prompt, lang)
+        return jsonify({"reply": reply, "intent": "college",
+                        "source": "AI + College Database", "language": lang, **defaults})
 
-    return await handleGeneral(clean, history, lang);
-  } catch (err) {
-    logger.error({ err }, "Router error");
-    const msg = lang === "te"
-      ? "క్షమించండి, ఏదో సమస్య వచ్చింది. దయచేసి మళ్లీ ప్రయత్నించండి."
-      : "Something went wrong. Please try again.";
-    return {
-      reply: msg,
-      intent: "general",
-      source: "Error",
-      language: lang,
-      ...MEDIA_DEFAULTS,
-    };
-  }
-}
+    # Weather
+    if intent == "weather":
+        city = extract_city(message)
+        wd = get_weather(city, lang)
+        if wd:
+            reply = (f"{wd['city']}లో వాతావరణం: {wd['description']}, ఉష్ణోగ్రత: {wd['temperature']}°C, తేమ: {wd['humidity']}%, గాలి: {wd['wind_speed']} km/h." if lang == "te"
+                     else f"Weather in {wd['city']}: {wd['description']}, Temperature: {wd['temperature']}°C, Humidity: {wd['humidity']}%, Wind: {wd['wind_speed']} km/h.")
+        else:
+            reply = f"'{city}' వాతావరణ సమాచారం దొరకలేదు." if lang == "te" else f"Couldn't find weather data for '{city}'."
+        return jsonify({"reply": reply, "intent": "weather", "source": "Weather API", "language": lang, **defaults})
 
-async function handleCollege(
-  message: string,
-  history: Array<{ role: string; content: string }>,
-  lang: string
-): Promise<ChatResponse> {
-  const localAnswer = getCollegeAnswer(message, lang);
-  if (localAnswer) {
-    return {
-      reply: localAnswer,
-      intent: "college",
-      source: "College Database",
-      language: lang,
-      ...MEDIA_DEFAULTS,
-    };
-  }
+    # News
+    if intent == "news":
+        articles = fetch_news()
+        if articles:
+            header = "తాజా వార్తలు:\n" if lang == "te" else "Here are the latest headlines:\n"
+            lines = [f"{i+1}. {a['title']} — {a['source']}" for i, a in enumerate(articles)]
+            reply = header + "\n".join(lines)
+        else:
+            reply = "వార్తలు తీసుకోలేకపోయాము." if lang == "te" else "Couldn't fetch news right now."
+        return jsonify({"reply": reply, "intent": "news", "source": "News API", "language": lang, **defaults})
 
-  const context = getCollegeContext();
-  const systemPrompt = (lang === "te" ? TELUGU_SYSTEM_PROMPT : COLLEGE_SYSTEM_PROMPT) +
-    `\n\nCOLLEGE INFORMATION:\n${context}`;
+    # Default Search / General
+    results = search_duckduckgo(message)
+    if results:
+        ctx = "\n".join(f"{i+1}. {r.get('snippet') or r.get('title')}" for i, r in enumerate(results))
+        prompt = f'Answer: "{message}"\n\nWeb results:\n{ctx}\n\nGive a clear, direct answer.'
+        source = "Web + AI"
+    else:
+        prompt = message
+        source = "AI"
 
-  const reply = await queryAI(message, history, systemPrompt, lang);
-  return {
-    reply,
-    intent: "college",
-    source: "Groq AI + College Database",
-    language: lang,
-    ...MEDIA_DEFAULTS,
-  };
-}
-
-async function handleWeather(message: string, lang: string): Promise<ChatResponse> {
-  const city = extractCity(message) ?? "Kakinada";
-  const weatherData = await getWeather(city, lang);
-
-  let reply: string;
-  if (weatherData) {
-    if (lang === "te") {
-      reply = `${weatherData.city}లో వాతావరణం: ${weatherData.description}, ఉష్ణోగ్రత: ${weatherData.temperature}°C, తేమ: ${weatherData.humidity}%, గాలి వేగం: ${weatherData.wind_speed} km/h.`;
-    } else {
-      reply = `Weather in ${weatherData.city}: ${weatherData.description}, Temperature: ${weatherData.temperature}°C, Humidity: ${weatherData.humidity}%, Wind: ${weatherData.wind_speed} km/h.`;
-    }
-  } else {
-    reply = lang === "te"
-      ? `'${city}' వాతావరణ సమాచారం దొరకలేదు. నగరం పేరు తనిఖీ చేయండి.`
-      : `Couldn't find weather data for '${city}'. Please check the city name.`;
-  }
-
-  return {
-    reply,
-    intent: "weather",
-    source: "Open-Meteo Weather API",
-    language: lang,
-    ...MEDIA_DEFAULTS,
-  };
-}
-
-async function handleNews(lang: string): Promise<ChatResponse> {
-  const articles = await fetchNews("India education college news");
-
-  let reply: string;
-  if (articles.length > 0) {
-    const header = lang === "te" ? "తాజా వార్తలు:\n" : "Here are the latest headlines:\n";
-    const lines = articles.slice(0, 5).map((a, i) => `${i + 1}. ${a.title} — ${a.source}`);
-    reply = header + lines.join("\n");
-  } else {
-    reply = lang === "te"
-      ? "ప్రస్తుతం వార్తలు తీసుకోలేకపోయాము. తర్వాత మళ్ళీ ప్రయత్నించండి."
-      : "Couldn't fetch the latest news right now. Please try again later.";
-  }
-
-  return {
-    reply,
-    intent: "news",
-    source: "News API",
-    language: lang,
-    ...MEDIA_DEFAULTS,
-  };
-}
-
-async function handleSearch(
-  message: string,
-  history: Array<{ role: string; content: string }>,
-  lang: string
-): Promise<ChatResponse> {
-  const results = await searchDuckDuckGo(message);
-  const searchContext = formatSearchResults(results);
-
-  const prompt = results.length > 0
-    ? `Based on this search info, answer the question: "${message}"\n\nSearch results:\n${searchContext}\n\nProvide a clear, direct answer.`
-    : message;
-
-  const reply = await queryAI(prompt, history, undefined, lang);
-  return {
-    reply,
-    intent: "search",
-    source: results.length > 0 ? "Live Web + Groq AI" : "Groq AI",
-    language: lang,
-    ...MEDIA_DEFAULTS,
-  };
-}
-
-async function handleGeneral(
-  message: string,
-  history: Array<{ role: string; content: string }>,
-  lang: string
-): Promise<ChatResponse> {
-  const reply = await queryAI(message, history, undefined, lang);
-  return {
-    reply,
-    intent: "general",
-    source: "Groq AI",
-    language: lang,
-    ...MEDIA_DEFAULTS,
-  };
-}
+    reply = query_ai(prompt, history, None, lang)
+    return jsonify({"reply": reply, "intent": intent, "source": source, "language": lang, **defaults})

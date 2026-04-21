@@ -1,3 +1,4 @@
+# app.py
 import os
 import logging
 from flask import Flask, request, jsonify, render_template, send_from_directory
@@ -70,6 +71,7 @@ def serve_media(filename):
 @app.route("/api/chat", methods=["POST"])
 def chat():
     try:
+        # FIXED: Pass request object to match function signature
         return handle_chat_request(request)
     except Exception as e:
         logger.error(f"Chat route error: {e}")
@@ -92,7 +94,7 @@ def api_news():
         return jsonify({"error": "Failed to fetch news"}), 500
 
 
-# Health check endpoint (recommended for Render)
+# Health check endpoint
 @app.route("/health")
 def health():
     return jsonify({
@@ -103,6 +105,5 @@ def health():
 
 # ====================== PRODUCTION ENTRY POINT ======================
 if __name__ == "__main__":
-    # This block only runs when executing `python app.py` directly (local development)
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)

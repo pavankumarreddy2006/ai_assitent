@@ -265,15 +265,7 @@ COLLEGE_DATABASE = {
                                 {"name": "V. Jeevan Kanth", "designation": "Assistant Professor"},
                                 {"name": "T. Pridhvi Krishna", "designation": "Assistant Professor"},
                                 {"name": "B. Venkata Ratnam", "designation": "Assistant Professor"},
-                                {"name": "K. Macha Rao", "designation": "Assistant Professor"},
-                                {"name": "P. Vidyadar Reddy", "designation": "Assistant Professor"},
-                                {"name": "A. Thulasi", "designation": "Assistant Professor"},
-                                {"name": "K. Prabhakar", "designation": "Assistant Professor"},
-                                {"name": "K. Srilaxmi", "designation": "Assistant Professor"},
-                                {"name": "V. Raj Kumar", "designation": "Assistant Professor"},
-                                {"name": "P.N. Jyoshna Sree", "designation": "Assistant Professor"},
-                                {"name": "S. Laxmi Prasanna", "designation": "Assistant Professor"},
-                                {"name": "M. Jeeela Rathanam", "designation": "Assistant Professor"}
+                                {"name": "K. Macha Rao", "designation": "Assistant Professor"}
                             ]
                         }
                     },
@@ -371,24 +363,12 @@ COLLEGE_DATABASE = {
 COLLEGE_CONTEXT = """
 Ideal College of Arts and Sciences — NAAC 'A' Grade institution, established 2000.
 Location: Vidyuth Nagar, Kakinada, Andhra Pradesh - 533003.
-Affiliated to Andhra University, Visakhapatnam. UGC recognized.
+Affiliated to Adikavi Nannaya University.
 
-UG Courses (3 yrs): B.Sc Computers, B.Sc AI, B.Sc Agriculture, B.Sc Aquaculture & Fisheries,
-B.Sc Food Technology, B.Sc Microbiology, BCA, BBA, B.Com, B.Com CA.
-PG Courses (2 yrs): MCA, M.Sc Organic Chemistry, M.Sc Food Science, M.Com.
+UG Courses (3 yrs): B.Sc Computers, BCA, B.Sc AI, BBA, Agriculture, Food Technology, Aqua & Fisheries.
+PG Courses (2 yrs): MCA, M.Sc Organic Chemistry, M.Sc Food Science, etc.
 
-Fees: UG ₹12k–₹25k/yr, PG ₹15k–₹35k/yr, Hostel ₹40k–₹65k/yr.
-Scholarships: SC/ST/BC/EBC/Minority govt. scholarships + Vasathi Deevena + Vidya Deevena.
 Contact: 0884-2384382 / 0884-2384381. Email: idealcolleges@gmail.com.
-Website: https://idealcollege.edu.in.
-
-Placements: 90%+ record. Top recruiters: TCS, Infosys, Wipro, HCL, Accenture, Tech Mahindra,
-Cognizant, HDFC, ICICI, ITC, Nestle. Avg package ₹3.5–6 LPA, highest ₹8–12 LPA.
-
-Facilities: Library (12,000+ books), Computer Labs (100+ systems), Science Labs,
-Seminar Hall, Auditorium (500+ capacity), Hostel (Boys & Girls, 300+ students),
-Bus service, Wi-Fi campus, Gym, Cafeteria, Playground, CCTV, NSS, NCC.
-College timings: 9:30 AM – 3:45 PM (Mon–Sat). Office: 9:00 AM – 5:00 PM.
 """
 
 
@@ -417,4 +397,3 @@ def get_college_answer(query: str, lang: str = "en"):
 
 def get_college_context() -> str:
     return COLLEGE_CONTEXT
-

@@ -12,23 +12,30 @@ from services.search_service import search_and_format
 from services.llm_service import query_ai
 from data.media_data import IMAGE_PATHS, VIDEO_PATH
 
-logger = logging.getLogger(__name__)
-router = Blueprint("router", __name__)
+logger = logging.getLogger(**name**)
+router = Blueprint("router", **name**)
 
 # ✅ ONLY ADDITION (no logic change)
 
 def purify_reply(text: str, max_lines: int = 4, max_chars: int = 420) -> str:
 if not text:
 return "No data found."
+
+```
 cleaned = re.sub(r"\s+", " ", str(text)).strip()
 cleaned = cleaned.replace("Here are the latest updates:", "Latest updates:")
 cleaned = cleaned.replace("Top search results:", "Search summary:")
-parts = re.split(r"\s(?=\d+.)", cleaned)
+
+parts = re.split(r"\s(?=\d+\.)", cleaned)
+
 if len(parts) > 1:
-cleaned = " ".join(parts[:max_lines])
+    cleaned = " ".join(parts[:max_lines])
+
 if len(cleaned) > max_chars:
-cleaned = cleaned[:max_chars].rstrip() + "..."
+    cleaned = cleaned[:max_chars].rstrip() + "..."
+
 return cleaned
+```
 
 @router.route("/api/chat", methods=["POST"])
 def api_chat():
@@ -125,6 +132,7 @@ history = data.get("history") or []
             })
 
     ai_reply = query_ai(prompt=user_message, history=history, lang=lang)
+
     return jsonify({
         "reply": purify_reply(ai_reply, max_lines=4, max_chars=420),
         "source": "AI Assistant",

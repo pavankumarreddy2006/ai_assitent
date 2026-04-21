@@ -23,12 +23,80 @@ function scrollBottom() {
   messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
-function appendUserMessage(text) {
+function appendAIMessage(data) {
+  const reply = data?.reply ?? "";
+  const source = data?.source ?? "";
+  const showImages = Boolean(data?.show_images);
+  const showVideo = Boolean(data?.show_video);
+  const images = Array.isArray(data?.images) ? data.images : [];
+  const videoUrl = data?.video_url ?? "";
+
+  let media = "";
+
+  // VIDEO: autoplay reliable (muted + playsinline)
+  if (showVideo && videoUrl) {
+    media += `
+      <div class="media-frame">
+        <video class="media-video" controls autoplay muted playsinline>
+          <source src="${esc(videoUrl)}" type="video/mp4">
+          Your browser does not support video.
+        </video>
+      </div>
+    `;
+  }
+
+  // IMAGES: same frame size as video + slider
+  if (showImages && images.length) {
+    const sliderId = "slider-" + Date.now();
+    media += `
+      <div class="media-frame">
+        <div class="image-slider" id="${sliderId}">
+          <button class="slide-btn prev" onclick="changeSlide('${sliderId}', -1)">❮</button>
+          <div class="slides">
+            ${images.map((src, idx) => `
+              <img
+                src="${esc(src)}"
+                class="slide ${idx === 0 ? "active" : ""}"
+                alt="college image"
+                loading="lazy"
+              />
+            `).join("")}
+          </div>
+          <button class="slide-btn next" onclick="changeSlide('${sliderId}', 1)">❯</button>
+        </div>
+      </div>
+    `;
+  }
+
   const div = document.createElement("div");
-  div.className = "message user-message";
-  div.innerHTML = `<div class="message-bubble user-bubble"><p>${esc(text)}</p></div>`;
+  div.className = "message ai-message";
+  div.innerHTML = `
+    <div class="message-bubble ai-bubble">
+      <p>${esc(reply)}</p>
+      ${media}
+      ${source ? `<div class="message-source" style="font-size:12px;color:#93a4bf;margin-top:8px;">${esc(source)}</div>` : ""}
+    </div>
+  `;
   messagesArea.appendChild(div);
   scrollBottom();
+}
+function changeSlide(sliderId, direction) {
+  const slider = document.getElementById(sliderId);
+  if (!slider) return;
+
+  const slides = slider.querySelectorAll(".slide");
+  if (!slides.length) return;
+
+  let current = 0;
+  slides.forEach((s, i) => {
+    if (s.classList.contains("active")) current = i;
+  });
+
+  slides[current].classList.remove("active");
+  let next = current + direction;
+  if (next < 0) next = slides.length - 1;
+  if (next >= slides.length) next = 0;
+  slides[next].classList.add("active");
 }
 
 function appendAIMessage(data) {

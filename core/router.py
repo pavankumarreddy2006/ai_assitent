@@ -107,4 +107,11 @@ def api_chat():
 
     except Exception as exc:
         logger.exception("Chat route failed: %s", exc)
-        return jsonify({"reply": "Sorry, server error. Please try again."}), 500
+        return jsonify({
+            "reply": "Sorry, server error. Please try again.",
+            "source": "System",
+            "show_images": False,
+            "images": [],
+            "show_video": False,
+            "video_url": ""
+        }), 500

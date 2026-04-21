@@ -40,7 +40,7 @@ def _query_groq(prompt: str, history: Optional[List[Dict[str, str]]], lang: str)
         temperature=0.6,
         max_tokens=700,
     )
-    return res.choices[0].message.content.strip()
+    return (res.choices[0].message.content or "").strip()
 
 
 def _query_openrouter(prompt: str, history: Optional[List[Dict[str, str]]], lang: str) -> str:
@@ -53,11 +53,19 @@ def _query_openrouter(prompt: str, history: Optional[List[Dict[str, str]]], lang
         temperature=0.6,
         max_tokens=700,
     )
-    return res.choices[0].message.content.strip()
+    return (res.choices[0].message.content or "").strip()
 
 
 def query_ai(prompt: str, history: Optional[List[Dict[str, str]]] = None, lang: str = "en") -> str:
+    # Never throw to router; always return safe fallback text.
     try:
         return _query_groq(prompt, history, lang)
     except Exception:
-        return _query_openrouter(prompt, history, lang)
+        try:
+            return _query_openrouter(prompt, history, lang)
+        except Exception:
+            return (
+                "I could not reach AI providers now. Please try again in a moment."
+                if lang == "en"
+                else "AI సేవలు ఇప్పుడు అందుబాటులో లేవు. కొద్దిసేపటి తర్వాత మళ్లీ ప్రయత్నించండి."
+            )

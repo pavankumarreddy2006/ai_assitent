@@ -1,4 +1,3 @@
-# data/media_data.py
 IMAGE_PATHS = [
     "/static/media/images/1.jpg",
     "/static/media/images/2.jpg",

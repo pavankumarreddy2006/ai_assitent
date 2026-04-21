@@ -1,9 +1,21 @@
-# render.yaml
 services:
   - type: web
-    name: ideal-ai
+    name: ideal-college-ai
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    healthCheckPath: /health
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPEN_ROUTER_API
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: GNEWS_API
+        sync: false
+      - key: NEWS_API_KEY
+        sync: false
+      - key: NEWS_DATA_API
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true

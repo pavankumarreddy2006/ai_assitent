@@ -1,14 +1,17 @@
 # app.py
 import logging
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 
-from core.router import router
-
 load_dotenv()
+
+from core.router import router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,6 +19,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
+app.secret_key = os.getenv("SESSION_SECRET", "ideal-college-ai-secret")
 app.register_blueprint(router)
 
 
@@ -31,7 +35,7 @@ def media(filename: str):
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "service": "ideal-ai"}), 200
+    return jsonify({"status": "ok", "service": "ideal-college-ai"}), 200
 
 
 if __name__ == "__main__":

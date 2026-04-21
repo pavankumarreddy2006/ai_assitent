@@ -1,103 +1,83 @@
 // static/js/main.js
-let chatInput;
-let sendBtn;
-let messagesArea;
-let welcomeScreen;
-let micBtn;
-let transcriptPreview;
+"use strict";
 
+let chatInput, sendBtn, messagesArea, welcomeScreen, micBtn, transcriptPreview;
 let chatHistory = [];
 let recognition = null;
 let isListening = false;
 
 function esc(str) {
-  return String(str)
+  return String(str ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll('"', "&quot;");
 }
 
 function scrollBottom() {
   messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
-// ONLY ONE appendAIMessage function - with proper image slider and video support
+function formatReply(text) {
+  if (!text) return "";
+  return esc(text)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>");
+}
+
 function appendAIMessage(data) {
   const reply = data?.reply ?? "";
-  const source = data?.source ?? "";
   const showImages = Boolean(data?.show_images);
   const showVideo = Boolean(data?.show_video);
   const images = Array.isArray(data?.images) ? data.images : [];
   const videoUrl = data?.video_url ?? "";
 
-  let media = "";
+  let mediaHtml = "";
 
-  // VIDEO: autoplay reliable (muted + playsinline)
   if (showVideo && videoUrl) {
-    media += `
+    mediaHtml = `
       <div class="media-frame">
         <video class="media-video" controls autoplay muted playsinline>
           <source src="${esc(videoUrl)}" type="video/mp4">
           Your browser does not support video.
         </video>
-      </div>
-    `;
+      </div>`;
   }
 
-  // IMAGES: same frame size as video + slider
   if (showImages && images.length) {
-    const sliderId = "slider-" + Date.now();
-    media += `
+    const id = "slider-" + Date.now();
+    mediaHtml = `
       <div class="media-frame">
-        <div class="image-slider" id="${sliderId}">
-          <button class="slide-btn prev" onclick="changeSlide('${sliderId}', -1)">❮</button>
+        <div class="image-slider" id="${id}">
+          <button class="slide-btn prev" onclick="changeSlide('${id}',-1)">&#8249;</button>
           <div class="slides">
-            ${images.map((src, idx) => `
-              <img
-                src="${esc(src)}"
-                class="slide ${idx === 0 ? "active" : ""}"
-                alt="college image"
-                loading="lazy"
-              />
-            `).join("")}
+            ${images.map((s, i) => `<img src="${esc(s)}" class="slide${i === 0 ? " active" : ""}" alt="campus" loading="lazy"/>`).join("")}
           </div>
-          <button class="slide-btn next" onclick="changeSlide('${sliderId}', 1)">❯</button>
+          <button class="slide-btn next" onclick="changeSlide('${id}',1)">&#8250;</button>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
   const div = document.createElement("div");
   div.className = "message ai-message";
   div.innerHTML = `
+    <div class="ai-avatar">IC</div>
     <div class="message-bubble ai-bubble">
-      <p>${esc(reply)}</p>
-      ${media}
-      ${source ? `<div class="message-source" style="font-size:12px;color:#93a4bf;margin-top:8px;">${esc(source)}</div>` : ""}
-    </div>
-  `;
+      <div>${formatReply(reply)}</div>
+      ${mediaHtml}
+    </div>`;
   messagesArea.appendChild(div);
   scrollBottom();
 }
 
-function changeSlide(sliderId, direction) {
-  const slider = document.getElementById(sliderId);
+function changeSlide(id, dir) {
+  const slider = document.getElementById(id);
   if (!slider) return;
-
   const slides = slider.querySelectorAll(".slide");
-  if (!slides.length) return;
-
-  let current = 0;
-  slides.forEach((s, i) => {
-    if (s.classList.contains("active")) current = i;
-  });
-
-  slides[current].classList.remove("active");
-  let next = current + direction;
-  if (next < 0) next = slides.length - 1;
-  if (next >= slides.length) next = 0;
+  let cur = 0;
+  slides.forEach((s, i) => { if (s.classList.contains("active")) cur = i; });
+  slides[cur].classList.remove("active");
+  let next = (cur + dir + slides.length) % slides.length;
   slides[next].classList.add("active");
 }
 
@@ -107,8 +87,9 @@ function appendTyping() {
   div.id = id;
   div.className = "message ai-message";
   div.innerHTML = `
+    <div class="ai-avatar">IC</div>
     <div class="message-bubble ai-bubble">
-      <div class="typing-indicator"><span>.</span><span>.</span><span>.</span></div>
+      <div class="typing-indicator"><span></span><span></span><span></span></div>
     </div>`;
   messagesArea.appendChild(div);
   scrollBottom();
@@ -118,16 +99,12 @@ function appendTyping() {
 function appendUserMessage(text) {
   const div = document.createElement("div");
   div.className = "message user-message";
-  div.innerHTML = `
-    <div class="message-bubble user-bubble">
-      <p>${esc(text)}</p>
-    </div>
-  `;
+  div.innerHTML = `<div class="message-bubble user-bubble">${esc(text)}</div>`;
   messagesArea.appendChild(div);
   scrollBottom();
 }
 
-function removeElement(id) {
+function removeEl(id) {
   const el = document.getElementById(id);
   if (el) el.remove();
 }
@@ -141,7 +118,6 @@ async function sendMessage() {
 
   appendUserMessage(text);
   chatHistory.push({ role: "user", content: text });
-
   chatInput.value = "";
   sendBtn.disabled = true;
   const typingId = appendTyping();
@@ -154,99 +130,89 @@ async function sendMessage() {
     });
 
     let data;
-    try {
-      data = await res.json();
-    } catch {
-      throw new Error("Invalid response");
-    }
+    try { data = await res.json(); } catch { throw new Error("Invalid JSON"); }
 
-    removeElement(typingId);
+    removeEl(typingId);
 
-    if (res.ok && typeof data.reply !== "undefined") {
+    if (res.ok && data.reply !== undefined) {
       appendAIMessage(data);
       chatHistory.push({ role: "assistant", content: data.reply });
     } else {
-      appendAIMessage({ reply: data?.reply || "Server error.", source: "System" });
+      appendAIMessage({ reply: data?.reply || "Something went wrong. Please try again." });
     }
   } catch (err) {
     console.error(err);
-    removeElement(typingId);
-    appendAIMessage({ reply: "Sorry, I couldn't connect to server.", source: "System" });
+    removeEl(typingId);
+    appendAIMessage({ reply: "Connection error. Please check your network and try again." });
   } finally {
     sendBtn.disabled = false;
     scrollBottom();
   }
 }
 
-function setTranscriptPreview(text) {
-  if (!transcriptPreview) return;
-  transcriptPreview.textContent = text || "";
-}
-
-function initRecognition() {
+function initSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
-
   const rec = new SR();
   rec.lang = "en-IN";
   rec.interimResults = true;
   rec.continuous = false;
-  rec.maxAlternatives = 1;
 
-  rec.onresult = (event) => {
-    let transcript = "";
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
-    }
-    chatInput.value = transcript;
-    setTranscriptPreview(transcript);
-
-    const last = event.results[event.results.length - 1];
-    if (last && last.isFinal) {
+  rec.onresult = (e) => {
+    let t = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+    chatInput.value = t;
+    if (transcriptPreview) transcriptPreview.textContent = t;
+    const last = e.results[e.results.length - 1];
+    if (last?.isFinal) {
       setTimeout(() => {
-        setTranscriptPreview("");
+        if (transcriptPreview) transcriptPreview.textContent = "";
         sendMessage();
-      }, 200);
+      }, 300);
     }
   };
-
-  rec.onerror = () => {
+  rec.onerror = rec.onend = () => {
     isListening = false;
     micBtn.classList.remove("active");
-    setTranscriptPreview("");
+    if (transcriptPreview) transcriptPreview.textContent = "";
   };
-
-  rec.onend = () => {
-    isListening = false;
-    micBtn.classList.remove("active");
-    setTranscriptPreview("");
-  };
-
   return rec;
 }
 
 function toggleVoice() {
-  if (!recognition) recognition = initRecognition();
+  if (!recognition) recognition = initSpeech();
   if (!recognition) {
-    appendAIMessage({ reply: "Voice is not supported in this browser. Use Chrome/Edge.", source: "System" });
+    appendAIMessage({ reply: "Voice input is not supported in this browser. Use Chrome or Edge." });
     return;
   }
-
   if (isListening) {
-    recognition.stop();
-    isListening = false;
-    micBtn.classList.remove("active");
-    return;
+    recognition.stop(); isListening = false; micBtn.classList.remove("active");
+  } else {
+    try {
+      recognition.start(); isListening = true; micBtn.classList.add("active");
+      if (transcriptPreview) transcriptPreview.textContent = "Listening...";
+    } catch { isListening = false; micBtn.classList.remove("active"); }
   }
+}
 
+async function loadSidebarNews() {
+  const newsList = document.getElementById("newsList");
+  if (!newsList) return;
   try {
-    recognition.start();
-    isListening = true;
-    micBtn.classList.add("active");
-    setTranscriptPreview("Listening...");
+    const res = await fetch("/api/news-sidebar");
+    const data = await res.json();
+    const articles = data.articles || [];
+    if (!articles.length) {
+      newsList.innerHTML = '<div class="news-loading">No updates available.</div>';
+      return;
+    }
+    newsList.innerHTML = articles.map(a => `
+      <div class="news-item" onclick="sendSuggestion('Tell me about: ${esc(a.title.slice(0, 60))}')">
+        <div>${esc(a.title)}</div>
+        <div class="news-item-source">${esc(a.source || "")}</div>
+      </div>`).join("");
   } catch {
-    isListening = false;
-    micBtn.classList.remove("active");
+    newsList.innerHTML = '<div class="news-loading">Could not load updates.</div>';
   }
 }
 
@@ -265,15 +231,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   sendBtn.addEventListener("click", sendMessage);
   micBtn.addEventListener("click", toggleVoice);
-
   chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
-  document.querySelectorAll(".suggestion-btn").forEach((btn) => {
-    btn.addEventListener("click", () => sendSuggestion(btn.getAttribute("data-text") || btn.textContent || ""));
+  document.querySelectorAll(".suggestion-btn").forEach(btn => {
+    btn.addEventListener("click", () => sendSuggestion(btn.getAttribute("data-text") || btn.textContent.trim()));
   });
+
+  loadSidebarNews();
 });

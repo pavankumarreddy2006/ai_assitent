@@ -1,12 +1,38 @@
 # services/college_service.py
-from data.college_data import FAQS, KEYWORDS
+"""
+College service compatibility layer.
+
+Goals:
+- Keep current JSON-style college_data architecture
+- Preserve previous imports used across older code:
+  - COLLEGE_KEYWORDS
+  - get_college_answer
+  - get_college_context
+"""
+
+from data.college_data import (
+    COLLEGE_KEYWORDS,
+    get_college_answer as _data_get_college_answer,
+    get_college_context as _data_get_college_context,
+)
 
 
 def get_college_answer(message: str, lang: str = "en"):
-    msg = (message or "").lower()
+    """
+    Proxy to data.college_data.get_college_answer()
+    """
+    return _data_get_college_answer(message, lang)
 
-    for key, kws in KEYWORDS.items():
-        if any(kw in msg for kw in kws):
-            val = FAQS.get(key, {})
-            return val.get(lang) or val.get("en")
-    return None
+
+def get_college_context():
+    """
+    Proxy to data.college_data.get_college_context()
+    """
+    return _data_get_college_context()
+
+
+__all__ = [
+    "COLLEGE_KEYWORDS",
+    "get_college_answer",
+    "get_college_context",
+]

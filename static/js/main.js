@@ -25,6 +25,63 @@ function formatReply(text) {
     .replace(/\n/g, "<br>");
 }
 
+////////////////////////////////////////////////////////////
+// 🔥 SWEET FEMALE VOICE MODULE (ADDED ONLY)
+////////////////////////////////////////////////////////////
+
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  const isTelugu = /[\u0C00-\u0C7F]/.test(text);
+  utterance.lang = isTelugu ? "te-IN" : "en-US";
+
+  const voices = speechSynthesis.getVoices();
+
+  let voice = null;
+
+  const preferredVoices = [
+    "Google UK English Female",
+    "Google US English",
+    "Microsoft Zira",
+    "Microsoft Aria",
+    "Samantha"
+  ];
+
+  if (isTelugu) {
+    voice = voices.find(v => v.lang.includes("te"));
+  }
+
+  if (!voice) {
+    for (let name of preferredVoices) {
+      voice = voices.find(v => v.name.includes(name));
+      if (voice) break;
+    }
+  }
+
+  if (!voice) {
+    voice = voices.find(v => v.lang.includes("en"));
+  }
+
+  if (voice) utterance.voice = voice;
+
+  utterance.rate = 0.9;   // smooth
+  utterance.pitch = 1.3;  // feminine tone
+  utterance.volume = 1;
+
+  speechSynthesis.speak(utterance);
+}
+
+// load voices properly
+speechSynthesis.onvoiceschanged = () => {
+  speechSynthesis.getVoices();
+};
+
+////////////////////////////////////////////////////////////
+
 function appendAIMessage(data) {
   const reply = data?.reply ?? "";
   const showImages = Boolean(data?.show_images);
@@ -67,6 +124,12 @@ function appendAIMessage(data) {
       ${mediaHtml}
     </div>`;
   messagesArea.appendChild(div);
+
+  ////////////////////////////////////////////////////////////
+  // 🔥 VOICE RESPONSE TRIGGER (ADDED ONLY)
+  ////////////////////////////////////////////////////////////
+  speak(reply);
+
   scrollBottom();
 }
 
@@ -163,6 +226,7 @@ function initSpeech() {
     for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
     chatInput.value = t;
     if (transcriptPreview) transcriptPreview.textContent = t;
+
     const last = e.results[e.results.length - 1];
     if (last?.isFinal) {
       setTimeout(() => {
@@ -171,54 +235,38 @@ function initSpeech() {
       }, 300);
     }
   };
+
   rec.onerror = rec.onend = () => {
     isListening = false;
     micBtn.classList.remove("active");
     if (transcriptPreview) transcriptPreview.textContent = "";
   };
+
   return rec;
 }
 
 function toggleVoice() {
   if (!recognition) recognition = initSpeech();
   if (!recognition) {
-    appendAIMessage({ reply: "Voice input is not supported in this browser. Use Chrome or Edge." });
+    appendAIMessage({ reply: "Voice input is not supported in this browser." });
     return;
   }
+
   if (isListening) {
-    recognition.stop(); isListening = false; micBtn.classList.remove("active");
+    recognition.stop();
+    isListening = false;
+    micBtn.classList.remove("active");
   } else {
     try {
-      recognition.start(); isListening = true; micBtn.classList.add("active");
+      recognition.start();
+      isListening = true;
+      micBtn.classList.add("active");
       if (transcriptPreview) transcriptPreview.textContent = "Listening...";
-    } catch { isListening = false; micBtn.classList.remove("active"); }
-  }
-}
-
-async function loadSidebarNews() {
-  const newsList = document.getElementById("newsList");
-  if (!newsList) return;
-  try {
-    const res = await fetch("/api/news-sidebar");
-    const data = await res.json();
-    const articles = data.articles || [];
-    if (!articles.length) {
-      newsList.innerHTML = '<div class="news-loading">No updates available.</div>';
-      return;
+    } catch {
+      isListening = false;
+      micBtn.classList.remove("active");
     }
-    newsList.innerHTML = articles.map(a => `
-      <div class="news-item" onclick="sendSuggestion('Tell me about: ${esc(a.title.slice(0, 60))}')">
-        <div>${esc(a.title)}</div>
-        <div class="news-item-source">${esc(a.source || "")}</div>
-      </div>`).join("");
-  } catch {
-    newsList.innerHTML = '<div class="news-loading">Could not load updates.</div>';
   }
-}
-
-function sendSuggestion(text) {
-  chatInput.value = text;
-  sendMessage();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -231,13 +279,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   sendBtn.addEventListener("click", sendMessage);
   micBtn.addEventListener("click", toggleVoice);
+
   chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   });
-
-  document.querySelectorAll(".suggestion-btn").forEach(btn => {
-    btn.addEventListener("click", () => sendSuggestion(btn.getAttribute("data-text") || btn.textContent.trim()));
-  });
-
-  loadSidebarNews();
 });

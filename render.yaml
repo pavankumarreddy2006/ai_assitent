@@ -1,15 +1,9 @@
+# render.yaml
 services:
   - type: web
-    name: ideal-college-ai
+    name: ideal-ai
     env: python
     plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app --config gunicorn.conf.py"
-    repo: https://github.com/YOUR_USERNAME/college-ai   # change after push
-    branch: main
-    envVars:
-      - key: GROQ_API_KEY
-        sync: false
-      - key: OPEN_ROUTER_API
-        sync: false
-      # add all other keys from .env
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /health

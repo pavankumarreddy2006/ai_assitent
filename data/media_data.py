@@ -1,6 +1,8 @@
-export const IMAGE_PATHS = [
-  "/api/media/images/1.png",
-  "/api/media/images/2.png",
-];
+# data/media_data.py
+IMAGE_PATHS = [
+    "/static/media/images/1.jpg",
+    "/static/media/images/2.jpg",
+    "/static/media/images/3.jpg"
+]
 
-export const VIDEO_PATH = "/api/media/videos/college.mp4";
+VIDEO_PATH = "/static/media/videos/college.mp4"

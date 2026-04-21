@@ -1,21 +1,12 @@
 # services/college_service.py
-"""
-College Service Wrapper
-This file imports college data and functions so that app.py and router.py can use them easily.
-"""
+from data.college_data import FAQS, KEYWORDS
 
-from data.college_data import (
-    COLLEGE_KEYWORDS,
-    get_college_answer,
-    get_college_context
-)
 
-# Exporting for compatibility with app.py and router.py
-__all__ = [
-    "COLLEGE_KEYWORDS",
-    "get_college_answer",
-    "get_college_context"
-]
+def get_college_answer(message: str, lang: str = "en"):
+    msg = (message or "").lower()
 
-# Optional: Print confirmation during startup (helpful for debugging on Render)
-print("✓ College Service loaded successfully from data.college_data")
+    for key, kws in KEYWORDS.items():
+        if any(kw in msg for kw in kws):
+            val = FAQS.get(key, {})
+            return val.get(lang) or val.get("en")
+    return None

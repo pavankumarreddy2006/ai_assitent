@@ -12,8 +12,8 @@ from services.search_service import search_and_format
 from services.llm_service import query_ai
 from data.media_data import IMAGE_PATHS, VIDEO_PATH
 
-logger = logging.getLogger(**name**)
-router = Blueprint("router", **name**)
+logger = logging.getLogger(__name__)
+router = Blueprint("router", __name__)
 
 # ✅ ONLY ADDITION (no logic change)
 

@@ -23,6 +23,7 @@ function scrollBottom() {
   messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
+// ONLY ONE appendAIMessage function - with proper image slider and video support
 function appendAIMessage(data) {
   const reply = data?.reply ?? "";
   const source = data?.source ?? "";
@@ -80,6 +81,7 @@ function appendAIMessage(data) {
   messagesArea.appendChild(div);
   scrollBottom();
 }
+
 function changeSlide(sliderId, direction) {
   const slider = document.getElementById(sliderId);
   if (!slider) return;
@@ -99,39 +101,6 @@ function changeSlide(sliderId, direction) {
   slides[next].classList.add("active");
 }
 
-function appendAIMessage(data) {
-  const reply = data?.reply ?? "";
-  const source = data?.source ?? "";
-  const showImages = Boolean(data?.show_images);
-  const showVideo = Boolean(data?.show_video);
-  const images = Array.isArray(data?.images) ? data.images : [];
-  const videoUrl = data?.video_url ?? "";
-
-  let media = "";
-  if (showImages && images.length) {
-    media += `<div class="media-container images-grid" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;">`;
-    images.forEach((src) => {
-      media += `<img src="${esc(src)}" alt="college image" style="max-width:220px;border-radius:10px;border:1px solid #283448;">`;
-    });
-    media += `</div>`;
-  }
-  if (showVideo && videoUrl) {
-    media += `<div style="margin-top:10px;"><video controls autoplay style="width:100%;max-height:320px;border-radius:10px;" src="${esc(videoUrl)}"></video></div>`;
-  }
-
-  const div = document.createElement("div");
-  div.className = "message ai-message";
-  div.innerHTML = `
-    <div class="message-bubble ai-bubble">
-      <p>${esc(reply)}</p>
-      ${media}
-      ${source ? `<div class="message-source" style="font-size:12px;color:#93a4bf;margin-top:8px;">${esc(source)}</div>` : ""}
-    </div>
-  `;
-  messagesArea.appendChild(div);
-  scrollBottom();
-}
-
 function appendTyping() {
   const id = "typing-" + Date.now();
   const div = document.createElement("div");
@@ -144,6 +113,18 @@ function appendTyping() {
   messagesArea.appendChild(div);
   scrollBottom();
   return id;
+}
+
+function appendUserMessage(text) {
+  const div = document.createElement("div");
+  div.className = "message user-message";
+  div.innerHTML = `
+    <div class="message-bubble user-bubble">
+      <p>${esc(text)}</p>
+    </div>
+  `;
+  messagesArea.appendChild(div);
+  scrollBottom();
 }
 
 function removeElement(id) {

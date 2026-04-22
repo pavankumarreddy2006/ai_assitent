@@ -28,7 +28,9 @@
       <div class="greeting-sub" id="greetingDate"></div>
     </div>
 
-    <div class="top-right">
+    <!-- 📍 HIGHLIGHTED LOCATION CHIP -->
+    <a href="https://maps.google.com/?q=Ideal+College+Vidyuth+Nagar+Kakinada"
+       target="_blank" rel="noopener" class="top-right location-chip" title="View on Google Maps">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
         <circle cx="12" cy="10" r="3"/>
@@ -37,7 +39,7 @@
         <div class="loc-line">Vidyuth Nagar, Kakinada</div>
         <div class="loc-sub">Andhra Pradesh, India</div>
       </div>
-    </div>
+    </a>
   </header>
 
   <div class="app-layout">
@@ -55,7 +57,6 @@
         </div>
       </div>
 
-      <!-- Welcome Screen -->
       <div class="welcome-screen" id="welcomeScreen">
         <div class="welcome-logo">
           <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="Ideal College"
@@ -97,11 +98,11 @@
       </div>
     </div>
 
-    <!-- RIGHT: Info Hub -->
+    <!-- RIGHT: Info Hub Sidebar -->
     <aside class="info-hub">
 
       <div class="hub-half hub-top">
-        <div class="hub-header">COLLEGE INFORMATION</div>
+        <div class="hub-header">📚 COLLEGE INFORMATION</div>
 
         <div class="hub-card college-card">
           <div class="college-logo-box">
@@ -115,29 +116,53 @@
           </div>
         </div>
 
+        <!-- 🎓 COURSES -->
         <div class="hub-section">
-          <div class="hub-section-title">KEY COURSES</div>
-          <div class="tags">
-            <span class="tag">B.Sc Computers</span><span class="tag">BCA</span><span class="tag">B.Sc AI</span>
-            <span class="tag">BBA</span><span class="tag">B.Sc Agriculture</span><span class="tag">Food Technology</span>
-            <span class="tag">Aqua &amp; Fisheries</span><span class="tag">MCA</span>
-            <span class="tag">M.Sc Organic Chemistry</span><span class="tag">M.Sc Analytical Chemistry</span>
-            <span class="tag">M.Sc Food Science</span><span class="tag">M.Sc Aquaculture</span>
+          <div class="hub-section-title">
+            <span class="sec-ico">🎓</span> COURSES
+            <a href="https://idealcollege.edu.in/courses" target="_blank" rel="noopener" class="sec-link">Open ↗</a>
+          </div>
+          <div class="tags click-tags">
+            <span class="tag" data-ask="Tell me about B.Sc Computers course">B.Sc Computers</span>
+            <span class="tag" data-ask="Tell me about BCA course">BCA</span>
+            <span class="tag" data-ask="Tell me about B.Sc AI course">B.Sc AI</span>
+            <span class="tag" data-ask="Tell me about BBA course">BBA</span>
+            <span class="tag" data-ask="Tell me about B.Sc Agriculture">B.Sc Agriculture</span>
+            <span class="tag" data-ask="Tell me about Food Technology course">Food Technology</span>
+            <span class="tag" data-ask="Tell me about Aqua and Fisheries course">Aqua &amp; Fisheries</span>
+            <span class="tag" data-ask="Tell me about MCA course">MCA</span>
+            <span class="tag" data-ask="Tell me about M.Sc Organic Chemistry">M.Sc Organic Chemistry</span>
+            <span class="tag" data-ask="Tell me about M.Sc Analytical Chemistry">M.Sc Analytical Chemistry</span>
+            <span class="tag" data-ask="Tell me about M.Sc Food Science">M.Sc Food Science</span>
+            <span class="tag" data-ask="Tell me about M.Sc Aquaculture">M.Sc Aquaculture</span>
           </div>
         </div>
 
+        <!-- 🏫 FACILITIES -->
         <div class="hub-section">
-          <div class="hub-section-title">FACILITIES</div>
-          <div class="tags">
-            <span class="tag">Library</span><span class="tag">Computer Labs</span><span class="tag">Science Labs</span>
-            <span class="tag">Hostel</span><span class="tag">Bus Facility</span><span class="tag">Wi-Fi</span>
-            <span class="tag">Cafeteria</span><span class="tag">Playground</span><span class="tag">CCTV Security</span>
-            <span class="tag">Auditorium</span><span class="tag">RO Water</span><span class="tag">Parking</span>
+          <div class="hub-section-title">
+            <span class="sec-ico">🏫</span> FACILITIES
+            <a href="https://idealcollege.edu.in/facilities" target="_blank" rel="noopener" class="sec-link">Open ↗</a>
+          </div>
+          <div class="tags click-tags">
+            <span class="tag" data-ask="Tell me about the college library">Library</span>
+            <span class="tag" data-ask="Tell me about computer labs">Computer Labs</span>
+            <span class="tag" data-ask="Tell me about science labs">Science Labs</span>
+            <span class="tag" data-ask="Tell me about hostel facility">Hostel</span>
+            <span class="tag" data-ask="Tell me about bus facility and transport">Bus Facility</span>
+            <span class="tag" data-ask="Is Wi-Fi available in college?">Wi-Fi</span>
+            <span class="tag" data-ask="Tell me about cafeteria">Cafeteria</span>
+            <span class="tag" data-ask="Tell me about playground">Playground</span>
+            <span class="tag" data-ask="Tell me about CCTV security">CCTV Security</span>
+            <span class="tag" data-ask="Tell me about auditorium">Auditorium</span>
+            <span class="tag" data-ask="Is RO water available?">RO Water</span>
+            <span class="tag" data-ask="Tell me about parking facility">Parking</span>
           </div>
         </div>
 
+        <!-- ☎ CONTACT -->
         <div class="hub-section">
-          <div class="hub-section-title">CONTACT</div>
+          <div class="hub-section-title"><span class="sec-ico">☎</span> CONTACT</div>
           <a href="tel:08842384382" class="contact-item link">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.31h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.13 6.13l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.92 17z"/></svg>
             0884-2384382 / 0884-2384381
@@ -150,194 +175,34 @@
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             idealcollege.edu.in
           </a>
-          <div class="contact-item">
+          <a href="https://maps.google.com/?q=Ideal+College+Vidyuth+Nagar+Kakinada" target="_blank" rel="noopener" class="contact-item link">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             Vidyuth Nagar, Kakinada, AP
-          </div>
+          </a>
         </div>
 
+        <!-- 🕘 TIMINGS -->
         <div class="hub-section">
-          <div class="hub-section-title">TIMINGS</div>
-          <div class="contact-item">
+          <div class="hub-section-title"><span class="sec-ico">🕘</span> TIMINGS</div>
+          <div class="contact-item link" data-ask="What are the college timings?">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             9:30 AM – 3:45 PM (Mon–Sat)
           </div>
-          <div class="contact-item">
+          <div class="contact-item link" data-ask="What is the lunch break time?">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Lunch: 1 are all 7 text files inline for direct copy-paste. (`logo.png` is the binary image — download it from `attached_assets/updated/logo.png` and place at `static/media/images/logo.png`.)
-
----
-
-## 📄 1. `templates/index.html`
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ideal College AI Assistant</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body>
-
-  <!-- ===== TOP BAR ===== -->
-  <header class="top-bar">
-    <div class="top-left">
-      <div class="top-logo">
-        <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="IC"
-             onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{textContent:'IC'}))"/>
-      </div>
-      <div class="top-left-text">
-        <div class="top-college-name">Ideal College of Arts &amp; Science</div>
-        <div class="top-college-sub">NAAC <span class="naac-badge">A Grade</span> Accredited</div>
-      </div>
-    </div>
-
-    <div class="top-middle">
-      <div class="greeting" id="greetingText">Good Morning</div>
-      <div class="greeting-sub" id="greetingDate"></div>
-    </div>
-
-    <div class="top-right">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-      <div class="top-right-text">
-        <div class="loc-line">Vidyuth Nagar, Kakinada</div>
-        <div class="loc-sub">Andhra Pradesh, India</div>
-      </div>
-    </div>
-  </header>
-
-  <div class="app-layout">
-
-    <!-- LEFT: Chat Panel -->
-    <div class="chat-panel">
-      <div class="chat-header">
-        <div class="chat-header-logo">
-          <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="IC"
-               onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{textContent:'IC'}))"/>
-        </div>
-        <div class="chat-header-info">
-          <span class="chat-header-name">Ideal AI</span>
-          <span class="chat-header-status"><span class="status-dot"></span>Online</span>
+            Lunch: 1:00 PM – 1:45 PM
+          </div>
         </div>
       </div>
 
-      <!-- Welcome Screen -->
-      <div class="welcome-screen" id="welcomeScreen">
-        <div class="welcome-logo">
-          <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="Ideal College"
-               onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'welcome-logo-fallback',textContent:'IC'}))"/>
-        </div>
-        <h1 class="welcome-title">How can I help you today?</h1>
-        <p class="welcome-sub">ASK ABOUT COURSES · ADMISSIONS · FEES · WEATHER · NEWS</p>
-        <div class="suggestions-grid">
-          <button class="suggestion-btn" data-text="What courses are offered?">What courses are offered?</button>
-          <button class="suggestion-btn" data-text="What is the fee structure?">What is the fee structure?</button>
-          <button class="suggestion-btn" data-text="Kakinada weather report">Kakinada weather report</button>
-          <button class="suggestion-btn" data-text="Latest news today">Latest news today</button>
-          <button class="suggestion-btn" data-text="కోర్సులు ఏమిటి?">కోర్సులు ఏమిటి?</button>
-          <button class="suggestion-btn" data-text="ఫీజు ఎంత?">ఫీజు ఎంత?</button>
+      <div class="hub-half hub-bottom">
+        <div class="hub-header">📢 LATEST STUDENT UPDATES</div>
+        <div class="news-list" id="newsList">
+          <div class="news-loading">Loading latest news...</div>
         </div>
       </div>
 
-      <div class="messages-area" id="messagesArea"></div>
-
-      <div class="input-area">
-        <div id="transcriptPreview" class="transcript-preview"></div>
-        <div class="input-bar">
-          <button class="mic-btn" id="micBtn" type="button" title="Voice input">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </button>
-          <input id="chatInput" class="chat-input" type="text" placeholder="Message Ideal AI" autocomplete="off" />
-          <button class="send-btn" id="sendBtn" type="button" title="Send">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: Info Hub -->
-    <aside class="info-hub">
-
-      <div class="hub-half hub-top">
-        <div class="hub-header">COLLEGE INFORMATION</div>
-
-        <div class="hub-card college-card">
-          <div class="college-logo-box">
-            <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="IC"
-                 onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{textContent:'IC'}))"/>
-          </div>
-          <div>
-            <div class="college-name">Ideal College</div>
-            <div class="college-sub">NAAC A GRADE · EST. 2000</div>
-            <a href="https://idealcollege.edu.in" target="_blank" rel="noopener" class="website-link">Visit Website →</a>
-          </div>
-        </div>
-
-        <div class="hub-section">
-          <div class="hub-section-title">KEY COURSES</div>
-          <div class="tags">
-            <span class="tag">B.Sc Computers</span><span class="tag">BCA</span><span class="tag">B.Sc AI</span>
-            <span class="tag">BBA</span><span class="tag">B.Sc Agriculture</span><span class="tag">Food Technology</span>
-            <span class="tag">Aqua &amp; Fisheries</span><span class="tag">MCA</span>
-            <span class="tag">M.Sc Organic Chemistry</span><span class="tag">M.Sc Analytical Chemistry</span>
-            <span class="tag">M.Sc Food Science</span><span class="tag">M.Sc Aquaculture</span>
-          </div>
-        </div>
-
-        <div class="hub-section">
-          <div class="hub-section-title">FACILITIES</div>
-          <div class="tags">
-            <span class="tag">Library</span><span class="tag">Computer Labs</span><span class="tag">Science Labs</span>
-            <span class="tag">Hostel</span><span class="tag">Bus Facility</span><span class="tag">Wi-Fi</span>
-            <span class="tag">Cafeteria</span><span class="tag">Playground</span><span class="tag">CCTV Security</span>
-            <span class="tag">Auditorium</span><span class="tag">RO Water</span><span class="tag">Parking</span>
-          </div>
-        </div>
-
-        <div class="hub-section">
-          <div class="hub-section-title">CONTACT</div>
-          <a href="tel:08842384382" class="contact-item link">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.31h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.13 6.13l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.92 17z"/></svg>
-            0884-2384382 / 0884-2384381
-          </a>
-          <a href="mailto:idealcolleges@gmail.com" class="contact-item link">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            idealcolleges@gmail.com
-          </a>
-          <a href="https://idealcollege.edu.in" target="_blank" rel="noopener" class="contact-item link">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            idealcollege.edu.in
-          </a>
-          <div class="contact-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Vidyuth Nagar, Kakinada, AP
-          </div>
-        </div>
-
-        <div class="hub-section">
-          <div class="hub-section-title">TIMINGS</div>
-          <div class="contact-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            9:30 AM – 3:45 PM (Mon–Sat)
-          </div>
-          <div class="contact-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Lunch: 1:00 PM – 1>
+    </aside>
   </div>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>

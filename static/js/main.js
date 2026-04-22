@@ -1,4 +1,3 @@
-// static/js/main.js
 "use strict";
 
 let chatInput, sendBtn, messagesArea, welcomeScreen, micBtn, transcriptPreview;
@@ -7,17 +6,11 @@ let recognition = null;
 let isListening = false;
 
 let cachedVoices = [];
-function loadVoices() {
-  cachedVoices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-}
+function loadVoices() { cachedVoices = window.speechSynthesis ? speechSynthesis.getVoices() : []; }
 if ("speechSynthesis" in window) {
   loadVoices();
   speechSynthesis.onvoiceschanged = loadVoices;
-  try {
-    const warm = new SpeechSynthesisUtterance(" ");
-    warm.volume = 0;
-    speechSynthesis.speak(warm);
-  } catch (_) {}
+  try { const warm = new SpeechSynthesisUtterance(" "); warm.volume = 0; speechSynthesis.speak(warm); } catch (_) {}
 }
 
 function pickFemaleVoice(isTelugu) {
@@ -29,14 +22,11 @@ function pickFemaleVoice(isTelugu) {
     const hi = v.find(x => /hi[-_]?IN/i.test(x.lang) && /female|aditi|swara|kalpana/i.test(x.name));
     if (hi) return hi;
   }
-  const preferred = [
-    "Google UK English Female",
+  const preferred = ["Google UK English Female",
     "Microsoft Aria Online (Natural) - English (United States)",
     "Microsoft Jenny Online (Natural) - English (United States)",
     "Microsoft Zira - English (United States)",
-    "Google US English",
-    "Samantha", "Karen", "Tessa", "Victoria", "Moira"
-  ];
+    "Google US English","Samantha","Karen","Tessa","Victoria","Moira"];
   for (const name of preferred) {
     const hit = v.find(x => x.name === name || x.name.includes(name));
     if (hit) return hit;
@@ -46,17 +36,14 @@ function pickFemaleVoice(isTelugu) {
   return v.find(x => /en[-_]/i.test(x.lang)) || v[0] || null;
 }
 
-function stopSpeaking() {
-  try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (_) {}
-}
+function stopSpeaking() { try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (_) {} }
 
 function speak(text) {
   if (!("speechSynthesis" in window) || !text) return;
   stopSpeaking();
   const cleanText = String(text)
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, " ")
-    .replace(/\*\*/g, "")
-    .replace(/[#_`>]/g, " ")
+    .replace(/\*\*/g, "").replace(/[#_`>]/g, " ")
     .replace(/\s+/g, " ").trim();
   if (!cleanText) return;
   const isTelugu = /[\u0C00-\u0C7F]/.test(cleanText);
@@ -70,16 +57,9 @@ function speak(text) {
   speechSynthesis.speak(utterance);
 }
 
-function esc(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-}
+function esc(str) { return String(str ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
 function scrollBottom() { messagesArea.scrollTop = messagesArea.scrollHeight; }
-function formatReply(text) {
-  if (!text) return "";
-  return esc(text).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-}
+function formatReply(text) { if (!text) return ""; return esc(text).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>"); }
 function aiAvatarHTML() {
   return `<div class="ai-avatar">
     <img src="/static/media/images/logo.png" alt="Ideal College"
@@ -192,6 +172,7 @@ async function sendMessage() {
     } else {
       appendAIMessage({ reply: data?.reply || "Something went wrong. Please try again." });
     }
+    try { sessionStorage.setItem("ideal_chat", JSON.stringify(chatHistory)); } catch (_) {}
   } catch (err) {
     console.error(err);
     removeEl(typingId);
@@ -231,7 +212,7 @@ function initSpeech() {
 }
 
 function toggleVoice() {
-  stopSpeaking(); // 🛑 stop AI voice the moment user touches the mic
+  stopSpeaking();
   if (!recognition) recognition = initSpeech();
   if (!recognition) {
     appendAIMessage({ reply: "Voice input is not supported in this browser." });
@@ -301,6 +282,40 @@ document.addEventListener("DOMContentLoaded", () => {
       sendMessage();
     });
   });
+
+  // 🔹 Sidebar clickable items → send as chat message
+  document.querySelectorAll("[data-ask]").forEach(el => {
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      const q = el.getAttribute("data-ask");
+      if (!q) return;
+      chatInput.value = q;
+      sendMessage();
+    });
+  });
+
+  // 🔹 Restore chat history (persists until browser refresh)
+  try {
+    const saved = sessionStorage.getItem("ideal_chat");
+    if (saved) {
+      const arr = JSON.parse(saved);
+      if (Array.isArray(arr) && arr.length) {
+        welcomeScreen.style.display = "none";
+        messagesArea.style.display = "flex";
+        arr.forEach(m => {
+          if (m.role === "user") appendUserMessage(m.content);
+          else if (m.role === "assistant") {
+            const div = document.createElement("div");
+            div.className = "message ai-message";
+            div.innerHTML = `${aiAvatarHTML()}<div class="message-bubble ai-bubble"><div class="ai-content">${formatReply(m.content)}</div></div>`;
+            messagesArea.appendChild(div);
+          }
+        });
+        chatHistory = arr;
+        scrollBottom();
+      }
+    }
+  } catch (_) {}
 
   updateGreeting();
   setInterval(updateGreeting, 60000);

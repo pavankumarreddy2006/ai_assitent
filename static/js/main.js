@@ -6,6 +6,100 @@ let chatHistory = [];
 let recognition = null;
 let isListening = false;
 
+/* ============================================================
+   🔥 SWEET FAST FEMALE VOICE MODULE (UPGRADED)
+   - Pre-warms voices on page load (no startup lag)
+   - Strict female voice prefer-list
+   - Speaks INSTANTLY when reply renders
+============================================================ */
+let cachedVoices = [];
+let voicesReady = false;
+
+function loadVoices() {
+  cachedVoices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  if (cachedVoices && cachedVoices.length) voicesReady = true;
+}
+
+if ("speechSynthesis" in window) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+  // pre-warm engine — first-call lag fix
+  try {
+    const warm = new SpeechSynthesisUtterance(" ");
+    warm.volume = 0;
+    speechSynthesis.speak(warm);
+  } catch (_) {}
+}
+
+function pickFemaleVoice(isTelugu) {
+  if (!cachedVoices.length) loadVoices();
+  const v = cachedVoices;
+
+  if (isTelugu) {
+    const te = v.find(x => /te[-_]?IN/i.test(x.lang)) || v.find(x => /telugu/i.test(x.name));
+    if (te) return te;
+    const hi = v.find(x => /hi[-_]?IN/i.test(x.lang) && /female|aditi|swara|kalpana/i.test(x.name));
+    if (hi) return hi;
+  }
+
+  const preferred = [
+    "Google UK English Female",
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Microsoft Jenny Online (Natural) - English (United States)",
+    "Microsoft Zira - English (United States)",
+    "Google US English",
+    "Samantha",
+    "Karen",
+    "Tessa",
+    "Victoria",
+    "Moira"
+  ];
+  for (const name of preferred) {
+    const hit = v.find(x => x.name === name || x.name.includes(name));
+    if (hit) return hit;
+  }
+  // any female english
+  const enFemale = v.find(x => /en[-_]/i.test(x.lang) && /female|woman|zira|aria|jenny|samantha|karen|tessa|victoria|moira/i.test(x.name));
+  if (enFemale) return enFemale;
+  // fallback any en
+  return v.find(x => /en[-_]/i.test(x.lang)) || v[0] || null;
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window) || !text) return;
+
+  // cancel queued utterances → speak immediately
+  try { speechSynthesis.cancel(); } catch (_) {}
+
+  // Strip emojis and markdown for cleaner pronunciation
+  const cleanText = String(text)
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, " ")
+    .replace(/\*\*/g, "")
+    .replace(/[#_`>]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleanText) return;
+
+  const isTelugu = /[\u0C00-\u0C7F]/.test(cleanText);
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = isTelugu ? "te-IN" : "en-IN";
+
+  const v = pickFemaleVoice(isTelugu);
+  if (v) utterance.voice = v;
+
+  // Pleasant, attractive feminine tone
+  utterance.rate  = isTelugu ? 0.95 : 1.02;   // a touch faster than before
+  utterance.pitch = 1.25;                     // sweet feminine
+  utterance.volume = 1;
+
+  // speak NOW — no setTimeout delay
+  speechSynthesis.speak(utterance);
+}
+
+/* ============================================================
+   UTILITIES
+============================================================ */
 function esc(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -25,63 +119,28 @@ function formatReply(text) {
     .replace(/\n/g, "<br>");
 }
 
-////////////////////////////////////////////////////////////
-// 🔥 SWEET FEMALE VOICE MODULE (ADDED ONLY)
-////////////////////////////////////////////////////////////
-
-function speak(text) {
-  if (!("speechSynthesis" in window)) return;
-
-  speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-
-  const isTelugu = /[\u0C00-\u0C7F]/.test(text);
-  utterance.lang = isTelugu ? "te-IN" : "en-US";
-
-  const voices = speechSynthesis.getVoices();
-
-  let voice = null;
-
-  const preferredVoices = [
-    "Google UK English Female",
-    "Google US English",
-    "Microsoft Zira",
-    "Microsoft Aria",
-    "Samantha"
-  ];
-
-  if (isTelugu) {
-    voice = voices.find(v => v.lang.includes("te"));
+/* ============================================================
+   GREETING (top bar middle)
+============================================================ */
+function updateGreeting() {
+  const el = document.getElementById("greetingText");
+  const ds = document.getElementById("greetingDate");
+  if (!el) return;
+  const h = new Date().getHours();
+  let g = "Good Morning";
+  if (h >= 12 && h < 17) g = "Good Afternoon";
+  else if (h >= 17 && h < 21) g = "Good Evening";
+  else if (h >= 21 || h < 5) g = "Good Night";
+  el.textContent = "🌟 " + g;
+  if (ds) {
+    const opt = { weekday: "long", day: "numeric", month: "short", year: "numeric" };
+    ds.textContent = new Date().toLocaleDateString("en-IN", opt);
   }
-
-  if (!voice) {
-    for (let name of preferredVoices) {
-      voice = voices.find(v => v.name.includes(name));
-      if (voice) break;
-    }
-  }
-
-  if (!voice) {
-    voice = voices.find(v => v.lang.includes("en"));
-  }
-
-  if (voice) utterance.voice = voice;
-
-  utterance.rate = 0.9;   // smooth
-  utterance.pitch = 1.3;  // feminine tone
-  utterance.volume = 1;
-
-  speechSynthesis.speak(utterance);
 }
 
-// load voices properly
-speechSynthesis.onvoiceschanged = () => {
-  speechSynthesis.getVoices();
-};
-
-////////////////////////////////////////////////////////////
-
+/* ============================================================
+   MESSAGE RENDERING
+============================================================ */
 function appendAIMessage(data) {
   const reply = data?.reply ?? "";
   const showImages = Boolean(data?.show_images);
@@ -120,14 +179,12 @@ function appendAIMessage(data) {
   div.innerHTML = `
     <div class="ai-avatar">IC</div>
     <div class="message-bubble ai-bubble">
-      <div>${formatReply(reply)}</div>
+      <div class="ai-content">${formatReply(reply)}</div>
       ${mediaHtml}
     </div>`;
   messagesArea.appendChild(div);
 
-  ////////////////////////////////////////////////////////////
-  // 🔥 VOICE RESPONSE TRIGGER (ADDED ONLY)
-  ////////////////////////////////////////////////////////////
+  // 🔥 INSTANT VOICE — no delay
   speak(reply);
 
   scrollBottom();
@@ -172,6 +229,9 @@ function removeEl(id) {
   if (el) el.remove();
 }
 
+/* ============================================================
+   CHAT FLOW
+============================================================ */
 async function sendMessage() {
   const text = (chatInput.value || "").trim();
   if (!text) return;
@@ -213,6 +273,9 @@ async function sendMessage() {
   }
 }
 
+/* ============================================================
+   VOICE INPUT (mic)
+============================================================ */
 function initSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
@@ -232,7 +295,7 @@ function initSpeech() {
       setTimeout(() => {
         if (transcriptPreview) transcriptPreview.textContent = "";
         sendMessage();
-      }, 300);
+      }, 250);
     }
   };
 
@@ -269,6 +332,41 @@ function toggleVoice() {
   }
 }
 
+/* ============================================================
+   SIDEBAR — Latest News (clickable, opens official page)
+============================================================ */
+async function loadSidebarNews() {
+  const list = document.getElementById("newsList");
+  if (!list) return;
+
+  try {
+    const res = await fetch("/api/news-sidebar");
+    const data = await res.json();
+    const articles = data?.articles || [];
+
+    if (!articles.length) {
+      list.innerHTML = `<div class="news-loading">No updates available right now.</div>`;
+      return;
+    }
+
+    list.innerHTML = articles.slice(0, 6).map(a => {
+      const title = esc(a.title || "");
+      const url = a.url || "#";
+      const source = esc(a.source || "News");
+      return `
+        <a class="news-item" href="${esc(url)}" target="_blank" rel="noopener" title="Open full article">
+          <div class="news-item-title">${title}</div>
+          <div class="news-item-source">${source} · Read more →</div>
+        </a>`;
+    }).join("");
+  } catch (err) {
+    list.innerHTML = `<div class="news-loading">Unable to load updates.</div>`;
+  }
+}
+
+/* ============================================================
+   INIT
+============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   chatInput = document.getElementById("chatInput");
   sendBtn = document.getElementById("sendBtn");
@@ -286,4 +384,17 @@ document.addEventListener("DOMContentLoaded", () => {
       sendMessage();
     }
   });
+
+  document.querySelectorAll(".suggestion-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      chatInput.value = btn.dataset.text || btn.textContent.trim();
+      sendMessage();
+    });
+  });
+
+  updateGreeting();
+  setInterval(updateGreeting, 60000);
+
+  loadSidebarNews();
+  setInterval(loadSidebarNews, 5 * 60 * 1000); // refresh every 5 min
 });

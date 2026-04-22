@@ -74,7 +74,14 @@ def api_chat():
 @router.route("/api/news-sidebar", methods=["GET"])
 def news_sidebar():
     try:
-        articles, _ = fetch_news("latest india news today")
-        return jsonify({"articles": articles[:6]})
+        articles, _ = fetch_news("students education college india latest")
+        cleaned = []
+        for a in articles[:6]:
+            title = (a.get("title") or "").strip()
+            url = (a.get("url") or "").strip()
+            source = (a.get("source") or "").strip()
+            if title:
+                cleaned.append({"title": title, "url": url, "source": source})
+        return jsonify({"articles": cleaned})
     except Exception:
         return jsonify({"articles": []})

@@ -6,24 +6,13 @@ let chatHistory = [];
 let recognition = null;
 let isListening = false;
 
-/* ============================================================
-   🔥 SWEET FAST FEMALE VOICE MODULE (UPGRADED)
-   - Pre-warms voices on page load (no startup lag)
-   - Strict female voice prefer-list
-   - Speaks INSTANTLY when reply renders
-============================================================ */
 let cachedVoices = [];
-let voicesReady = false;
-
 function loadVoices() {
   cachedVoices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-  if (cachedVoices && cachedVoices.length) voicesReady = true;
 }
-
 if ("speechSynthesis" in window) {
   loadVoices();
   speechSynthesis.onvoiceschanged = loadVoices;
-  // pre-warm engine — first-call lag fix
   try {
     const warm = new SpeechSynthesisUtterance(" ");
     warm.volume = 0;
@@ -34,94 +23,70 @@ if ("speechSynthesis" in window) {
 function pickFemaleVoice(isTelugu) {
   if (!cachedVoices.length) loadVoices();
   const v = cachedVoices;
-
   if (isTelugu) {
     const te = v.find(x => /te[-_]?IN/i.test(x.lang)) || v.find(x => /telugu/i.test(x.name));
     if (te) return te;
     const hi = v.find(x => /hi[-_]?IN/i.test(x.lang) && /female|aditi|swara|kalpana/i.test(x.name));
     if (hi) return hi;
   }
-
   const preferred = [
     "Google UK English Female",
     "Microsoft Aria Online (Natural) - English (United States)",
     "Microsoft Jenny Online (Natural) - English (United States)",
     "Microsoft Zira - English (United States)",
     "Google US English",
-    "Samantha",
-    "Karen",
-    "Tessa",
-    "Victoria",
-    "Moira"
+    "Samantha", "Karen", "Tessa", "Victoria", "Moira"
   ];
   for (const name of preferred) {
     const hit = v.find(x => x.name === name || x.name.includes(name));
     if (hit) return hit;
   }
-  // any female english
   const enFemale = v.find(x => /en[-_]/i.test(x.lang) && /female|woman|zira|aria|jenny|samantha|karen|tessa|victoria|moira/i.test(x.name));
   if (enFemale) return enFemale;
-  // fallback any en
   return v.find(x => /en[-_]/i.test(x.lang)) || v[0] || null;
+}
+
+function stopSpeaking() {
+  try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (_) {}
 }
 
 function speak(text) {
   if (!("speechSynthesis" in window) || !text) return;
-
-  // cancel queued utterances → speak immediately
-  try { speechSynthesis.cancel(); } catch (_) {}
-
-  // Strip emojis and markdown for cleaner pronunciation
+  stopSpeaking();
   const cleanText = String(text)
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, " ")
     .replace(/\*\*/g, "")
     .replace(/[#_`>]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
+    .replace(/\s+/g, " ").trim();
   if (!cleanText) return;
-
   const isTelugu = /[\u0C00-\u0C7F]/.test(cleanText);
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = isTelugu ? "te-IN" : "en-IN";
-
   const v = pickFemaleVoice(isTelugu);
   if (v) utterance.voice = v;
-
-  // Pleasant, attractive feminine tone
-  utterance.rate  = isTelugu ? 0.95 : 1.02;   // a touch faster than before
-  utterance.pitch = 1.25;                     // sweet feminine
+  utterance.rate = isTelugu ? 0.95 : 1.02;
+  utterance.pitch = 1.25;
   utterance.volume = 1;
-
-  // speak NOW — no setTimeout delay
   speechSynthesis.speak(utterance);
 }
 
-/* ============================================================
-   UTILITIES
-============================================================ */
 function esc(str) {
   return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
-
-function scrollBottom() {
-  messagesArea.scrollTop = messagesArea.scrollHeight;
-}
-
+function scrollBottom() { messagesArea.scrollTop = messagesArea.scrollHeight; }
 function formatReply(text) {
   if (!text) return "";
-  return esc(text)
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>");
+  return esc(text).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+}
+function aiAvatarHTML() {
+  return `<div class="ai-avatar">
+    <img src="/static/media/images/logo.png" alt="Ideal College"
+         onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'ai-avatar-fallback',textContent:'IC'}))"/>
+  </div>`;
 }
 
-/* ============================================================
-   GREETING (top bar middle)
-============================================================ */
 function updateGreeting() {
   const el = document.getElementById("greetingText");
   const ds = document.getElementById("greetingDate");
@@ -138,55 +103,32 @@ function updateGreeting() {
   }
 }
 
-/* ============================================================
-   MESSAGE RENDERING
-============================================================ */
 function appendAIMessage(data) {
   const reply = data?.reply ?? "";
   const showImages = Boolean(data?.show_images);
   const showVideo = Boolean(data?.show_video);
   const images = Array.isArray(data?.images) ? data.images : [];
   const videoUrl = data?.video_url ?? "";
-
   let mediaHtml = "";
-
   if (showVideo && videoUrl) {
-    mediaHtml = `
-      <div class="media-frame">
-        <video class="media-video" controls autoplay muted playsinline>
-          <source src="${esc(videoUrl)}" type="video/mp4">
-          Your browser does not support video.
-        </video>
-      </div>`;
+    mediaHtml = `<div class="media-frame"><video class="media-video" controls autoplay muted playsinline>
+      <source src="${esc(videoUrl)}" type="video/mp4">Your browser does not support video.</video></div>`;
   }
-
   if (showImages && images.length) {
     const id = "slider-" + Date.now();
-    mediaHtml = `
-      <div class="media-frame">
-        <div class="image-slider" id="${id}">
-          <button class="slide-btn prev" onclick="changeSlide('${id}',-1)">&#8249;</button>
-          <div class="slides">
-            ${images.map((s, i) => `<img src="${esc(s)}" class="slide${i === 0 ? " active" : ""}" alt="campus" loading="lazy"/>`).join("")}
-          </div>
-          <button class="slide-btn next" onclick="changeSlide('${id}',1)">&#8250;</button>
-        </div>
-      </div>`;
+    mediaHtml = `<div class="media-frame"><div class="image-slider" id="${id}">
+      <button class="slide-btn prev" onclick="changeSlide('${id}',-1)">&#8249;</button>
+      <div class="slides">${images.map((s, i) => `<img src="${esc(s)}" class="slide${i === 0 ? " active" : ""}" alt="campus" loading="lazy"/>`).join("")}</div>
+      <button class="slide-btn next" onclick="changeSlide('${id}',1)">&#8250;</button></div></div>`;
   }
-
   const div = document.createElement("div");
   div.className = "message ai-message";
-  div.innerHTML = `
-    <div class="ai-avatar">IC</div>
+  div.innerHTML = `${aiAvatarHTML()}
     <div class="message-bubble ai-bubble">
-      <div class="ai-content">${formatReply(reply)}</div>
-      ${mediaHtml}
+      <div class="ai-content">${formatReply(reply)}</div>${mediaHtml}
     </div>`;
   messagesArea.appendChild(div);
-
-  // 🔥 INSTANT VOICE — no delay
   speak(reply);
-
   scrollBottom();
 }
 
@@ -206,8 +148,7 @@ function appendTyping() {
   const div = document.createElement("div");
   div.id = id;
   div.className = "message ai-message";
-  div.innerHTML = `
-    <div class="ai-avatar">IC</div>
+  div.innerHTML = `${aiAvatarHTML()}
     <div class="message-bubble ai-bubble">
       <div class="typing-indicator"><span></span><span></span><span></span></div>
     </div>`;
@@ -224,39 +165,27 @@ function appendUserMessage(text) {
   scrollBottom();
 }
 
-function removeEl(id) {
-  const el = document.getElementById(id);
-  if (el) el.remove();
-}
+function removeEl(id) { const el = document.getElementById(id); if (el) el.remove(); }
 
-/* ============================================================
-   CHAT FLOW
-============================================================ */
 async function sendMessage() {
   const text = (chatInput.value || "").trim();
   if (!text) return;
-
   welcomeScreen.style.display = "none";
   messagesArea.style.display = "flex";
-
   appendUserMessage(text);
   chatHistory.push({ role: "user", content: text });
   chatInput.value = "";
   sendBtn.disabled = true;
   const typingId = appendTyping();
-
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text, history: chatHistory.slice(-10) }),
     });
-
     let data;
     try { data = await res.json(); } catch { throw new Error("Invalid JSON"); }
-
     removeEl(typingId);
-
     if (res.ok && data.reply !== undefined) {
       appendAIMessage(data);
       chatHistory.push({ role: "assistant", content: data.reply });
@@ -273,9 +202,6 @@ async function sendMessage() {
   }
 }
 
-/* ============================================================
-   VOICE INPUT (mic)
-============================================================ */
 function initSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
@@ -283,13 +209,11 @@ function initSpeech() {
   rec.lang = "en-IN";
   rec.interimResults = true;
   rec.continuous = false;
-
   rec.onresult = (e) => {
     let t = "";
     for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
     chatInput.value = t;
     if (transcriptPreview) transcriptPreview.textContent = t;
-
     const last = e.results[e.results.length - 1];
     if (last?.isFinal) {
       setTimeout(() => {
@@ -298,27 +222,26 @@ function initSpeech() {
       }, 250);
     }
   };
-
   rec.onerror = rec.onend = () => {
     isListening = false;
     micBtn.classList.remove("active");
     if (transcriptPreview) transcriptPreview.textContent = "";
   };
-
   return rec;
 }
 
 function toggleVoice() {
+  stopSpeaking(); // 🛑 stop AI voice the moment user touches the mic
   if (!recognition) recognition = initSpeech();
   if (!recognition) {
     appendAIMessage({ reply: "Voice input is not supported in this browser." });
     return;
   }
-
   if (isListening) {
-    recognition.stop();
+    try { recognition.stop(); } catch (_) {}
     isListening = false;
     micBtn.classList.remove("active");
+    if (transcriptPreview) transcriptPreview.textContent = "";
   } else {
     try {
       recognition.start();
@@ -332,41 +255,31 @@ function toggleVoice() {
   }
 }
 
-/* ============================================================
-   SIDEBAR — Latest News (clickable, opens official page)
-============================================================ */
 async function loadSidebarNews() {
   const list = document.getElementById("newsList");
   if (!list) return;
-
   try {
     const res = await fetch("/api/news-sidebar");
     const data = await res.json();
     const articles = data?.articles || [];
-
     if (!articles.length) {
       list.innerHTML = `<div class="news-loading">No updates available right now.</div>`;
       return;
     }
-
     list.innerHTML = articles.slice(0, 6).map(a => {
       const title = esc(a.title || "");
       const url = a.url || "#";
       const source = esc(a.source || "News");
-      return `
-        <a class="news-item" href="${esc(url)}" target="_blank" rel="noopener" title="Open full article">
-          <div class="news-item-title">${title}</div>
-          <div class="news-item-source">${source} · Read more →</div>
-        </a>`;
+      return `<a class="news-item" href="${esc(url)}" target="_blank" rel="noopener" title="Open full article">
+        <div class="news-item-title">${title}</div>
+        <div class="news-item-source">${source} · Read more →</div>
+      </a>`;
     }).join("");
   } catch (err) {
     list.innerHTML = `<div class="news-loading">Unable to load updates.</div>`;
   }
 }
 
-/* ============================================================
-   INIT
-============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   chatInput = document.getElementById("chatInput");
   sendBtn = document.getElementById("sendBtn");
@@ -379,10 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
   micBtn.addEventListener("click", toggleVoice);
 
   chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
   document.querySelectorAll(".suggestion-btn").forEach(btn => {
@@ -394,7 +304,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateGreeting();
   setInterval(updateGreeting, 60000);
-
   loadSidebarNews();
-  setInterval(loadSidebarNews, 5 * 60 * 1000); // refresh every 5 min
+  setInterval(loadSidebarNews, 5 * 60 * 1000);
 });

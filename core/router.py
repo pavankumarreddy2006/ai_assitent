@@ -22,7 +22,8 @@ def api_chat():
         history = data.get("history") or []
 
         if not user_message:
-            return jsonify({"reply": "Please enter a message.", "source": "", "show_images": False, "images": [], "show_video": False, "video_url": ""}), 400
+            return jsonify({"reply": "Please enter a message.", "source": "", "show_images": False,
+                            "images": [], "show_video": False, "video_url": ""}), 400
 
         lang = detect_language(user_message)
         intent_data = classify_intent(user_message)

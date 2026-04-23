@@ -172,7 +172,7 @@ async function sendMessage() {
     } else {
       appendAIMessage({ reply: data?.reply || "Something went wrong. Please try again." });
     }
-    try { sessionStorage.setItem("ideal_chat", JSON.stringify(chatHistory)); } catch (_) {}
+    // ❌ No more sessionStorage save — fresh chat on every refresh
   } catch (err) {
     console.error(err);
     removeEl(typingId);
@@ -262,6 +262,10 @@ async function loadSidebarNews() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // ✅ Clear any old saved chat — always fresh on refresh / re-open
+  try { sessionStorage.removeItem("ideal_chat"); } catch (_) {}
+  try { localStorage.removeItem("ideal_chat"); } catch (_) {}
+
   chatInput = document.getElementById("chatInput");
   sendBtn = document.getElementById("sendBtn");
   messagesArea = document.getElementById("messagesArea");
@@ -300,6 +304,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (backdrop) backdrop.addEventListener("click", closeSidebar);
 
+  // 🎓 COURSE TAGS — open Google search in new tab
+  document.querySelectorAll("[data-course]").forEach(el => {
+    el.addEventListener("click", () => {
+      const q = el.getAttribute("data-course");
+      if (!q) return;
+      const url = "https://www.google.com/search?q=" + encodeURIComponent(q + " course details eligibility career scope");
+      window.open(url, "_blank", "noopener");
+    });
+  });
+
+  // Other clickable tags (facilities/timings) → ask AI
   document.querySelectorAll("[data-ask]").forEach(el => {
     el.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;
@@ -310,28 +325,6 @@ document.addEventListener("DOMContentLoaded", () => {
       closeSidebar();
     });
   });
-
-  try {
-    const saved = sessionStorage.getItem("ideal_chat");
-    if (saved) {
-      const arr = JSON.parse(saved);
-      if (Array.isArray(arr) && arr.length) {
-        welcomeScreen.style.display = "none";
-        messagesArea.style.display = "flex";
-        arr.forEach(m => {
-          if (m.role === "user") appendUserMessage(m.content);
-          else if (m.role === "assistant") {
-            const div = document.createElement("div");
-            div.className = "message ai-message";
-            div.innerHTML = `${aiAvatarHTML()}<div class="message-bubble ai-bubble"><div class="ai-content">${formatReply(m.content)}</div></div>`;
-            messagesArea.appendChild(div);
-          }
-        });
-        chatHistory = arr;
-        scrollBottom();
-      }
-    }
-  } catch (_) {}
 
   updateGreeting();
   setInterval(updateGreeting, 60000);

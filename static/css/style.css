@@ -8,7 +8,11 @@
   --user-bg: #1a2b44; --ai-bg: #131826;
   --radius: 12px; --radius-sm: 8px; --topbar-h: 60px;
   --sidebar-w: 300px;
+  --app-h: 100vh;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+@supports (height: 100dvh) {
+  :root { --app-h: 100dvh; }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; }
@@ -58,7 +62,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .loc-line { font-size: 12.5px; font-weight: 600; color: #fff; }
 .loc-sub { font-size: 10px; color: #b6cce6; margin-top: 2px; }
 
-/* 📱 Mobile menu toggle */
 .menu-toggle {
   display: none;
   background: transparent; border: 1px solid var(--border);
@@ -70,7 +73,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .app-layout {
   display: grid;
   grid-template-columns: 1fr var(--sidebar-w);
-  height: calc(100vh - var(--topbar-h));
+  height: calc(var(--app-h) - var(--topbar-h));
   overflow: hidden;
 }
 
@@ -130,9 +133,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .messages-area::-webkit-scrollbar { width: 8px; }
 .messages-area::-webkit-scrollbar-track { background: transparent; }
 .messages-area::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-  border: 2px solid var(--bg);
+  background: var(--border); border-radius: 4px; border: 2px solid var(--bg);
 }
 .messages-area::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
@@ -186,7 +187,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .slide-btn.prev { left: 10px; } .slide-btn.next { right: 10px; }
 
 /* ===== INPUT AREA ===== */
-.input-area { padding: 10px 16px 14px; border-top: 1px solid var(--border-soft); flex-shrink: 0; background: var(--bg); }
+.input-area {
+  padding: 10px 16px 14px; border-top: 1px solid var(--border-soft);
+  flex-shrink: 0; background: var(--bg);
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
 .transcript-preview { min-height: 16px; font-size: 11px; color: #6a87b0; padding: 0 4px 6px; font-style: italic; }
 .input-bar { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border);
   background: var(--panel); border-radius: var(--radius); padding: 7px 9px; transition: border-color 0.2s; }
@@ -249,7 +254,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .contact-item.link:hover { color: var(--accent-strong); }
 .contact-item svg { color: var(--accent-strong); flex-shrink: 0; }
 
-/* ===== NEWS LIST ===== */
 .news-list { display: flex; flex-direction: column; gap: 6px; }
 .news-loading { font-size: 11px; color: var(--text-muted); padding: 8px; text-align: center; }
 .news-item { display: block; background: var(--panel); border: 1px solid var(--border);
@@ -281,7 +285,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 }
 
 /* =====================================================
-   📱 MOBILE (≤ 768px)
+   📱 MOBILE (≤ 768px) — input overlap fixed
 ===================================================== */
 @media (max-width: 768px) {
   :root { --topbar-h: 54px; --sidebar-w: 280px; }
@@ -299,13 +303,19 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
   .app-layout { grid-template-columns: 1fr; }
 
+  .chat-panel {
+    height: calc(var(--app-h) - var(--topbar-h));
+    display: flex;
+    flex-direction: column;
+  }
+
   .info-hub {
     position: fixed;
     top: var(--topbar-h);
     right: 0;
     width: var(--sidebar-w);
     max-width: 88vw;
-    height: calc(100vh - var(--topbar-h));
+    height: calc(var(--app-h) - var(--topbar-h));
     z-index: 100;
     transform: translateX(100%);
     transition: transform 0.28s ease;
@@ -314,7 +324,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   .info-hub.open { transform: translateX(0); }
 
   .chat-header { padding: 10px 14px; }
-  .welcome-screen { padding: 20px 16px; }
+  .welcome-screen { padding: 20px 16px 24px; }
   .welcome-logo { width: 100px; height: 100px; }
   .welcome-logo img { width: 84px; height: 84px; }
   .welcome-title { font-size: 20px; }
@@ -322,7 +332,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   .suggestions-grid { grid-template-columns: 1fr; }
   .suggestion-btn { padding: 12px; font-size: 12.5px; }
 
-  .messages-area { padding: 14px 12px 8px; gap: 12px; }
+  .messages-area { padding: 14px 12px 12px; gap: 12px; }
   .message-bubble { max-width: 90%; padding: 11px 13px; font-size: 13px; line-height: 1.6; }
   .ai-bubble::before { font-size: 8px; margin-bottom: 6px; padding-bottom: 4px; }
   .ai-avatar { width: 28px; height: 28px; }
@@ -330,7 +340,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   .media-video { max-height: 220px; }
   .image-slider { height: 200px; }
 
-  .input-area { padding: 8px 10px 10px; }
+  .input-area {
+    position: relative;
+    padding: 8px 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg);
+    z-index: 5;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .transcript-preview { min-height: 14px; font-size: 10.5px; padding-bottom: 4px; }
   .input-bar { padding: 6px 8px; }
   .mic-btn, .send-btn { width: 40px; height: 40px; }
 }
@@ -347,7 +365,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   .welcome-logo img { width: 72px; height: 72px; }
   .message-bubble { max-width: 92%; font-size: 12.5px; padding: 10px 12px; }
   .ai-bubble::before { font-size: 7.5px; }
-  .messages-area { padding: 12px 8px 6px; }
+  .messages-area { padding: 12px 8px 10px; }
 }
 
 /* =====================================================

@@ -283,7 +283,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 🔹 Sidebar clickable items → send as chat message
+  // 📱 Mobile sidebar toggle
+  const menuToggle = document.getElementById("menuToggle");
+  const infoHub = document.getElementById("infoHub");
+  const backdrop = document.getElementById("sidebarBackdrop");
+
+  function closeSidebar() {
+    if (infoHub) infoHub.classList.remove("open");
+    if (backdrop) backdrop.classList.remove("active");
+  }
+  if (menuToggle && infoHub) {
+    menuToggle.addEventListener("click", () => {
+      infoHub.classList.toggle("open");
+      if (backdrop) backdrop.classList.toggle("active");
+    });
+  }
+  if (backdrop) backdrop.addEventListener("click", closeSidebar);
+
   document.querySelectorAll("[data-ask]").forEach(el => {
     el.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;
@@ -291,10 +307,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!q) return;
       chatInput.value = q;
       sendMessage();
+      closeSidebar();
     });
   });
 
-  // 🔹 Restore chat history (persists until browser refresh)
   try {
     const saved = sessionStorage.getItem("ideal_chat");
     if (saved) {

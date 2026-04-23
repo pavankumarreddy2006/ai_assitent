@@ -172,7 +172,6 @@ async function sendMessage() {
     } else {
       appendAIMessage({ reply: data?.reply || "Something went wrong. Please try again." });
     }
-    // ❌ No more sessionStorage save — fresh chat on every refresh
   } catch (err) {
     console.error(err);
     removeEl(typingId);
@@ -262,7 +261,7 @@ async function loadSidebarNews() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Clear any old saved chat — always fresh on refresh / re-open
+  // Always fresh on refresh / re-open
   try { sessionStorage.removeItem("ideal_chat"); } catch (_) {}
   try { localStorage.removeItem("ideal_chat"); } catch (_) {}
 
@@ -304,17 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (backdrop) backdrop.addEventListener("click", closeSidebar);
 
-  // 🎓 COURSE TAGS — open Google search in new tab
-  document.querySelectorAll("[data-course]").forEach(el => {
-    el.addEventListener("click", () => {
-      const q = el.getAttribute("data-course");
-      if (!q) return;
-      const url = "https://www.google.com/search?q=" + encodeURIComponent(q + " course details eligibility career scope");
-      window.open(url, "_blank", "noopener");
-    });
-  });
-
-  // Other clickable tags (facilities/timings) → ask AI
+  // ✅ All sidebar tags (courses, facilities, timings) → send as user question to chat
   document.querySelectorAll("[data-ask]").forEach(el => {
     el.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;

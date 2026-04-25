@@ -62,7 +62,7 @@ function scrollBottom() { messagesArea.scrollTop = messagesArea.scrollHeight; }
 function formatReply(text) { if (!text) return ""; return esc(text).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>"); }
 function aiAvatarHTML() {
   return `<div class="ai-avatar">
-    <img src="/static/media/images/logo.png" alt="Ideal College"
+    <img src="/static/media/images/logo.png?v=2" alt="Ideal College"
          onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'ai-avatar-fallback',textContent:'IC'}))"/>
   </div>`;
 }
@@ -303,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (backdrop) backdrop.addEventListener("click", closeSidebar);
 
-  // ✅ All sidebar tags (courses, facilities, timings) → send as user question to chat
+  // ✅ All sidebar tags → send as user question to chat
   document.querySelectorAll("[data-ask]").forEach(el => {
     el.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;

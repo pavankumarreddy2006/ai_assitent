@@ -21,7 +21,7 @@
         </svg>
       </button>
       <div class="top-logo">
-        <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="IC"
+        <img src="{{ url_for('static', filename='media/images/logo.png') }}?v=2" alt="IC"
              onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{textContent:'IC'}))"/>
       </div>
       <div class="top-left-text">
@@ -53,7 +53,7 @@
     <div class="chat-panel">
       <div class="chat-header">
         <div class="chat-header-logo">
-          <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="IC"
+          <img src="{{ url_for('static', filename='media/images/logo.png') }}?v=2" alt="IC"
                onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{textContent:'IC'}))"/>
         </div>
         <div class="chat-header-info">
@@ -64,18 +64,18 @@
 
       <div class="welcome-screen" id="welcomeScreen">
         <div class="welcome-logo">
-          <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="Ideal College"
+          <img src="{{ url_for('static', filename='media/images/logo.png') }}?v=2" alt="Ideal College"
                onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'welcome-logo-fallback',textContent:'IC'}))"/>
         </div>
         <h1 class="welcome-title">How can I help you today?</h1>
         <p class="welcome-sub">ASK ABOUT COURSES · ADMISSIONS · FEES · WEATHER · NEWS</p>
         <div class="suggestions-grid">
           <button class="suggestion-btn" data-text="What courses are offered?">What courses are offered?</button>
-          <button class="suggestion-btn" data-text="who is principal of ideal college?">who is principal of ideal college?</button>
+          <button class="suggestion-btn" data-text="What is the fee structure?">What is the fee structure?</button>
           <button class="suggestion-btn" data-text="Kakinada weather report">Kakinada weather report</button>
           <button class="suggestion-btn" data-text="Latest news today">Latest news today</button>
-          <button class="suggestion-btn" data-text="college video">college video</button>
-          <button class="suggestion-btn" data-text="college images">college images</button>
+          <button class="suggestion-btn" data-text="కోర్సులు ఏమిటి?">కోర్సులు ఏమిటి?</button>
+          <button class="suggestion-btn" data-text="ఫీజు ఎంత?">ఫీజు ఎంత?</button>
         </div>
       </div>
 
@@ -110,7 +110,7 @@
 
         <div class="hub-card college-card">
           <div class="college-logo-box">
-            <img src="{{ url_for('static', filename='media/images/logo.png') }}" alt="IC"
+            <img src="{{ url_for('static', filename='media/images/logo.png') }}?v=2" alt="IC"
                  onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{textContent:'IC'}))"/>
           </div>
           <div>
@@ -120,7 +120,7 @@
           </div>
         </div>
 
-        <!-- 🎓 COURSES — click sends question to chat (no external redirect) -->
+        <!-- 🎓 COURSES -->
         <div class="hub-section">
           <div class="hub-section-title">
             <span class="sec-ico">🎓</span> COURSES
